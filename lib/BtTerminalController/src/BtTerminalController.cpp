@@ -1,52 +1,87 @@
-#include "BtTerminalController.h"
+#include <BtTerminalController.h>
 
-BluetoothSerial *BT;
-Preferences *memory;
+BluetoothSerial BT;
 
+const char* bt_credentials_name = "ESP32";
+
+#define COMMAND_AMOUNT 7
+// exceptions
+#define NOT_AVAILABLE -2
+#define NOT_RECOGNISED -1
+// commands
+#define BT_PING 0
+#define WIFI_SSID_AND_PASSWORD 1
+#define WIFI_ERASE_MEMORY 2
+#define WIFI_SHOW_NETWORKS 3
+#define RESTART 4
+#define HELP 5
+#define WIFI_CONNECT 6
 
 // bt messages
 const char* wifi_ssid_request_message = "Provide ssid of network:";
+const char* wifi_ssid_confirmation_message = "Ssid received.";
 const char* wifi_password_request_message = "Provide passowrd of network:";
+const char* wifi_password_confirmation_message = "Password received.";
 const char* erasing_memory_message = "Erasing all memory";
 const char* status_ok_message = "Ok";
 const char* status_error_message = "Error";
 const char* unknown_command_message = "Unknown command";
 const char* restart_message = "Restarting...";
+const char* pong_message = "pong";
+const char* memory_empty_message = "No networks in memory.";
 
-// memory keys
-const char* wifi_table_name = "bt_wifi";
-const char* wifi_ssid_key_prefix = "ssid";
-const char* wifi_password_key_prefix = "pass";
-const char* wifi_amount_key = "amount";
+// bt commands
+char* BT_PING_LINE = "ping";
+char* WIFI_SSID_AND_PASSWORD_LINE =  "new";
+char* WIFI_ERASE_MEMORY_LINE =  "clear";
+char* WIFI_SHOW_NETWORKS_LINE = "show";
+char* RESTART_LINE = "restart";
+char* HELP_LINE = "help";
+char* WIFI_CONNECT_LINE = "connect";
+
+char* commands[] = {
+    BT_PING_LINE, 
+    WIFI_SSID_AND_PASSWORD_LINE, 
+    WIFI_ERASE_MEMORY_LINE, 
+    WIFI_SHOW_NETWORKS_LINE,
+    RESTART_LINE,
+    HELP_LINE,
+    WIFI_CONNECT_LINE
+};
 
 void ProcessBt();
+void PingCommand();
 void AddCredentialsCommand();
-int SaveCredentials(const char* ssid, const char* password);
-void PrintNetworksFromMemory(Preferences *memory, BluetoothSerial *BT);
+void PrintNetworksFromMemoryCommand();
+void ConnectCommand();
 void ClearMemoryCommand();
 void RestartESPCommand();
 
-void BtControllerSetup(BluetoothSerial *SerialBT, Preferences *preferences){
-    BT = SerialBT;
-    memory = preferences;
+void WriteBtLine(const char* line);
+int ReadBtLine(String *buffer, int maxLength);
+int ReadBtCommand(String *buffer, int maxLength);
+
+void InitBtTerminalController(){
+  Serial.println("You can pair to " + String(bt_credentials_name));
+  BT.begin(bt_credentials_name);
+
 }
 
 void ProcessBt(){
-  if (!BT->available())
+  if (!BT.available())
     return;
-
-    Serial.println("here");
 
   String commandLine = String(STRING_LENGTH);
 
-  // Serial.println("BT available: starting reading...");
-
-  int command = ReadBtCommand(BT, &commandLine, STRING_LENGTH);
+  int command = ReadBtCommand(&commandLine, STRING_LENGTH);
 
   Serial.println("Got command: " + String(command));
 
   switch (command)
   {
+  case BT_PING:
+    PingCommand();
+    break;
   case WIFI_SSID_AND_PASSWORD:
     AddCredentialsCommand();
     break;
@@ -54,13 +89,17 @@ void ProcessBt(){
     ClearMemoryCommand();
     break;
   case WIFI_SHOW_NETWORKS:
-    PrintNetworksFromMemory(memory, BT);
+    PrintNetworksFromMemoryCommand();
+    break;
+  case WIFI_CONNECT:
+    ConnectCommand();
     break;
   case RESTART:
     RestartESPCommand();
     break;
+  case NOT_RECOGNISED:
   default:
-    WriteBtLine(BT, unknown_command_message);
+    WriteBtLine(unknown_command_message);
     break;
   }
   
@@ -70,92 +109,161 @@ void AddCredentialsCommand(){
   String ssid = String(STRING_LENGTH);
   String password = String(STRING_LENGTH);
     
-  WriteBtLine(BT, wifi_ssid_request_message);
-  while (!BT->available()){}
-  Serial.println("received ssid");
-  if (ReadBtLine(BT, &ssid, STRING_LENGTH) < 0){
-    WriteBtLine(BT, status_error_message);
+  WriteBtLine(wifi_ssid_request_message);
+  while (!BT.available()){}
+  Serial.println(wifi_ssid_confirmation_message);
+  if (ReadBtLine(&ssid, STRING_LENGTH) < 0){
+    WriteBtLine(status_error_message);
     return;
   }
-  WriteBtLine(BT, wifi_password_request_message);
-  while(!BT->available()){}
-  Serial.println("received password");
-  if (ReadBtLine(BT, &password, STRING_LENGTH) < 0){
-    WriteBtLine(BT, status_error_message);
+  WriteBtLine(wifi_password_request_message);
+  while(!BT.available()){}
+  Serial.println(wifi_password_confirmation_message);
+  if (ReadBtLine(&password, STRING_LENGTH) < 0){
+    WriteBtLine(status_error_message);
     return;
   }
-  SaveCredentials(ssid.c_str(), password.c_str());
-  WriteBtLine(BT, status_ok_message);
+  SaveCredentialsInMemory(ssid.c_str(), password.c_str());
+  WriteBtLine(status_ok_message);
 }
 
-int SaveCredentials(const char* ssid, const char* password){
-  char* ssid_key = (char*) malloc(6 * sizeof(char));
-  char* password_key = (char*) malloc(6 * sizeof(char));
+void PrintNetworksFromMemoryCommand(){
+  int counter = GetCredentialsAmountFromMemory();
 
-  int counter = memory->getUInt(wifi_amount_key, 0);
+  if (counter == 0){
+      WriteBtLine(memory_empty_message);
+  } else {
+    char* ssid = (char*) malloc(STRING_LENGTH * sizeof(char));
+    char* password = (char*) malloc(STRING_LENGTH * sizeof(char));
+
+    for (int i = 0; i < counter; i++){
+      GetSsidFromMemory(i, ssid);
+      GetPasswordFromMemory(i, password);
+      String output = String(i + 1) + ": '" + String(ssid) + "' - '" + String(password) + "'";
+      WriteBtLine(output.c_str());
+    }
+
+    free(ssid);
+    free(password);
+  }
+}
+
+void ConnectCommand(){
+  PrintNetworksFromMemoryCommand();
   
-  sprintf(ssid_key, "%s%d", wifi_ssid_key_prefix, counter);
-  sprintf(password_key, "%s%d", wifi_password_key_prefix, counter);
 
-  memory->putString(ssid_key, ssid);
-  memory->putString(password_key, password);
+  int amount = GetCredentialsAmountFromMemory();
+  String message;
+  if (amount == 0){
+    message = "Provide credentials by '" + String(WIFI_SSID_AND_PASSWORD_LINE) + "' command.";
+    WriteBtLine(message.c_str());
+    return;
+  }
 
-  memory->putUInt(wifi_amount_key, ++counter);
+  String buffer = String(STRING_LENGTH);
 
-  Serial.println("saved credantials");
-  Serial.println(ssid);
-  Serial.println(password);
+  message = "Wich network to connect to?";
+  WriteBtLine(message.c_str());
+  while (!BT.available()){}
+  if (ReadBtLine(&buffer, STRING_LENGTH) < 0){
+    WriteBtLine(status_error_message);
+    return;
+  }
 
-  free(ssid_key);
-  free(password_key);
-
-  return counter;
-}
-
-void PrintNetworksFromMemory(Preferences *memory, BluetoothSerial *BT){
-
-  char* ssid_key = (char*) malloc(6 * sizeof(char));
-  char* password_key = (char*) malloc(6 * sizeof(char));
+  int index = buffer.toInt();
 
   char* ssid = (char*) malloc(STRING_LENGTH * sizeof(char));
   char* password = (char*) malloc(STRING_LENGTH * sizeof(char));
 
-  int counter = memory->getUInt(wifi_amount_key, 0);
 
-  if (counter == 0){
-    if (BT != NULL)
-      WriteBtLine(BT, "No networks in memory");
-    else
-      Serial.println("No networks in memory");
-  } else {
-    for (int i = 0; i < counter; i++){
-      sprintf(ssid_key, "%s%d", wifi_ssid_key_prefix, i);
-      sprintf(password_key, "%s%d", wifi_password_key_prefix, i);
-
-      memory->getString(ssid_key, ssid, STRING_LENGTH);
-      memory->getString(password_key, password, STRING_LENGTH);
-      
-      String output = String(i) + ": '" + String(ssid) + "' - '" + String(password) + "'";
-
-      if (BT != NULL)
-        WriteBtLine(BT, output.c_str());
-      else
-        Serial.println(output);
+  if (index <= 0 || index > amount){
+    WriteBtLine("Trying to connect to each network...");
+    for (int i = 0; i < amount; i++){
+      GetSsidFromMemory(i, ssid);
+      WriteBtLine((String("Connecting to: ") + ssid).c_str());
+      ConnectToWiFi(
+        ssid, 
+        GetPasswordFromMemory(i, password)
+      );
+      delay(CONNECTING_TIMEOUT);
+      if (IsWiFiConnected()){
+        WriteBtLine(status_ok_message);
+        break;
+      }
     }
+  } else {
+    ConnectToWiFi(
+      GetSsidFromMemory(index - 1, ssid), 
+      GetPasswordFromMemory(index - 1, password)
+    );
   }
 
-  free(ssid_key);
-  free(password_key);
+  if (!IsWiFiConnected())
+    WriteBtLine("Can't connect.");
+
   free(ssid);
   free(password);
 }
 
+void PingCommand(){
+  WriteBtLine(pong_message);
+}
+
 void ClearMemoryCommand(){
-  memory->clear();
-  WriteBtLine(BT, erasing_memory_message);
+  WriteBtLine(erasing_memory_message);
+  ClearMemory();
 }
 
 void RestartESPCommand(){
-  WriteBtLine(BT, restart_message);
+  WriteBtLine(restart_message);
   ESP.restart();
+}
+
+
+
+
+// IO
+
+int ReadBtCommand(String *buffer, int maxLength){
+    if (!BT.available())
+        return NOT_AVAILABLE;
+    
+    int symbolsRead = ReadBtLine(buffer, maxLength);
+    
+    for (int j = 0; j < COMMAND_AMOUNT; j++){
+        if (!buffer->compareTo(String(commands[j])))
+            return j;
+    }
+    
+    return NOT_RECOGNISED;
+}
+
+int ReadBtLine(String *buffer, int maxLength){
+    if (!BT.available() || buffer->length() <= 0)
+        return -1;
+
+    int index = 0;
+
+    char character = 0;
+    buffer->clear();
+
+    while (index < maxLength - 1){
+        character = (char)BT.read();
+        if ((character == '\n') || (character == '\r'))
+            break;
+        *buffer = *buffer + character;
+        index++;
+    } 
+    Serial.println(*buffer);
+
+    while (BT.available())
+        BT.read();
+
+    return buffer->length();
+}
+
+void WriteBtLine(const char* line){
+  BT.write((const uint8_t *)line, strlen(line));
+  BT.write('\n');
+  Serial.println(line);
 }
