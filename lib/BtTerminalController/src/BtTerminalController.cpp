@@ -4,7 +4,7 @@ BluetoothSerial BT;
 
 const char* bt_credentials_name = "ESP32";
 
-#define COMMAND_AMOUNT 7
+#define COMMAND_AMOUNT 8
 // exceptions
 #define NOT_AVAILABLE -2
 #define NOT_RECOGNISED -1
@@ -16,6 +16,7 @@ const char* bt_credentials_name = "ESP32";
 #define RESTART 4
 #define HELP 5
 #define WIFI_CONNECT 6
+#define WIFI_SEND_EMAIL 7
 
 // bt messages
 const char* wifi_ssid_request_message = "Provide ssid of network:";
@@ -38,28 +39,34 @@ char* WIFI_SHOW_NETWORKS_LINE = "show";
 char* RESTART_LINE = "restart";
 char* HELP_LINE = "help";
 char* WIFI_CONNECT_LINE = "connect";
+char* WIFI_SEND_EMAIL_LINE = "email";
 
 char* commands[] = {
-    BT_PING_LINE, 
+    BT_PING_LINE,
     WIFI_SSID_AND_PASSWORD_LINE, 
     WIFI_ERASE_MEMORY_LINE, 
     WIFI_SHOW_NETWORKS_LINE,
     RESTART_LINE,
     HELP_LINE,
-    WIFI_CONNECT_LINE
+    WIFI_CONNECT_LINE,
+    WIFI_SEND_EMAIL_LINE
 };
 
 void ProcessBt();
+
 void PingCommand();
 void AddCredentialsCommand();
 void PrintNetworksFromMemoryCommand();
 void ConnectCommand();
 void ClearMemoryCommand();
 void RestartESPCommand();
+void HelpCommand();
+void SendEmailCommand();
 
 void WriteBtLine(const char* line);
 int ReadBtLine(String *buffer, int maxLength);
 int ReadBtCommand(String *buffer, int maxLength);
+int AwaitAndReadBtLine(String *buffer, int maxLength);
 
 void InitBtTerminalController(){
   Serial.println("You can pair to " + String(bt_credentials_name));
@@ -97,6 +104,12 @@ void ProcessBt(){
   case RESTART:
     RestartESPCommand();
     break;
+  case WIFI_SEND_EMAIL:
+    SendEmailCommand();
+    break;
+  case HELP:
+    HelpCommand();
+    break;
   case NOT_RECOGNISED:
   default:
     WriteBtLine(unknown_command_message);
@@ -110,20 +123,21 @@ void AddCredentialsCommand(){
   String password = String(STRING_LENGTH);
     
   WriteBtLine(wifi_ssid_request_message);
-  while (!BT.available()){}
+  if (AwaitAndReadBtLine(&ssid, STRING_LENGTH) < 0){
+    WriteBtLine(status_error_message);
+    return;
+  }
   Serial.println(wifi_ssid_confirmation_message);
-  if (ReadBtLine(&ssid, STRING_LENGTH) < 0){
-    WriteBtLine(status_error_message);
-    return;
-  }
+
   WriteBtLine(wifi_password_request_message);
-  while(!BT.available()){}
-  Serial.println(wifi_password_confirmation_message);
-  if (ReadBtLine(&password, STRING_LENGTH) < 0){
+  if (AwaitAndReadBtLine(&password, STRING_LENGTH) < 0){
     WriteBtLine(status_error_message);
     return;
   }
+  Serial.println(wifi_password_confirmation_message);
+
   SaveCredentialsInMemory(ssid.c_str(), password.c_str());
+
   WriteBtLine(status_ok_message);
 }
 
@@ -164,8 +178,7 @@ void ConnectCommand(){
 
   message = "Wich network to connect to?";
   WriteBtLine(message.c_str());
-  while (!BT.available()){}
-  if (ReadBtLine(&buffer, STRING_LENGTH) < 0){
+  if (AwaitAndReadBtLine(&buffer, STRING_LENGTH) < 0){
     WriteBtLine(status_error_message);
     return;
   }
@@ -186,20 +199,21 @@ void ConnectCommand(){
         GetPasswordFromMemory(i, password)
       );
       delay(CONNECTING_TIMEOUT);
-      if (IsWiFiConnected()){
-        WriteBtLine(status_ok_message);
-        break;
-      }
     }
   } else {
     ConnectToWiFi(
       GetSsidFromMemory(index - 1, ssid), 
       GetPasswordFromMemory(index - 1, password)
     );
+    delay(CONNECTING_TIMEOUT);
   }
 
-  if (!IsWiFiConnected())
+  if (!IsWiFiConnected()){
     WriteBtLine("Can't connect.");
+    DisconnectFromWiFi();
+  }
+  else
+    WriteBtLine("Connected.");
 
   free(ssid);
   free(password);
@@ -219,6 +233,93 @@ void RestartESPCommand(){
   ESP.restart();
 }
 
+void HelpCommand(){
+  WriteBtLine("List of commands:");
+  String message;
+  for (int i = 0; i < COMMAND_AMOUNT; i++){
+    message += String(commands[i]) + "\n";
+  }
+  WriteBtLine(message.c_str());
+}
+
+void SendEmailCommand(){
+  WriteBtLine("You are about to write and email.");
+  WriteBtLine((String(
+    "1 [line] - append message;\n") +
+    "2 - reset last line;\n" + 
+    "3 - reset all message;\n" +
+    "4 [email] - set recipient;\n" +
+    "5 [y/N] - toggle html format (false by default);\n" +
+    "6 [subject] - set subject;\n" +
+    "7 - commit;\n" +
+    "100 - abort."
+  ).c_str());
+
+  String commandLine = String(STRING_LENGTH);
+  int command;
+  String defaultMessage = "<div style=\"color:#ff0000;font-size:20px;\">Hello World! - From ESP32</div>";
+  String subject = "Message from ESP32";
+  String message;
+  String recipient = "kot.zakhar@gmail.com";
+  bool isHtml = true;
+
+
+  do {
+    WriteBtLine("Write a command in a following way:\n[command number] [value]");    
+    if (AwaitAndReadBtLine(&commandLine, STRING_LENGTH) < 0){
+      WriteBtLine(status_error_message);
+      return;
+    }
+
+    command = commandLine.toInt();
+    commandLine = commandLine.substring(2);
+    Serial.println("Command: " + String(command));
+    Serial.println("Value: " + String(commandLine));
+    switch (command){
+      case 1:
+        if (message.isEmpty())
+          isHtml = false;
+        message += commandLine + '\n';
+        WriteBtLine(message.c_str());
+        break;
+      case 2:
+        message.setCharAt(message.lastIndexOf('\n'), 0);
+        WriteBtLine(message.c_str());
+        break;
+      case 3:
+        message.clear();
+        isHtml = true;
+        break;
+      case 4:
+        recipient = commandLine;
+        break;
+      case 5:
+        commandLine.trim();
+        commandLine.toLowerCase();
+        isHtml = !commandLine.compareTo("y");
+        WriteBtLine(String("Html format is set to ") + isHtml ? "true" : "false");
+        break;
+      case 6:
+        commandLine.trim();
+        subject = commandLine;
+        break;
+      case 7:
+        WriteBtLine("Sending email...");
+        if (SendLetter(recipient, subject, message.isEmpty() ? defaultMessage : message, isHtml)){
+          WriteBtLine("Email sent successfully.");
+        } else {
+          WriteBtLine("Couldn't send email. Abort...");
+        }
+        break;
+      case 100:
+        WriteBtLine("Aborting...");
+        break;
+      case 0:
+      default:
+        WriteBtLine("Command not recognize.");
+    }
+  } while (command != 7 && command != 100);
+}
 
 
 
@@ -228,7 +329,7 @@ int ReadBtCommand(String *buffer, int maxLength){
     if (!BT.available())
         return NOT_AVAILABLE;
     
-    int symbolsRead = ReadBtLine(buffer, maxLength);
+    ReadBtLine(buffer, maxLength);
     
     for (int j = 0; j < COMMAND_AMOUNT; j++){
         if (!buffer->compareTo(String(commands[j])))
@@ -236,6 +337,11 @@ int ReadBtCommand(String *buffer, int maxLength){
     }
     
     return NOT_RECOGNISED;
+}
+
+int AwaitAndReadBtLine(String *buffer, int maxLength){
+  while (!BT.available()){}
+  return ReadBtLine(buffer, maxLength);
 }
 
 int ReadBtLine(String *buffer, int maxLength){
@@ -256,8 +362,9 @@ int ReadBtLine(String *buffer, int maxLength){
     } 
     Serial.println(*buffer);
 
-    while (BT.available())
-        BT.read();
+    while (BT.available()){
+      BT.read();
+    }
 
     return buffer->length();
 }
@@ -266,4 +373,5 @@ void WriteBtLine(const char* line){
   BT.write((const uint8_t *)line, strlen(line));
   BT.write('\n');
   Serial.println(line);
+  delay(100);
 }
