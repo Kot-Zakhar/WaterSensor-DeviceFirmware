@@ -4,10 +4,10 @@
 
 #define CONNECTING_TIMEOUT 5000
 
-#include <WiFi.h>
-#include <ESP32_MailClient.h>
 #include <Arduino.h>
+#include <ESP32_MailClient.h>
 
+void WiFiControllerInit();
 bool IsWiFiConnected();
 void ConnectToWiFi(const char *ssid, const char *password);
 void DisconnectFromWiFi();

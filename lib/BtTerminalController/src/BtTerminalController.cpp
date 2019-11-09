@@ -219,8 +219,43 @@ void ConnectCommand(){
   free(password);
 }
 
+//Callback function to get the Email sending status
+void sendCallbackaa(SendStatus msg)
+{
+  //Print the current status
+  Serial.println(msg.info());
+
+  //Do something when complete
+  if (msg.success())
+  {
+    Serial.println("----------------");
+  }
+}
+
+
 void PingCommand(){
   WriteBtLine(pong_message);
+    
+  while (WiFi.status() != WL_CONNECTED)
+  {
+    Serial.print(".");
+    delay(200);
+  }
+
+    // SMTPData smtpData;
+
+    // smtpData.setLogin("smtp.gmail.com", 587, "kot.zakhar@gmail.com", "arpskkthwnjqijdd");
+    // smtpData.setSender("Zakhar", "kot.zakhar@gmail.com");
+    // smtpData.setPriority("High");
+    // smtpData.setSubject("ESP32 SMTP Mail Sending Test");
+    // smtpData.setMessage("<div style=\"color:#ff0000;font-size:20px;\">Hello World! - From ESP32</div>", true);
+    // smtpData.addRecipient("kot.zakhar@gmail.com");
+    // smtpData.setSendCallback(sendCallbackaa);
+    // if (!MailClient.sendMail(smtpData))
+    //   Serial.println("Error sending Email, " + MailClient.smtpErrorReason());
+
+
+    // smtpData.empty();
 }
 
 void ClearMemoryCommand(){
