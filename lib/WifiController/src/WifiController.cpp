@@ -1,18 +1,24 @@
 #include <WifiController.h>
-// #include <esp_wifi.h>
 
+SMTPData smtpData;
 
 //const char* host = "api.noopschallenge.com";
 
-ESP32_MailClient client;
-
 void WiFiControllerInit(){
-    client = ESP32_MailClient();
 }
 
 void ConnectToWiFi(const char *ssid, const char *password){
     WiFi.begin(ssid, password);
     // delay(500);
+}
+
+void AwaitForWiFiConnection(){
+  Serial.println("Awaiting for wifi connection...");
+  while (!IsWiFiConnected())
+  {
+    Serial.print(".");
+    delay(200);
+  }
 }
 
 bool IsWiFiConnected(){
@@ -36,27 +42,28 @@ void sendCallback(SendStatus msg)
   }
 }
 
-bool SendLetter(String recipient, String subject, String message, bool isHtml){
+bool SendLetter(const String &recipient, const String &subject, const String &message, bool isHtml){
     Serial.println("recipient: " + recipient + "\nsubject: " + subject + "\nmessage: " + message);
-    SMTPData smtpData;
 
-    smtpData.setDebug(true);
+    AwaitForWiFiConnection();
 
-    smtpData.setLogin("smtp.gmail.com", 587, "kot.zakhar@gmail.com", "arpskkthwnjqijdd");
-    smtpData.setSender("Zakhar", "kot.zakhar@gmail.com");
+    // smtpData.setDebug(true);
+
+    smtpData.setLogin(PERSONAL_SMTP_SERVER, PERSONAL_SMTP_PORT, PERSONAL_SMTP_LOGIN, PERSONAL_SMTP_PASSWORD);
+    smtpData.setSender("ESP32", "kot.zakhar@gmail.com");
     smtpData.setPriority("High");
     // smtpData.setSubject(subject.c_str());
     // smtpData.setMessage(message.c_str(), isHtml);
     // smtpData.addRecipient(recipient.c_str());
-    
+
     //Set the subject
-    smtpData.setSubject("ESP32 SMTP Mail Sending Test");
+    smtpData.setSubject(subject);
 
     //Set the message - normal text or html format
-    smtpData.setMessage("<div style=\"color:#ff0000;font-size:20px;\">Hello World! - From ESP32</div>", true);
+    smtpData.setMessage(message, isHtml);
 
     //Add recipients, can add more than one recipient
-    smtpData.addRecipient("kot.zakhar@gmail.com");
+    smtpData.addRecipient(recipient);
 
     smtpData.addCustomMessageHeader("Date: Sat, 10 Aug 2019 21:39:56 -0700 (PDT)");
     

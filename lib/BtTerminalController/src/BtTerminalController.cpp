@@ -1,5 +1,6 @@
 #include <BtTerminalController.h>
 
+
 BluetoothSerial BT;
 
 const char* bt_credentials_name = "ESP32";
@@ -19,37 +20,37 @@ const char* bt_credentials_name = "ESP32";
 #define WIFI_SEND_EMAIL 7
 
 // bt messages
-const char* wifi_ssid_request_message = "Provide ssid of network:";
-const char* wifi_ssid_confirmation_message = "Ssid received.";
-const char* wifi_password_request_message = "Provide passowrd of network:";
-const char* wifi_password_confirmation_message = "Password received.";
-const char* erasing_memory_message = "Erasing all memory";
-const char* status_ok_message = "Ok";
-const char* status_error_message = "Error";
-const char* unknown_command_message = "Unknown command";
-const char* restart_message = "Restarting...";
-const char* pong_message = "pong";
-const char* memory_empty_message = "No networks in memory.";
+static const char wifi_ssid_request_message[] = "Provide ssid of network:";
+static const char wifi_ssid_confirmation_message[] = "Ssid received.";
+static const char wifi_password_request_message[] = "Provide passowrd of network:";
+static const char wifi_password_confirmation_message[] = "Password received.";
+static const char erasing_memory_message[] = "Erasing all memory";
+static const char status_ok_message[] = "Ok";
+static const char status_error_message[] = "Error";
+static const char unknown_command_message[] = "Unknown command";
+static const char restart_message[] = "Restarting...";
+static const char pong_message[] = "pong";
+static const char memory_empty_message[] = "No networks in memory.";
 
 // bt commands
-char* BT_PING_LINE = "ping";
-char* WIFI_SSID_AND_PASSWORD_LINE =  "new";
-char* WIFI_ERASE_MEMORY_LINE =  "clear";
-char* WIFI_SHOW_NETWORKS_LINE = "show";
-char* RESTART_LINE = "restart";
-char* HELP_LINE = "help";
-char* WIFI_CONNECT_LINE = "connect";
-char* WIFI_SEND_EMAIL_LINE = "email";
+static char BT_PING_LINE[] = "ping";
+static char WIFI_SSID_AND_PASSWORD_LINE[] =  "new";
+static char WIFI_ERASE_MEMORY_LINE[] =  "clear";
+static char WIFI_SHOW_NETWORKS_LINE[] = "show";
+static char RESTART_LINE[] = "restart";
+static char HELP_LINE[] = "help";
+static char WIFI_CONNECT_LINE[] = "connect";
+static char WIFI_SEND_EMAIL_LINE[] = "email";
 
-char* commands[] = {
-    BT_PING_LINE,
-    WIFI_SSID_AND_PASSWORD_LINE, 
-    WIFI_ERASE_MEMORY_LINE, 
-    WIFI_SHOW_NETWORKS_LINE,
-    RESTART_LINE,
-    HELP_LINE,
-    WIFI_CONNECT_LINE,
-    WIFI_SEND_EMAIL_LINE
+static const char* commands[] = {
+  BT_PING_LINE,
+  WIFI_SSID_AND_PASSWORD_LINE, 
+  WIFI_ERASE_MEMORY_LINE, 
+  WIFI_SHOW_NETWORKS_LINE,
+  RESTART_LINE,
+  HELP_LINE,
+  WIFI_CONNECT_LINE,
+  WIFI_SEND_EMAIL_LINE
 };
 
 void ProcessBt();
@@ -71,7 +72,6 @@ int AwaitAndReadBtLine(String *buffer, int maxLength);
 void InitBtTerminalController(){
   Serial.println("You can pair to " + String(bt_credentials_name));
   BT.begin(bt_credentials_name);
-
 }
 
 void ProcessBt(){
@@ -219,19 +219,6 @@ void ConnectCommand(){
   free(password);
 }
 
-//Callback function to get the Email sending status
-void sendCallbackaa(SendStatus msg)
-{
-  //Print the current status
-  Serial.println(msg.info());
-
-  //Do something when complete
-  if (msg.success())
-  {
-    Serial.println("----------------");
-  }
-}
-
 
 void PingCommand(){
   WriteBtLine(pong_message);
@@ -241,21 +228,6 @@ void PingCommand(){
     Serial.print(".");
     delay(200);
   }
-
-    // SMTPData smtpData;
-
-    // smtpData.setLogin("smtp.gmail.com", 587, "kot.zakhar@gmail.com", "arpskkthwnjqijdd");
-    // smtpData.setSender("Zakhar", "kot.zakhar@gmail.com");
-    // smtpData.setPriority("High");
-    // smtpData.setSubject("ESP32 SMTP Mail Sending Test");
-    // smtpData.setMessage("<div style=\"color:#ff0000;font-size:20px;\">Hello World! - From ESP32</div>", true);
-    // smtpData.addRecipient("kot.zakhar@gmail.com");
-    // smtpData.setSendCallback(sendCallbackaa);
-    // if (!MailClient.sendMail(smtpData))
-    //   Serial.println("Error sending Email, " + MailClient.smtpErrorReason());
-
-
-    // smtpData.empty();
 }
 
 void ClearMemoryCommand(){
@@ -292,10 +264,11 @@ void SendEmailCommand(){
 
   String commandLine = String(STRING_LENGTH);
   int command;
-  String defaultMessage = "<div style=\"color:#ff0000;font-size:20px;\">Hello World! - From ESP32</div>";
-  String subject = "Message from ESP32";
-  String message;
-  String recipient = "kot.zakhar@gmail.com";
+  String defaultMessage = String("<div style=\"color:#ff0000;font-size:20px;\">Hello World! - From ESP32</div>");
+  String subject = String("Message from ESP32");
+  String message = String();
+  String recipient = String("kot.zakhar@gmail.com");
+  String email = String("kot.zakhar@gmail.com");
   bool isHtml = true;
 
 
@@ -340,11 +313,19 @@ void SendEmailCommand(){
         break;
       case 7:
         WriteBtLine("Sending email...");
-        if (SendLetter(recipient, subject, message.isEmpty() ? defaultMessage : message, isHtml)){
-          WriteBtLine("Email sent successfully.");
-        } else {
-          WriteBtLine("Couldn't send email. Abort...");
-        }
+        delay(500);
+        SendLetter(
+          email,
+          subject,
+          message,
+          false
+        );
+        delay(500);
+        // if (SendLetter(recipient, subject, message.isEmpty() ? defaultMessage : message, isHtml)){
+        //   WriteBtLine("Email sent successfully.");
+        // } else {
+        //   WriteBtLine("Couldn't send email. Abort...");
+        // }
         break;
       case 100:
         WriteBtLine("Aborting...");

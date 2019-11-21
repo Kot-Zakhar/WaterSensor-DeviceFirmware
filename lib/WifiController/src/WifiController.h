@@ -4,13 +4,13 @@
 
 #define CONNECTING_TIMEOUT 5000
 
-#include <Arduino.h>
 #include <ESP32_MailClient.h>
 
 void WiFiControllerInit();
+void AwaitForWiFiConnection();
 bool IsWiFiConnected();
 void ConnectToWiFi(const char *ssid, const char *password);
 void DisconnectFromWiFi();
-bool SendLetter(String recipient, String subject, String message, bool isHtml);
+bool SendLetter(const String &recipient, const String &subject, const String &message, bool isHtml);
 
 #endif
