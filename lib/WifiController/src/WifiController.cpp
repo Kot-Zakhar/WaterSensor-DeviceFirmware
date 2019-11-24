@@ -1,5 +1,7 @@
 #include <WifiController.h>
 
+static const char *TAG = "WiFiController";
+
 SMTPData smtpData;
 
 //const char* host = "api.noopschallenge.com";
@@ -7,18 +9,52 @@ SMTPData smtpData;
 void WiFiControllerInit(){
 }
 
+void WiFiControllerOff(){
+  DisconnectFromWiFi();
+}
+
 void ConnectToWiFi(const char *ssid, const char *password){
     WiFi.begin(ssid, password);
-    // delay(500);
+}
+
+String GetCurrentWiFiSsid(){
+  return WiFi.SSID();
 }
 
 void AwaitForWiFiConnection(){
-  Serial.println("Awaiting for wifi connection...");
+  ESP_LOGV(TAG, "Awaiting for wifi connection...");
   while (!IsWiFiConnected())
   {
-    Serial.print(".");
+    ESP_LOGV(TAG, ".");
     delay(200);
   }
+}
+
+bool AwaitForWiFiConnection(int timeout){
+  int time = 0;
+  ESP_LOGV(TAG, "Awaiting for wifi connection...");
+  while (!IsWiFiConnected() && (time <= timeout))
+  {
+    ESP_LOGV(TAG, ".");
+    delay(200);
+    time+= 200;
+  }
+  return IsWiFiConnected();
+}
+
+bool ConnectToAnyWiFiFromMemory(){
+  char *ssid = (char *)malloc(STRING_LENGTH);
+  char *password = (char *)malloc(STRING_LENGTH);
+  int amount = GetWiFiCredentialsAmountFromMemory();
+  bool result = false;
+  for (int i = 0; i < amount; i++){
+    ConnectToWiFi(GetWiFiSsidFromMemory(i, ssid), GetWiFiPasswordFromMemory(i, password));
+    if (AwaitForWiFiConnection(2000))
+      result = true;
+  }
+  free(ssid);
+  free(password);
+  return result;
 }
 
 bool IsWiFiConnected(){
@@ -29,50 +65,57 @@ void DisconnectFromWiFi(){
     WiFi.disconnect();
 }
 
-//Callback function to get the Email sending status
-void sendCallback(SendStatus msg)
-{
-  //Print the current status
-  Serial.println(msg.info());
-
-  //Do something when complete
-  if (msg.success())
-  {
-    Serial.println("----------------");
+bool SendLetter(const char *subject, const char *message, bool isHtml, bool retryUntilSuccess){
+  ESP_LOGV(TAG, "Sending letter");
+  if (!SmtpValuesAvailable()){
+    ESP_LOGV(TAG, "Not all smtp settings are set!");
+    return false;
   }
-}
+  char *server = GetSmtpValue(SMTP_SERVER, (char *)malloc(STRING_LENGTH));
+  char *port = GetSmtpValue(SMTP_PORT, (char *)malloc(STRING_LENGTH));
+  char *login = GetSmtpValue(SMTP_LOGIN, (char *)malloc(STRING_LENGTH));
+  char *password = GetSmtpValue(SMTP_PASS, (char *)malloc(STRING_LENGTH));
+  char *sender = GetSmtpValue(SMTP_SENDER, (char *)malloc(STRING_LENGTH));
+  char *recipient = GetSmtpValue(SMTP_RECIPIENT, (char *)malloc(STRING_LENGTH));
+  ESP_LOGV(TAG, "Email:\n ---\n Smtp server: %s\n Smtp port: %s\n Smtp login: %s\n Smtp sender name: %s\n ---\n Recipient: %s\n Subject: %s\n Message:\n %s\n ---\n",
+    server,
+    port,
+    login,
+    sender,
+    recipient,
+    subject,
+    message
+  );
 
-bool SendLetter(const String &recipient, const String &subject, const String &message, bool isHtml){
-    Serial.println("recipient: " + recipient + "\nsubject: " + subject + "\nmessage: " + message);
+  // AwaitForWiFiConnection();
 
-    AwaitForWiFiConnection();
+  smtpData.setDebug(true);
 
-    // smtpData.setDebug(true);
+  smtpData.setLogin(server, String(port).toInt(), login, password);
+  smtpData.setSender(sender, login);
+  smtpData.setPriority("High");
+  smtpData.setSubject(subject);
+  smtpData.setMessage(message, isHtml);
+  smtpData.addRecipient(recipient);
 
-    smtpData.setLogin(PERSONAL_SMTP_SERVER, PERSONAL_SMTP_PORT, PERSONAL_SMTP_LOGIN, PERSONAL_SMTP_PASSWORD);
-    smtpData.setSender("ESP32", "kot.zakhar@gmail.com");
-    smtpData.setPriority("High");
-    // smtpData.setSubject(subject.c_str());
-    // smtpData.setMessage(message.c_str(), isHtml);
-    // smtpData.addRecipient(recipient.c_str());
+  bool result = false;
+  do {
+    ESP_LOGV(TAG, "Trying to send email..." );
+    result = MailClient.sendMail(smtpData);
+    if (result)
+      ESP_LOGV(TAG, "Successfully sent.");
+    else
+      ESP_LOGV(TAG, "Not sent.");
+  } while(!result && retryUntilSuccess);
 
-    //Set the subject
-    smtpData.setSubject(subject);
+  smtpData.empty();
 
-    //Set the message - normal text or html format
-    smtpData.setMessage(message, isHtml);
+  free(server);
+  free(port);
+  free(login);
+  free(password);
+  free(sender);
+  free(recipient);
 
-    //Add recipients, can add more than one recipient
-    smtpData.addRecipient(recipient);
-
-    smtpData.addCustomMessageHeader("Date: Sat, 10 Aug 2019 21:39:56 -0700 (PDT)");
-    
-    smtpData.setSendCallback(sendCallback);
-
-    bool result = MailClient.sendMail(smtpData);
-    if (!result){
-        Serial.println("Error sending Email, " + MailClient.smtpErrorReason());
-    }
-    smtpData.empty();
-    return result;
+  return result;
 }

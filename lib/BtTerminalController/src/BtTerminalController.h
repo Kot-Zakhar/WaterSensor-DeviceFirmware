@@ -8,7 +8,6 @@
 
 void InitBtTerminalController();
 void PrintNetworksFromMemoryCommand();
-void SendEmailCommand();
 
 void ProcessBt();
 

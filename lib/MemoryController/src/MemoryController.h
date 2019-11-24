@@ -4,24 +4,36 @@
 
 #include <Preferences.h>
 
-#define STRING_LENGTH 100
+#define STRING_LENGTH 50
+#define STRING_MESSAGE_LENGTH 150
 
-// memory keys
-extern const char* wifi_table_name;
-extern const char* wifi_ssid_key_prefix;
-extern const char* wifi_password_key_prefix;
-extern const char* wifi_amount_key;
+#define SMTP_SERVER 0
+#define SMTP_PORT 1
+#define SMTP_LOGIN 2
+#define SMTP_PASS 3
+#define SMTP_SENDER 4
+#define SMTP_RECIPIENT 5
+#define SMTP_SETTINGS_COUNT 6
+
+#define CONFIG_IS_DEFAULT true
+
+extern const char* smtp_settings[];
 
 void InitMemoryController();
 
-int SaveCredentialsInMemory(const char* ssid, const char* password);
+int SaveWiFiCredentialsInMemory(const char* ssid, const char* password);
 
-void RemoveCredentialsFromMemory(int index);
-void RemoveCredentialsFromMemory(const char* ssid);
 void ClearMemory();
 
-int GetCredentialsAmountFromMemory();
-char* GetSsidFromMemory(int index, char* buffer);
-char* GetPasswordFromMemory(int index, char* buffer);
+int GetWiFiCredentialsAmountFromMemory();
+char* GetWiFiSsidFromMemory(int index, char* buffer);
+char* GetWiFiPasswordFromMemory(int index, char* buffer);
+
+bool IsConfigStateInMemory();
+void SetStateInMemory(bool debug = CONFIG_IS_DEFAULT);
+
+bool SmtpValuesAvailable();
+char* GetSmtpValue(int key, char* buffer);
+void SetSmtpValue(int key, const char* buffer);
 
 #endif

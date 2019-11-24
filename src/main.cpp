@@ -1,28 +1,39 @@
 #include <BtTerminalController.h>
+#include <MemoryController.h>
+#include <InterruptController.h>
+
+bool stateIsConfig;
 
 void setup() {
   Serial.begin(115200);
 
 
   InitMemoryController();
-  InitBtTerminalController();
   WiFiControllerInit();
-  PrintNetworksFromMemoryCommand();
 
-  ConnectToWiFi("KOTPC", "6V2490a3");
-  AwaitForWiFiConnection();
+  stateIsConfig = IsConfigStateInMemory() || GetWiFiCredentialsAmountFromMemory() == 0 || !ConnectToAnyWiFiFromMemory();
 
-  Serial.print("CONFIG_SW_COEXIST_ENABLE = ");
-  Serial.println(String(CONFIG_SW_COEXIST_ENABLE));
-  SendLetter(
-    String("kot.zakhar@gmail.com"),
-    String("New email"),
-    String("Hello, this is a new message from esp32."),
-    false
-  );
+  if (stateIsConfig){
+    Serial.println("Config mode is on.");
+    WiFiControllerOff();
+    InitBtTerminalController();
+  } else {
+    Serial.println("Working mode.");
+    SendLetter(
+      "First letter",
+      "I've started to work. Everything is ok so far.",
+      false
+    );
+  }
+
+  BindInterrupts(stateIsConfig);
 }
 
 void loop() {
-  ProcessBt();
+  if (stateIsConfig){
+    ProcessBt();
+  } else {
+  }
+  ProcessInterrupts(stateIsConfig);
   delay(100);
 }

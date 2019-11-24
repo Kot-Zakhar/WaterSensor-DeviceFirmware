@@ -1,22 +1,92 @@
 #include <MemoryController.h>
 
+#define MEMORY_KEY_MAX_LENGTH 15
+
+static const char *TAG = "MemoryController";
+
 // memory keys
 const char* wifi_table_name = "bt_wifi";
-const char* wifi_ssid_key_prefix = "ssid";
-const char* wifi_password_key_prefix = "pass";
-const char* wifi_amount_key = "amount";
+const char* wifi_ssid_key_prefix = "wf_ssid";
+const char* wifi_password_key_prefix = "wf_pass";
+const char* wifi_amount_key = "wf_amount";
+
+const char *smtp_key_prefix = "smtp";
+
+const char* smtp_settings[SMTP_SETTINGS_COUNT] = {
+  "server", 
+  "port", 
+  "login", 
+  "pass", 
+  "sender", 
+  "recipient"
+};
+
+const char* state_is_config_key = "dbg_state";
 
 Preferences memory;
 
 void InitMemoryController(){
-    memory.begin(wifi_table_name, false);
+  memory.begin(wifi_table_name, false);
+
+  SetStateInMemory(IsConfigStateInMemory());
+  if (!SmtpValuesAvailable()){
+    SetSmtpValue(SMTP_SERVER, PERSONAL_SMTP_SERVER);
+    SetSmtpValue(SMTP_PORT, PERSONAL_SMTP_PORT);
+    SetSmtpValue(SMTP_LOGIN, PERSONAL_SMTP_LOGIN);
+    SetSmtpValue(SMTP_PASS, PERSONAL_SMTP_PASSWORD);
+    SetSmtpValue(SMTP_SENDER, "ESP32");
+    SetSmtpValue(SMTP_RECIPIENT, PERSONAL_SMTP_LOGIN);
+  }
 }
 
-int SaveCredentialsInMemory(const char* ssid, const char* password){
-  char* ssid_key = (char*) malloc(6 * sizeof(char));
-  char* password_key = (char*) malloc(6 * sizeof(char));
+// email and smtp credentials
 
-  int counter = GetCredentialsAmountFromMemory();
+bool SmtpValuesAvailable(){
+  ESP_LOGV(TAG, "Checking smtp values.");
+  char *buffer = (char *)malloc(STRING_LENGTH);
+  bool result = true;
+  for (int i = 0; i < SMTP_SETTINGS_COUNT; i++){
+    if (memory.getString((String(smtp_key_prefix) + smtp_settings[i]).c_str(), buffer, STRING_LENGTH) == 0){
+      ESP_LOGV(TAG, "Value %d not available.", i);
+      result = false;
+      break;
+    } else {
+      ESP_LOGV(TAG, "Value %d: %s", i, buffer);
+    }
+  }
+
+  if (result)
+    ESP_LOGV(TAG, "Values are checked.");
+  else
+    ESP_LOGV(TAG, "Values are not available.");
+
+  free(buffer);
+  return result;
+}
+
+char* GetSmtpValue(int key, char* buffer){
+  memory.getString(
+    (String(smtp_key_prefix) + smtp_settings[key]).c_str(),
+    buffer,
+    STRING_LENGTH
+  );
+  return buffer;
+}
+
+void SetSmtpValue(int key, const char* buffer){
+  memory.putString(
+    (String(smtp_key_prefix) + smtp_settings[key]).c_str(),
+    buffer
+  );
+}
+
+// WiFi credentials
+
+int SaveWiFiCredentialsInMemory(const char* ssid, const char* password){
+  char* ssid_key = (char*) malloc(MEMORY_KEY_MAX_LENGTH * sizeof(char));
+  char* password_key = (char*) malloc(MEMORY_KEY_MAX_LENGTH * sizeof(char));
+
+  int counter = GetWiFiCredentialsAmountFromMemory();
   
   sprintf(ssid_key, "%s%d", wifi_ssid_key_prefix, counter);
   sprintf(password_key, "%s%d", wifi_password_key_prefix, counter);
@@ -36,28 +106,20 @@ int SaveCredentialsInMemory(const char* ssid, const char* password){
   return counter;
 }
 
-void RemoveCredentialsFromMemory(int index){
-
-}
-
-void RemoveCredentialsFromMemory(const char* ssid){
-
-}
-
-int GetCredentialsAmountFromMemory(){
+int GetWiFiCredentialsAmountFromMemory(){
   return memory.getUInt(wifi_amount_key, 0);
 }
 
-char* GetSsidFromMemory(int index, char* buffer){
-  char* ssid_key = (char*) malloc(6 * sizeof(char));
+char* GetWiFiSsidFromMemory(int index, char* buffer){
+  char* ssid_key = (char*) malloc(MEMORY_KEY_MAX_LENGTH * sizeof(char));
   sprintf(ssid_key, "%s%d", wifi_ssid_key_prefix, index);
   memory.getString(ssid_key, buffer, STRING_LENGTH);
   free(ssid_key);
   return buffer;
 }
 
-char* GetPasswordFromMemory(int index, char* buffer){
-  char* password_key = (char*) malloc(6 * sizeof(char));
+char* GetWiFiPasswordFromMemory(int index, char* buffer){
+  char* password_key = (char*) malloc(MEMORY_KEY_MAX_LENGTH * sizeof(char));
   sprintf(password_key, "%s%d", wifi_password_key_prefix, index);
   memory.getString(password_key, buffer, STRING_LENGTH);
   free(password_key);
@@ -66,4 +128,14 @@ char* GetPasswordFromMemory(int index, char* buffer){
 
 void ClearMemory(){
     memory.clear();
+}
+
+// States (modes)
+
+bool IsConfigStateInMemory(){
+  return memory.getBool(state_is_config_key, CONFIG_IS_DEFAULT);
+}
+
+void SetStateInMemory(bool debug) {
+  memory.putBool(state_is_config_key, debug);
 }
