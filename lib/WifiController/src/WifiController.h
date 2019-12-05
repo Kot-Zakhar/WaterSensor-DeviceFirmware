@@ -8,7 +8,7 @@
 #include <MemoryController.h>
 
 
-void WiFiControllerInit();
+void InitWiFiController();
 void WiFiControllerOff();
 
 String GetCurrentWiFiSsid();

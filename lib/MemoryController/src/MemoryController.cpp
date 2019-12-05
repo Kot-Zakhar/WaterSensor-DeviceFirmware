@@ -2,7 +2,7 @@
 
 #define MEMORY_KEY_MAX_LENGTH 15
 
-static const char *TAG = "MemoryController";
+static const char *memoryTag = "MemoryController";
 
 // memory keys
 const char* wifi_table_name = "bt_wifi";
@@ -42,23 +42,23 @@ void InitMemoryController(){
 // email and smtp credentials
 
 bool SmtpValuesAvailable(){
-  ESP_LOGV(TAG, "Checking smtp values.");
+  log_v("[%s] %s", memoryTag, "Checking smtp values.");
   char *buffer = (char *)malloc(STRING_LENGTH);
   bool result = true;
   for (int i = 0; i < SMTP_SETTINGS_COUNT; i++){
     if (memory.getString((String(smtp_key_prefix) + smtp_settings[i]).c_str(), buffer, STRING_LENGTH) == 0){
-      ESP_LOGV(TAG, "Value %d not available.", i);
+      log_v("[%s] %s", memoryTag, "Value %d not available.", i);
       result = false;
       break;
     } else {
-      ESP_LOGV(TAG, "Value %d: %s", i, buffer);
+      log_v("[%s] %s", memoryTag, "Value %d: %s", i, buffer);
     }
   }
 
   if (result)
-    ESP_LOGV(TAG, "Values are checked.");
+    log_v("[%s] %s", memoryTag, "Values are checked.");
   else
-    ESP_LOGV(TAG, "Values are not available.");
+    log_v("[%s] %s", memoryTag, "Values are not available.");
 
   free(buffer);
   return result;

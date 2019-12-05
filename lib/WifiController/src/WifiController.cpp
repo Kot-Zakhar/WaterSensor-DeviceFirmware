@@ -1,12 +1,12 @@
 #include <WifiController.h>
 
-static const char *TAG = "WiFiController";
+static const char *wifiTag = "WiFiController";
 
 SMTPData smtpData;
 
 //const char* host = "api.noopschallenge.com";
 
-void WiFiControllerInit(){
+void InitWiFiController(){
 }
 
 void WiFiControllerOff(){
@@ -22,20 +22,20 @@ String GetCurrentWiFiSsid(){
 }
 
 void AwaitForWiFiConnection(){
-  ESP_LOGV(TAG, "Awaiting for wifi connection...");
+  log_v("[%s] %s", wifiTag, "Awaiting for wifi connection...");
   while (!IsWiFiConnected())
   {
-    ESP_LOGV(TAG, ".");
+    log_v("[%s] %s", wifiTag, ".");
     delay(200);
   }
 }
 
 bool AwaitForWiFiConnection(int timeout){
   int time = 0;
-  ESP_LOGV(TAG, "Awaiting for wifi connection...");
+  log_v("[%s] %s", wifiTag, "Awaiting for wifi connection...");
   while (!IsWiFiConnected() && (time <= timeout))
   {
-    ESP_LOGV(TAG, ".");
+    log_v("[%s] %s", wifiTag, ".");
     delay(200);
     time+= 200;
   }
@@ -49,8 +49,10 @@ bool ConnectToAnyWiFiFromMemory(){
   bool result = false;
   for (int i = 0; i < amount; i++){
     ConnectToWiFi(GetWiFiSsidFromMemory(i, ssid), GetWiFiPasswordFromMemory(i, password));
-    if (AwaitForWiFiConnection(2000))
+    if (AwaitForWiFiConnection(2000)){
       result = true;
+      break;
+    }
   }
   free(ssid);
   free(password);
@@ -66,9 +68,9 @@ void DisconnectFromWiFi(){
 }
 
 bool SendLetter(const char *subject, const char *message, bool isHtml, bool retryUntilSuccess){
-  ESP_LOGV(TAG, "Sending letter");
+  log_v("[%s] %s", wifiTag, "Sending letter");
   if (!SmtpValuesAvailable()){
-    ESP_LOGV(TAG, "Not all smtp settings are set!");
+    log_v("[%s] %s", wifiTag, "Not all smtp settings are set!");
     return false;
   }
   char *server = GetSmtpValue(SMTP_SERVER, (char *)malloc(STRING_LENGTH));
@@ -77,7 +79,7 @@ bool SendLetter(const char *subject, const char *message, bool isHtml, bool retr
   char *password = GetSmtpValue(SMTP_PASS, (char *)malloc(STRING_LENGTH));
   char *sender = GetSmtpValue(SMTP_SENDER, (char *)malloc(STRING_LENGTH));
   char *recipient = GetSmtpValue(SMTP_RECIPIENT, (char *)malloc(STRING_LENGTH));
-  ESP_LOGV(TAG, "Email:\n ---\n Smtp server: %s\n Smtp port: %s\n Smtp login: %s\n Smtp sender name: %s\n ---\n Recipient: %s\n Subject: %s\n Message:\n %s\n ---\n",
+  log_v("[%s] %s", wifiTag, "Email:\n ---\n Smtp server: %s\n Smtp port: %s\n Smtp login: %s\n Smtp sender name: %s\n ---\n Recipient: %s\n Subject: %s\n Message:\n %s\n ---\n",
     server,
     port,
     login,
@@ -100,12 +102,12 @@ bool SendLetter(const char *subject, const char *message, bool isHtml, bool retr
 
   bool result = false;
   do {
-    ESP_LOGV(TAG, "Trying to send email..." );
+    log_v("[%s] %s", wifiTag, "Trying to send email..." );
     result = MailClient.sendMail(smtpData);
     if (result)
-      ESP_LOGV(TAG, "Successfully sent.");
+      log_v("[%s] %s", wifiTag, "Successfully sent.");
     else
-      ESP_LOGV(TAG, "Not sent.");
+      log_v("[%s] %s", wifiTag, "Not sent.");
   } while(!result && retryUntilSuccess);
 
   smtpData.empty();

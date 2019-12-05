@@ -1,5 +1,5 @@
 #include <BtTerminalController.h>
-
+#include <IOController.h>
 
 BluetoothSerial BT;
 
@@ -57,10 +57,12 @@ void WriteBtLine(const char* line);
 int ReadBtLine(char *buffer, int maxLength);
 int ReadBtCommand(char *buffer, int maxLength);
 int AwaitAndReadBtLine(char *buffer, int maxLength);
+void BtInterruptCallback(esp_spp_cb_event_t event, esp_spp_cb_param_t *param);
 
 void InitBtTerminalController(){
   Serial.println("You can pair to " + String(bt_credentials_name));
   BT.begin(bt_credentials_name);
+  BT.register_callback(BtInterruptCallback);
 }
 
 void ProcessBt(){
@@ -72,6 +74,7 @@ void ProcessBt(){
   int command = ReadBtCommand(commandLine, STRING_LENGTH);
 
   Serial.println("Got command: " + String(command));
+  // IOWrite(IO_WRITE)
 
   switch (command)
   {
@@ -304,4 +307,15 @@ void WriteBtLine(const char* line){
   BT.write('\n');
   Serial.println(line);
   delay(100);
+}
+
+// Interrupts
+
+void BtInterruptCallback(esp_spp_cb_event_t event, esp_spp_cb_param_t *param){
+  if (event == ESP_SPP_SRV_OPEN_EVT){
+    IOWrite(IO_WRITE_SCREEN | IO_WRITE_SERIAL | IO_WRITE_CLEAN_BEFORE_WRITE, "Bt connected.");
+  }
+  if (event == ESP_SPP_CLOSE_EVT){
+    IOWrite(IO_WRITE_SCREEN | IO_WRITE_SERIAL | IO_WRITE_CLEAN_BEFORE_WRITE, "Bt disconnected.");
+  }
 }
