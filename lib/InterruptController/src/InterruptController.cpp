@@ -1,93 +1,88 @@
 #include "InterruptController.h"
 
-static const char *interruptTag = "InterruptController";
+bool isConfigState;
 
-bool restartInterruptQueued = false;
-bool changeModeInterruptQueued = false;
-bool messageInterruptQueued = false;
+volatile bool buttonsPressed[] = {
+  false,
+  false,
+  false,
+  false
+};
 
+volatile uint8_t buttonsPins[] = {
+  16,
+  0,
+  14,
+  2,
+};
 
+portMUX_TYPE interruptMux = portMUX_INITIALIZER_UNLOCKED;
 
-void IRAM_ATTR RestartInterrupt() {
-  if (!restartInterruptQueued){
-    restartInterruptQueued = true;
-    log_v("[%s] %s", interruptTag, "Restart interrupt");
-  }
+void IRAM_ATTR Button0Interrupt(){
+  portENTER_CRITICAL_ISR(&interruptMux);
+  buttonsPressed[0] = true;
+  portEXIT_CRITICAL_ISR(&interruptMux);
+  delay(100);
 }
 
-void IRAM_ATTR ChangeModeInterrupt(){
-  if (!changeModeInterruptQueued){
-    changeModeInterruptQueued = true;
-    log_v("[%s] %s", interruptTag, "ChangeMode required.");
-  }
+void IRAM_ATTR Button1Interrupt(){
+  portENTER_CRITICAL_ISR(&interruptMux);
+  buttonsPressed[1] = true;
+  portEXIT_CRITICAL_ISR(&interruptMux);
+  delay(100);
 }
 
-void IRAM_ATTR MessageInterrupt(){
-  if (!messageInterruptQueued){
-    messageInterruptQueued = true;
-    log_v("[%s] %s", interruptTag, "Message interrupt.");
-  }
+void IRAM_ATTR Button2Interrupt(){
+  portENTER_CRITICAL_ISR(&interruptMux);
+  buttonsPressed[2] = true;
+  portEXIT_CRITICAL_ISR(&interruptMux);
+  delay(100);
+}
+
+void IRAM_ATTR Button3Interrupt(){
+  portENTER_CRITICAL_ISR(&interruptMux);
+  buttonsPressed[3] = true;
+  portEXIT_CRITICAL_ISR(&interruptMux);
+  delay(100);
 }
 
 void BindInterrupts(bool stateIsConfig){
-  log_v("[%s] %s", interruptTag, "Binding interrupts.");
+  log_v("Binding interrupts.");
 
-  // pinMode(VOutPin5v, OUTPUT);
-  // digitalWrite(VOutPin5v, HIGH);
+  isConfigState = stateIsConfig;
 
-  if (!stateIsConfig){
-    pinMode(MESSAGE_BUTTON_PIN, INPUT);
-    attachInterrupt(MESSAGE_BUTTON_PIN, MessageInterrupt, RISING);
-
-  }
-
-  pinMode(RESET_BUTTON_PIN, INPUT);
-  attachInterrupt(RESET_BUTTON_PIN, RestartInterrupt, RISING);
-
-  pinMode(MODE_BUTTON_PIN, INPUT);
-  attachInterrupt(MODE_BUTTON_PIN, ChangeModeInterrupt, RISING);
+  pinMode(buttonsPins[0], INPUT_PULLDOWN);
+  attachInterrupt(buttonsPins[0], Button0Interrupt, RISING);
+  pinMode(buttonsPins[1], INPUT_PULLDOWN);
+  attachInterrupt(buttonsPins[1], Button1Interrupt, RISING);
+  pinMode(buttonsPins[2], INPUT_PULLDOWN);
+  attachInterrupt(buttonsPins[2], Button2Interrupt, RISING);
+  pinMode(buttonsPins[3], INPUT_PULLDOWN);
+  attachInterrupt(buttonsPins[3], Button3Interrupt, RISING);
 
 }
 
 
-void ProcessMessageInterrupt(){
-  if (messageInterruptQueued){
-    SendLetter(
-      "Кнопка нажата",
-      "<h1>Кнопка</h1><p>Кнопка была нажата.</p>",
-      true,
-      true
-    );
-    log_v("[%s] %s", interruptTag, "Letter interrupt processed.");
-    messageInterruptQueued = false;
-    delay(500);
+void ProcessInterrupts(){
+
+  portENTER_CRITICAL(&interruptMux);
+  if (buttonsPressed[0]){
+    IOIndicate(Interrupt0);
+    buttonsPressed[0] = false;
   }
-}
-
-void ProcessChangeModeInterrupt(bool stateIsConfig){
-  if (changeModeInterruptQueued){
-    SetStateInMemory(!stateIsConfig);
-    log_v("[%s] %s", interruptTag, "Switched to %s after restart.", stateIsConfig ? "work" : "debug");
-    changeModeInterruptQueued = false;
-    delay(500);
+  if (buttonsPressed[1]){
+    IOIndicate(Interrupt1);
+    buttonsPressed[1] = false;
   }
-}
-
-void ProcessRestartInterrupt(){
-  if (restartInterruptQueued){
-    log_v("[%s] %s", interruptTag, "Restart interrupt processing.");
-    ESP.restart();
+  if (buttonsPressed[2]){
+    IOIndicate(Interrupt2);
+    buttonsPressed[2] = false;
   }
-}
-
-
-
-void ProcessInterrupts(bool stateIsConfig){
-  if (!stateIsConfig){
-    ProcessMessageInterrupt();
+  if (buttonsPressed[3]){
+    IOIndicate(Interrupt3);
+    buttonsPressed[3] = false;
   }
-  ProcessChangeModeInterrupt(stateIsConfig);
-  ProcessRestartInterrupt();
+  portEXIT_CRITICAL(&interruptMux);
 }
 
 

@@ -1,73 +1,120 @@
 #include "IOController.h"
-static const char *TAG = "LedController";
+#include <jled.h>
 
-#define RED_LED_PIN 25
-#define GREEN_LED_PIN 26
-#define RGB_RED_LED_PIN 15
-#define RGB_GREEN_LED_PIN 13
-#define RGB_BLUE_LED_PIN 12
+#define LED_TIMER_INDEX 1
+#define LED_TIMER_FREQ_DEVIDER 80
 
-#define RED_LED_CHANNEL 0
-#define GREEN_LED_CHANNEL 1
-#define RGB_RED_LED_CHANNEL 2
-#define RGB_GREEN_LED_CHANNEL 3
-#define RGB_BLUE_LED_CHANNEL 4
+enum led_t {
+    RED_LED,
+    GREEN_LED,
+    RGB_LED,
+};
 
-#define LEDC_TIMER_13_BIT 13
-#define LEDC_BASE_FREQ 5000
-#define FADE_AMOUNT 5
+enum rgb_led_t {
+    RGB_RED_LED,
+    RGB_GREEN_LED,
+    RGB_BLUE_LED,
+};
+
+struct rgb_color_code_t {
+    uint8_t r;
+    uint8_t g;
+    uint8_t b;
+};
+
+
+const static rgb_color_code_t rgbColorCodes[13] = {
+    { 2, 2, 2 },
+    { 2, 2, 0 },
+    { 2, 1, 0 },
+    { 2, 0, 0 },
+    { 2, 0, 1 },
+    { 2, 0, 2 },
+    { 1, 0, 2 },
+    { 0, 0, 2 },
+    { 0, 1, 2 },
+    { 0, 2, 2 },
+    { 0, 2, 1 },
+    { 0, 2, 0 },
+    { 1, 2, 0 }
+};
+
+const static uint16_t blinkDuration[2] = {300, 1000};
+
+const static uint8_t ledPins[] = {25, 26};
+const static uint8_t rgbLedPins[] = {15, 13, 12};
+
+hw_timer_t *timer = NULL;
+
+JLed redLed(ledPins[RED_LED]);
+JLed greenLed(ledPins[GREEN_LED]);
+
+JLed rgbLeds[] = {
+    JLed(rgbLedPins[RGB_RED_LED]),
+    JLed(rgbLedPins[RGB_GREEN_LED]),
+    JLed(rgbLedPins[RGB_BLUE_LED])
+};
+
+JLedSequence rgbLed(JLedSequence::eMode::PARALLEL, rgbLeds);
+
+portMUX_TYPE ledTimerMux = portMUX_INITIALIZER_UNLOCKED;
+
+void IRAM_ATTR LedUpdateInterrupt(){
+    portENTER_CRITICAL_ISR(&ledTimerMux);
+    rgbLed.Update();
+    redLed.Update();
+    greenLed.Update();
+    portEXIT_CRITICAL_ISR(&ledTimerMux);
+}
 
 void BindLEDs(){
-
-    ledcSetup(RED_LED_CHANNEL, LEDC_BASE_FREQ, LEDC_TIMER_13_BIT);
-    ledcAttachPin(RED_LED_PIN, RED_LED_CHANNEL);
-
-    ledcSetup(GREEN_LED_CHANNEL, LEDC_BASE_FREQ, LEDC_TIMER_13_BIT);
-    ledcAttachPin(GREEN_LED_PIN, GREEN_LED_CHANNEL);
-
-    ledcSetup(RGB_RED_LED_CHANNEL, LEDC_BASE_FREQ, LEDC_TIMER_13_BIT);
-    ledcAttachPin(RGB_RED_LED_PIN, RGB_RED_LED_CHANNEL);
-
-    ledcSetup(RGB_GREEN_LED_CHANNEL, LEDC_BASE_FREQ, LEDC_TIMER_13_BIT);
-    ledcAttachPin(RGB_GREEN_LED_PIN, RGB_GREEN_LED_CHANNEL);
-
-    ledcSetup(RGB_BLUE_LED_CHANNEL, LEDC_BASE_FREQ, LEDC_TIMER_13_BIT);
-    ledcAttachPin(RGB_BLUE_LED_PIN, RGB_BLUE_LED_CHANNEL);
+    timer = timerBegin(LED_TIMER_INDEX, LED_TIMER_FREQ_DEVIDER, true);
+    timerAttachInterrupt(timer, &LedUpdateInterrupt, true);
+    timerAlarmWrite(timer, 10000, true);
+    timerAlarmEnable(timer);
+    delay(100);
 }
 
-void ledcAnalogWrite(uint8_t channel, uint32_t value, uint32_t valueMax = 255) {
-  // calculate duty, 8191 from 2 ^ 13 - 1
-  uint32_t duty = (8191 / valueMax) * min(value, valueMax);
-
-  // write duty to LEDC
-  ledcWrite(channel, duty);
+void BlinkRGB(rgb_color_t color, blink_duration_t blinkDurationType, int times = 1){
+    portENTER_CRITICAL(&ledTimerMux);
+    rgbLed.Stop();
+    rgbLeds[RGB_RED_LED]
+        .Breathe((rgbColorCodes[color].r > 0 ? 1 : 0) * blinkDuration[blinkDurationType])
+        .Repeat(times)
+        .DelayBefore(0)
+        .DelayAfter((rgbColorCodes[color].r > 0 ? 2 : 1) * blinkDuration[blinkDurationType]);
+    rgbLeds[RGB_GREEN_LED]
+        .Breathe((rgbColorCodes[color].g > 0 ? 1 : 0) * blinkDuration[blinkDurationType])
+        .Repeat(times)
+        .DelayBefore(0)
+        .DelayAfter((rgbColorCodes[color].g > 0 ? 2 : 1) * blinkDuration[blinkDurationType]);
+    rgbLeds[RGB_BLUE_LED]
+        .Breathe((rgbColorCodes[color].b > 0 ? 1 : 0) * blinkDuration[blinkDurationType])
+        .Repeat(times)
+        .DelayBefore(0)
+        .DelayAfter((rgbColorCodes[color].b > 0 ? 2 : 1) * blinkDuration[blinkDurationType]);
+    rgbLed.Reset();
+    portEXIT_CRITICAL(&ledTimerMux);
 }
 
-void BlinkLed(uint8_t ledChannel, int lightDuration){
-    for (int i = 0; i < 255; i=i+2){
-        ledcAnalogWrite(ledChannel, i);
-        delay(2);
-    }
-    
-    log_v("[%s] %s", TAG, "%d led is up", ledChannel);
-    delay(lightDuration);
-    for (int i = 254; i >= 0; i=i-2){
-        ledcAnalogWrite(ledChannel, i);
-        delay(2);
-    }
-    log_v("[%s] %s", TAG, "%d led is down", ledChannel);
+void BlinkLed(led_t led, blink_duration_t blinkDurationType, int times = 1){
+    portENTER_CRITICAL(&ledTimerMux);
+    rgbLeds[led]
+        .Breathe(blinkDuration[blinkDurationType])
+        .Repeat(times)
+        .DelayBefore(0)
+        .DelayAfter(blinkDuration[blinkDurationType]);
+    portEXIT_CRITICAL(&ledTimerMux);
 }
 
-void CheckLeds(int lightDuration){
-    IOWrite(IO_WRITE_SCREEN | IO_WRITE_CLEAN_BEFORE_WRITE | IO_WRITE_SCREEN, "Checking leds:");
-    IOWrite(IO_WRITE_SCREEN | IO_WRITE_SERIAL, "red led");
-    BlinkLed(RED_LED_CHANNEL, lightDuration);
-    IOWrite(IO_WRITE_SCREEN | IO_WRITE_SERIAL, "green led");
-    BlinkLed(GREEN_LED_CHANNEL, lightDuration);
-    IOWrite(IO_WRITE_SCREEN | IO_WRITE_SERIAL, "red rgb led");
-    BlinkLed(RGB_RED_LED_CHANNEL, lightDuration);
-    IOWrite(IO_WRITE_SCREEN | IO_WRITE_SERIAL, "green rgb led");
-    BlinkLed(RGB_GREEN_LED_CHANNEL, lightDuration);
-    IOWrite(IO_WRITE_SCREEN | IO_WRITE_SERIAL, "blue rgb led");
-    BlinkLed(RGB_BLUE_LED_CHANNEL, lightDuration);
+void CheckLeds(){
+    portENTER_CRITICAL(&ledTimerMux);
+    greenLed.Breathe(500).DelayAfter(2000);
+    rgbLed.Stop();
+    rgbLeds[RGB_RED_LED].DelayBefore(500).Breathe(500).DelayAfter(1500);
+    rgbLeds[RGB_GREEN_LED].DelayBefore(1000).Breathe(500).DelayAfter(1000);
+    rgbLeds[RGB_BLUE_LED].DelayBefore(1500).Breathe(500).DelayAfter(500);
+    rgbLed.Reset();
+    redLed.DelayBefore(2000).Breathe(500);
+    portEXIT_CRITICAL(&ledTimerMux);
 }

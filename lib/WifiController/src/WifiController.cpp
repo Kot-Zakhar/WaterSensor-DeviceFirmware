@@ -1,7 +1,5 @@
 #include <WifiController.h>
 
-static const char *wifiTag = "WiFiController";
-
 SMTPData smtpData;
 
 //const char* host = "api.noopschallenge.com";
@@ -22,20 +20,20 @@ String GetCurrentWiFiSsid(){
 }
 
 void AwaitForWiFiConnection(){
-  log_v("[%s] %s", wifiTag, "Awaiting for wifi connection...");
+  log_v("Awaiting for wifi connection...");
   while (!IsWiFiConnected())
   {
-    log_v("[%s] %s", wifiTag, ".");
+    log_v(".");
     delay(200);
   }
 }
 
 bool AwaitForWiFiConnection(int timeout){
   int time = 0;
-  log_v("[%s] %s", wifiTag, "Awaiting for wifi connection...");
+  log_v("Awaiting for wifi connection...");
   while (!IsWiFiConnected() && (time <= timeout))
   {
-    log_v("[%s] %s", wifiTag, ".");
+    log_v(".");
     delay(200);
     time+= 200;
   }
@@ -68,9 +66,9 @@ void DisconnectFromWiFi(){
 }
 
 bool SendLetter(const char *subject, const char *message, bool isHtml, bool retryUntilSuccess){
-  log_v("[%s] %s", wifiTag, "Sending letter");
+  log_v("Sending letter");
   if (!SmtpValuesAvailable()){
-    log_v("[%s] %s", wifiTag, "Not all smtp settings are set!");
+    log_v("Not all smtp settings are set!");
     return false;
   }
   char *server = GetSmtpValue(SMTP_SERVER, (char *)malloc(STRING_LENGTH));
@@ -79,7 +77,7 @@ bool SendLetter(const char *subject, const char *message, bool isHtml, bool retr
   char *password = GetSmtpValue(SMTP_PASS, (char *)malloc(STRING_LENGTH));
   char *sender = GetSmtpValue(SMTP_SENDER, (char *)malloc(STRING_LENGTH));
   char *recipient = GetSmtpValue(SMTP_RECIPIENT, (char *)malloc(STRING_LENGTH));
-  log_v("[%s] %s", wifiTag, "Email:\n ---\n Smtp server: %s\n Smtp port: %s\n Smtp login: %s\n Smtp sender name: %s\n ---\n Recipient: %s\n Subject: %s\n Message:\n %s\n ---\n",
+  log_v("Email:\n ---\n Smtp server: %s\n Smtp port: %s\n Smtp login: %s\n Smtp sender name: %s\n ---\n Recipient: %s\n Subject: %s\n Message:\n %s\n ---\n",
     server,
     port,
     login,
@@ -102,12 +100,12 @@ bool SendLetter(const char *subject, const char *message, bool isHtml, bool retr
 
   bool result = false;
   do {
-    log_v("[%s] %s", wifiTag, "Trying to send email..." );
+    log_v("Trying to send email..." );
     result = MailClient.sendMail(smtpData);
     if (result)
-      log_v("[%s] %s", wifiTag, "Successfully sent.");
+      log_v("Successfully sent.");
     else
-      log_v("[%s] %s", wifiTag, "Not sent.");
+      log_v("Not sent.");
   } while(!result && retryUntilSuccess);
 
   smtpData.empty();

@@ -5,6 +5,7 @@
 #include <BluetoothSerial.h>
 #include <MemoryController.h>
 #include <WifiController.h>
+#include <IOController.h>
 
 void InitBtTerminalController();
 void PrintNetworksFromMemoryCommand();

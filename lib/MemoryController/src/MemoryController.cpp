@@ -2,8 +2,6 @@
 
 #define MEMORY_KEY_MAX_LENGTH 15
 
-static const char *memoryTag = "MemoryController";
-
 // memory keys
 const char* wifi_table_name = "bt_wifi";
 const char* wifi_ssid_key_prefix = "wf_ssid";
@@ -42,23 +40,23 @@ void InitMemoryController(){
 // email and smtp credentials
 
 bool SmtpValuesAvailable(){
-  log_v("[%s] %s", memoryTag, "Checking smtp values.");
+  log_v("Checking smtp values.");
   char *buffer = (char *)malloc(STRING_LENGTH);
   bool result = true;
   for (int i = 0; i < SMTP_SETTINGS_COUNT; i++){
     if (memory.getString((String(smtp_key_prefix) + smtp_settings[i]).c_str(), buffer, STRING_LENGTH) == 0){
-      log_v("[%s] %s", memoryTag, "Value %d not available.", i);
+      // log_v("Value %d not available.", i);
       result = false;
       break;
     } else {
-      log_v("[%s] %s", memoryTag, "Value %d: %s", i, buffer);
+      // log_v("Value %d: %s", i, buffer);
     }
   }
 
   if (result)
-    log_v("[%s] %s", memoryTag, "Values are checked.");
+    log_v("Values are checked.");
   else
-    log_v("[%s] %s", memoryTag, "Values are not available.");
+    log_v("Values are not available.");
 
   free(buffer);
   return result;
@@ -126,13 +124,26 @@ char* GetWiFiPasswordFromMemory(int index, char* buffer){
   return buffer;
 }
 
-void ClearMemory(){
-    memory.clear();
+void ClearWiFiCredentials(){
+  int amount = GetWiFiCredentialsAmountFromMemory();
+  char* key = (char*)malloc(MEMORY_KEY_MAX_LENGTH * sizeof(char));
+  
+  for (int i = 0; i < amount; i++){
+    sprintf(key, "%s%d", wifi_ssid_key_prefix, i);
+    memory.remove(key);
+    sprintf(key, "%s%d", wifi_password_key_prefix, i);
+    memory.remove(key);
+  }
+
+  memory.remove(wifi_amount_key);
+    
+  free(key);
 }
 
 // States (modes)
 
 bool IsConfigStateInMemory(){
+  log_v("Getting state from memory");
   return memory.getBool(state_is_config_key, CONFIG_IS_DEFAULT);
 }
 
