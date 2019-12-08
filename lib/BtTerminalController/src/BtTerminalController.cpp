@@ -1,161 +1,358 @@
-#include "BtTerminalController.h"
+#include <BtTerminalController.h>
 
-BluetoothSerial *BT;
-Preferences *memory;
+BluetoothSerial BT;
 
+const char* bt_credentials_name = "ESP32";
+
+enum bt_command_t {
+  NOT_AVAILABLE = -2,
+  NOT_RECOGNISED,
+  BT_PING,
+  WIFI_SSID_AND_PASSWORD,
+  WIFI_ERASE,
+  WIFI_SHOW_NETWORKS,
+  SMTP_SETTINGS,
+  RESTART,
+  SWITCH_MODE,
+  HELP,
+  COMMAND_AMOUNT,
+};
+
+// commands
+static const char* commands[] = {
+  "ping",
+  "new wifi",
+  "clear wifi",
+  "show",
+  "smtp",
+  "restart",
+  "switch mode",
+  "help"
+};
 
 // bt messages
-const char* wifi_ssid_request_message = "Provide ssid of network:";
-const char* wifi_password_request_message = "Provide passowrd of network:";
-const char* erasing_memory_message = "Erasing all memory";
-const char* status_ok_message = "Ok";
-const char* status_error_message = "Error";
-const char* unknown_command_message = "Unknown command";
-const char* restart_message = "Restarting...";
+static const char *wifi_ssid_request_message = "Provide ssid of network:";
+static const char *wifi_ssid_confirmation_message = "Ssid received.";
+static const char *wifi_password_request_message = "Provide passowrd of network:";
+static const char *wifi_password_confirmation_message = "Password received.";
+static const char *erasing_wifi_credentials_message = "Erasing wifi credentials.";
+static const char *status_ok_message = "Ok.";
+static const char *status_error_message = "Error.";
+static const char *unknown_command_message = "Unknown command.";
+static const char *restart_message = "Restarting...";
+static const char *pong_message = "pong";
+static const char *memory_empty_message = "No networks in memory";
 
-// memory keys
-const char* wifi_table_name = "bt_wifi";
-const char* wifi_ssid_key_prefix = "ssid";
-const char* wifi_password_key_prefix = "pass";
-const char* wifi_amount_key = "amount";
 
-void ProcessBt();
-void AddCredentialsCommand();
-int SaveCredentials(const char* ssid, const char* password);
-void PrintNetworksFromMemory(Preferences *memory, BluetoothSerial *BT);
-void ClearMemoryCommand();
+void PingCommand();
+void AddWiFiCredentialsCommand();
+void ClearWiFiCredentialsCommand();
+void PrintNetworksFromMemoryCommand();
+void SmtpConfigureCommand();
 void RestartESPCommand();
+void SwitchModeCommand();
+void HelpCommand();
 
-void BtControllerSetup(BluetoothSerial *SerialBT, Preferences *preferences){
-    BT = SerialBT;
-    memory = preferences;
+void WriteBtLine(const char* line);
+int ReadBtLine(char *buffer, int maxLength);
+int ReadBtCommand(char *buffer, int maxLength);
+int AwaitAndReadBtLine(char *buffer, int maxLength);
+void BtInterruptCallback(esp_spp_cb_event_t event, esp_spp_cb_param_t *param);
+
+void InitBtTerminalController(){
+  BT.begin(bt_credentials_name);
+  IOWrite(IO_WRITE_SCREEN | IO_WRITE_SERIAL, ("BT - " + String(bt_credentials_name)).c_str());
+  BT.register_callback(BtInterruptCallback);
 }
 
 void ProcessBt(){
-  if (!BT->available())
+  if (!BT.available())
     return;
 
-    Serial.println("here");
+  char *commandLine = (char *)malloc(STRING_LENGTH);
 
-  String commandLine = String(STRING_LENGTH);
+  int command = ReadBtCommand(commandLine, STRING_LENGTH);
 
-  // Serial.println("BT available: starting reading...");
+  IOWrite(IO_WRITE_SCREEN | IO_WRITE_SERIAL, ("Command: " + String(commands[command]) + ".").c_str());
 
-  int command = ReadBtCommand(BT, &commandLine, STRING_LENGTH);
-
-  Serial.println("Got command: " + String(command));
+  if (command < 0){
+    IOIndicate(BT_GOT_BAD_COMMAND);
+  } else {
+    IOIndicate(BT_GOT_GOOD_COMMAND);
+  }
 
   switch (command)
   {
-  case WIFI_SSID_AND_PASSWORD:
-    AddCredentialsCommand();
+  case BT_PING:
+    PingCommand();
     break;
-  case WIFI_ERASE_MEMORY:
-    ClearMemoryCommand();
+  case WIFI_SSID_AND_PASSWORD:
+    AddWiFiCredentialsCommand();
+    break;
+  case WIFI_ERASE:
+    ClearWiFiCredentialsCommand();
     break;
   case WIFI_SHOW_NETWORKS:
-    PrintNetworksFromMemory(memory, BT);
+    PrintNetworksFromMemoryCommand();
+    break;
+  case SMTP_SETTINGS:
+    SmtpConfigureCommand();
     break;
   case RESTART:
     RestartESPCommand();
     break;
-  default:
-    WriteBtLine(BT, unknown_command_message);
+  case SWITCH_MODE:
+    SwitchModeCommand();
+    break;
+  case HELP:
+    HelpCommand();
+    break;
+  case NOT_RECOGNISED:
+    WriteBtLine(unknown_command_message);
     break;
   }
-  
+
+  free(commandLine);
 }
 
-void AddCredentialsCommand(){
-  String ssid = String(STRING_LENGTH);
-  String password = String(STRING_LENGTH);
+void PingCommand(){
+  WriteBtLine(pong_message);
+}
+
+void AddWiFiCredentialsCommand(){
+  IOIndicate(BT_PENDING_COMMAND);
+
+  char *ssid = (char *)malloc(STRING_LENGTH);
+  char *password = (char *)malloc(STRING_LENGTH);
     
-  WriteBtLine(BT, wifi_ssid_request_message);
-  while (!BT->available()){}
-  Serial.println("received ssid");
-  if (ReadBtLine(BT, &ssid, STRING_LENGTH) < 0){
-    WriteBtLine(BT, status_error_message);
+  WriteBtLine(wifi_ssid_request_message);
+  if (AwaitAndReadBtLine(ssid, STRING_LENGTH) < 0){
+    WriteBtLine(status_error_message);
     return;
   }
-  WriteBtLine(BT, wifi_password_request_message);
-  while(!BT->available()){}
-  Serial.println("received password");
-  if (ReadBtLine(BT, &password, STRING_LENGTH) < 0){
-    WriteBtLine(BT, status_error_message);
+  Serial.println(wifi_ssid_confirmation_message);
+
+  WriteBtLine(wifi_password_request_message);
+  if (AwaitAndReadBtLine(password, STRING_LENGTH) < 0){
+    WriteBtLine(status_error_message);
     return;
   }
-  SaveCredentials(ssid.c_str(), password.c_str());
-  WriteBtLine(BT, status_ok_message);
-}
+  Serial.println(wifi_password_confirmation_message);
 
-int SaveCredentials(const char* ssid, const char* password){
-  char* ssid_key = (char*) malloc(6 * sizeof(char));
-  char* password_key = (char*) malloc(6 * sizeof(char));
+  int newAmount = SaveWiFiCredentialsInMemory(ssid, password);
 
-  int counter = memory->getUInt(wifi_amount_key, 0);
-  
-  sprintf(ssid_key, "%s%d", wifi_ssid_key_prefix, counter);
-  sprintf(password_key, "%s%d", wifi_password_key_prefix, counter);
+  WriteBtLine(status_ok_message);
+  IOWrite(IO_WRITE_SCREEN, (String(ssid) + " saved.").c_str());
+  IOWrite(IO_WRITE_SCREEN, (String(newAmount) + " networks in memory.").c_str());
+  IOIndicate(BT_END_COMMAND);
 
-  memory->putString(ssid_key, ssid);
-  memory->putString(password_key, password);
-
-  memory->putUInt(wifi_amount_key, ++counter);
-
-  Serial.println("saved credantials");
-  Serial.println(ssid);
-  Serial.println(password);
-
-  free(ssid_key);
-  free(password_key);
-
-  return counter;
-}
-
-void PrintNetworksFromMemory(Preferences *memory, BluetoothSerial *BT){
-
-  char* ssid_key = (char*) malloc(6 * sizeof(char));
-  char* password_key = (char*) malloc(6 * sizeof(char));
-
-  char* ssid = (char*) malloc(STRING_LENGTH * sizeof(char));
-  char* password = (char*) malloc(STRING_LENGTH * sizeof(char));
-
-  int counter = memory->getUInt(wifi_amount_key, 0);
-
-  if (counter == 0){
-    if (BT != NULL)
-      WriteBtLine(BT, "No networks in memory");
-    else
-      Serial.println("No networks in memory");
-  } else {
-    for (int i = 0; i < counter; i++){
-      sprintf(ssid_key, "%s%d", wifi_ssid_key_prefix, i);
-      sprintf(password_key, "%s%d", wifi_password_key_prefix, i);
-
-      memory->getString(ssid_key, ssid, STRING_LENGTH);
-      memory->getString(password_key, password, STRING_LENGTH);
-      
-      String output = String(i) + ": '" + String(ssid) + "' - '" + String(password) + "'";
-
-      if (BT != NULL)
-        WriteBtLine(BT, output.c_str());
-      else
-        Serial.println(output);
-    }
-  }
-
-  free(ssid_key);
-  free(password_key);
   free(ssid);
   free(password);
 }
 
-void ClearMemoryCommand(){
-  memory->clear();
-  WriteBtLine(BT, erasing_memory_message);
+void PrintNetworksFromMemoryCommand(){
+  int counter = GetWiFiCredentialsAmountFromMemory();
+
+  if (counter == 0){
+      WriteBtLine(memory_empty_message);
+      IOWrite(IO_WRITE_SCREEN | IO_WRITE_SERIAL, memory_empty_message);
+  } else {
+    char* ssid = (char*) malloc(STRING_LENGTH * sizeof(char));
+    char* password = (char*) malloc(STRING_LENGTH * sizeof(char));
+
+    IOWrite(IO_WRITE_SCREEN | IO_WRITE_CLEAN_BEFORE_WRITE | IO_WRITE_SERIAL, (String(counter) + " networks in memory.").c_str());
+
+    for (int i = 0; i < counter; i++){
+      GetWiFiSsidFromMemory(i, ssid);
+      GetWiFiPasswordFromMemory(i, password);
+      String output = String(i + 1) + ":'" + String(ssid) + "'-'" + String(password) + "'";
+      WriteBtLine(output.c_str());
+      if (i < MAX_LINES_AMOUNT - 1){
+        IOWrite(IO_WRITE_SCREEN, output.c_str());
+      }
+    }
+
+    free(ssid);
+    free(password);
+  }
+}
+
+void SmtpConfigureCommand(){
+  IOIndicate(BT_PENDING_COMMAND);
+  IOWrite(IO_WRITE_SCREEN | IO_WRITE_CLEAN_BEFORE_WRITE | IO_WRITE_SERIAL, "Configuring smtp.");
+  // todo: Unbind hardcoded index of command to smtp value index
+  WriteBtLine((String(
+    "0 - exit;\n") + 
+    "1 - show all settings;\n" +
+    "2 [server] - set server;\n" +
+    "3 [port] - set port;\n" +
+    "4 [login] - set login;\n" +
+    "5 [password] - set pass;\n" +
+    "6 [sender name] - set sender name;\n" +
+    "7 [recipient email] - set recipient."
+  ).c_str());
+
+  String commandLine;
+  int command;
+  String response;
+  String currentSettings;
+  char *buffer = (char *)malloc(STRING_LENGTH);
+
+  do {
+    currentSettings = String("Smtp settings:");
+    IOWrite(IO_WRITE_SCREEN | IO_WRITE_CLEAN_BEFORE_WRITE, currentSettings.c_str());
+    for (int i = 0; i < SMTP_SETTINGS_COUNT; i++){
+      response = GetSmtpValue(i, buffer);
+      IOWrite(IO_WRITE_SCREEN, response.c_str());
+      currentSettings = smtp_settings[i] + String(": ") + currentSettings + "\n" + response;
+    }
+
+    WriteBtLine("Write a command in a following way:\n[command number] [value]");    
+    if (AwaitAndReadBtLine(buffer, STRING_LENGTH) < 0){
+      WriteBtLine(status_error_message);
+      return;
+    }
+
+    commandLine = String(buffer);
+    command = commandLine.toInt();
+    commandLine = commandLine.substring(2);
+    Serial.println("Command: " + String(command));
+    Serial.println("Value: " + String(commandLine));
+    switch (command){
+      case 0:
+        response = String("Exiting.");
+        break;
+      case 1:
+        response = String("Smtp settings:");
+        for (int i = 0; i < SMTP_SETTINGS_COUNT; i++){
+          // todo: check for setting existance
+          response = response + "\n" + smtp_settings[i] + ": " + GetSmtpValue(i, buffer);
+        }
+        break;
+      case 2:
+      case 3:
+      case 4:
+      case 5:
+      case 6:
+      case 7:
+        SetSmtpValue(SMTP_SERVER + command - 2, commandLine.c_str());
+        response = String(status_ok_message);
+        break;
+      default:
+        response = String("Command not recognize.");
+    }
+    WriteBtLine(response.c_str());
+  } while (command != 0);
+  free(buffer);
+  ClearDisplay();
+  IOIndicate(BT_END_COMMAND);
+}
+
+void ClearWiFiCredentialsCommand(){
+  WriteBtLine(erasing_wifi_credentials_message);
+  ClearWiFiCredentials();
+  IOWrite(IO_WRITE_SCREEN, erasing_wifi_credentials_message);
 }
 
 void RestartESPCommand(){
-  WriteBtLine(BT, restart_message);
+  WriteBtLine(restart_message);
   ESP.restart();
+}
+
+void SwitchModeCommand(){
+  IOIndicate(BT_PENDING_COMMAND);
+  bool mode = IsConfigStateInMemory();
+  String currentMode = String("Mode ") + (mode ? "`configuration`" : "`working`");
+  WriteBtLine(currentMode.c_str());
+  IOWrite(IO_WRITE_SCREEN | IO_WRITE_CLEAN_BEFORE_WRITE, currentMode.c_str());
+
+  String answer;
+  char *buffer = (char *)malloc(STRING_LENGTH);
+  do {
+    WriteBtLine((String("Would you like to switch it to ") + (!mode ? "`configuration`" : "`working`") + "? (y/n)").c_str());
+    AwaitAndReadBtLine(buffer, STRING_LENGTH);
+    answer = String(buffer);
+    answer.toLowerCase();
+  } while (answer.compareTo("y") && answer.compareTo("n"));
+  if (!answer.compareTo("y")){
+    SetStateInMemory(!mode);
+    WriteBtLine(status_ok_message);
+    IOWrite(IO_WRITE_SCREEN | IO_WRITE_SERIAL, (String("New mode ") + (!mode ? "`configuration`" : "`working`")).c_str());
+  } else {
+    WriteBtLine("Aborting.");
+  }
+  free(buffer);
+  IOIndicate(BT_END_COMMAND);
+}
+
+void HelpCommand(){
+  IOIndicate(BT_PENDING_COMMAND);
+  WriteBtLine("List of commands:");
+  String message;
+  for (int i = 0; i < COMMAND_AMOUNT; i++){
+    message += String(commands[i]) + "\n";
+  }
+  WriteBtLine(message.c_str());
+  IOIndicate(BT_END_COMMAND);
+}
+
+// IO
+
+int ReadBtCommand(char *buffer, int maxLength){
+  if (!BT.available())
+      return NOT_AVAILABLE;
+  
+  ReadBtLine(buffer, maxLength);
+  
+  String line = String(buffer);
+
+  for (int j = 0; j < COMMAND_AMOUNT; j++){
+    if (!line.compareTo(String(commands[j])))
+      return j;
+  }
+  
+  return NOT_RECOGNISED;
+}
+
+int AwaitAndReadBtLine(char *buffer, int maxLength){
+  while (!BT.available()){}
+  return ReadBtLine(buffer, maxLength);
+}
+
+int ReadBtLine(char *buffer, int maxLength){
+  if (!BT.available())
+      return -1;
+
+  int charAmount = BT.readBytes(buffer, maxLength);
+
+  
+  for (int i = 0; i < charAmount; i++){
+    if ((buffer[i] == '\n') || (buffer[i] == '\r')){
+      buffer[i] = 0;
+      charAmount = i;
+      break;
+    }
+  }
+
+  return charAmount;
+}
+
+void WriteBtLine(const char* line){
+  BT.write((const uint8_t *)line, strlen(line));
+  BT.write('\n');
+  Serial.println(line);
+  delay(100);
+}
+
+// Interrupts
+
+void BtInterruptCallback(esp_spp_cb_event_t event, esp_spp_cb_param_t *param){
+  if (event == ESP_SPP_SRV_OPEN_EVT){
+    IOWrite(IO_WRITE_SCREEN | IO_WRITE_SERIAL, "Connected to bt.");
+    IOIndicate(BT_CONNECTED);
+  }
+  if (event == ESP_SPP_CLOSE_EVT){
+    IOWrite(IO_WRITE_SCREEN | IO_WRITE_SERIAL, "Disconnected from bt.");
+    IOIndicate(BT_DISCONNECTED);
+  }
 }

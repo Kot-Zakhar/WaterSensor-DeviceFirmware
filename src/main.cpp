@@ -1,29 +1,58 @@
-#include <BluetoothSerial.h>
-#include <Preferences.h>
-
 #include <BtTerminalController.h>
+#include <MemoryController.h>
+#include <InterruptController.h>
+#include <IOController.h>
 
-
-BluetoothSerial SerialBT;
-Preferences preferences;
-
-// bt credentials
-const char* bt_credentials_name = "ESP32";
+bool stateIsConfig;
 
 void setup() {
   Serial.begin(115200);
-  SerialBT.begin(bt_credentials_name);
-  Serial.println("You can pair to ESP32s");
 
-  preferences.begin(wifi_table_name, false);
-  
-  BtControllerSetup(&SerialBT, &preferences);
+  InitIOController();
+  InitMemoryController();
+  InitWiFiController();
 
-  PrintNetworksFromMemory(&preferences, NULL);
+  stateIsConfig = IsConfigStateInMemory();
 
+  if (!stateIsConfig){
+    IOWrite(IO_WRITE_SCREEN, "Connecting to wifi...");
+    stateIsConfig = (GetWiFiCredentialsAmountFromMemory() == 0) || !ConnectToAnyWiFiFromMemory();
+    if (stateIsConfig){
+      IOWrite(IO_WRITE_SCREEN, "Couldn't connect.");
+    } else {
+      IOWrite(IO_WRITE_SCREEN | IO_WRITE_CLEAN_BEFORE_WRITE, "Connected to ");
+      IOWrite(IO_WRITE_SCREEN, GetCurrentWiFiSsid().c_str());
+      SyncTime();
+      char *buffer = (char *)malloc(STRING_LENGTH);
+      IOWrite(IO_WRITE_SCREEN | IO_WRITE_SERIAL, GetDateTimeStr(buffer, STRING_LENGTH));
+      free(buffer);
+    }
+  }
+
+  if (stateIsConfig){
+    Serial.println("Config mode is on.");
+    IOWrite(IO_WRITE_SCREEN, "Configuration mode.");
+    IOIndicate(MODE_CONFIG_ON);
+    WiFiControllerOff();
+    InitBtTerminalController();
+  } else {
+    Serial.println("Working mode.");
+    IOWrite(IO_WRITE_SCREEN, "Working mode.");
+    IOIndicate(MODE_WORK_ON);
+    // SendLetter(
+    //   "First letter",
+    //   "I've started to work. Everything is ok so far.",
+    //   false
+    // );
+  }
+  BindInterrupts(stateIsConfig);
 }
 
 void loop() {
-  ProcessBt();
-  delay(20);
+  if (stateIsConfig){
+    ProcessBt();
+  } else {
+  }
+  ProcessInterrupts();
+  delay(100);
 }
