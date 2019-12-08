@@ -1,5 +1,8 @@
 #include "InterruptController.h"
 
+static const char *memory_empty_message = "No networks in memory";
+
+
 bool isConfigState;
 
 volatile bool buttonsPressed[] = {
@@ -17,6 +20,12 @@ volatile uint8_t buttonsPins[] = {
 };
 
 portMUX_TYPE interruptMux = portMUX_INITIALIZER_UNLOCKED;
+
+
+void ListSMTPSettings();
+void SendLetterAboutButtonPressed();
+void ListWiFiFromMemory();
+
 
 void IRAM_ATTR Button0Interrupt(){
   if (!interruptMux.count){
@@ -54,33 +63,27 @@ void IRAM_ATTR Button3Interrupt(){
   delay(100);
 }
 
-
-
-
 void ProcessInterrupt(int index){
-  bool result = false;
 
   switch(index){
     case 0:
-      IOIndicate(WAIT);
-      IOWrite(IO_WRITE_SCREEN | IO_WRITE_CLEAN_BEFORE_WRITE | IO_WRITE_SERIAL, "Sending letter...");
-      result = SendLetter("Message from ESP", "<h1>Hey, your button was pressed!</h1>", true);
-      if (result){
-        IOIndicate(SUCCESS);
-        IOWrite(IO_WRITE_SCREEN | IO_WRITE_SERIAL, "Sent successfully.");
+      if (isConfigState){
+        ListSMTPSettings();
       } else {
-        IOIndicate(ERROR);
-        IOWrite(IO_WRITE_SCREEN | IO_WRITE_SERIAL, "Not sent.");
+        SendLetterAboutButtonPressed();
       }
       break;
     case 1:
+        ListWiFiFromMemory();
       break;
     case 2:
       break;
     case 3:
       IOIndicate(Interrupt3);
       SetStateInMemory(!isConfigState);
-      IOWrite(IO_WRITE_SCREEN | IO_WRITE_SERIAL, (String("Switching to ") + (isConfigState ? "work" : "debug")).c_str());
+      delay(100);
+      IOWrite(IO_WRITE_SCREEN | IO_WRITE_SERIAL, (String("Switching to ") + (isConfigState ? "work" : "config")).c_str());
+      delay(100);
       IOWrite(IO_WRITE_SCREEN | IO_WRITE_SERIAL, "after restart.");
       break;
     default:
@@ -115,4 +118,55 @@ void BindInterrupts(bool stateIsConfig){
   pinMode(buttonsPins[3], INPUT_PULLDOWN);
   attachInterrupt(buttonsPins[3], Button3Interrupt, RISING);
 
+}
+
+
+// actions on interrupts
+
+void SendLetterAboutButtonPressed(){
+  bool result = false;
+  IOIndicate(WAIT);
+  IOWrite(IO_WRITE_SCREEN | IO_WRITE_CLEAN_BEFORE_WRITE | IO_WRITE_SERIAL, "Sending letter...");
+  result = SendLetter("Message from ESP", "<h1>Hey, your button was pressed!</h1>", true);
+  if (result){
+    IOIndicate(SUCCESS);
+    IOWrite(IO_WRITE_SCREEN | IO_WRITE_SERIAL, "Sent successfully.");
+  } else {
+    IOIndicate(ERROR);
+    IOWrite(IO_WRITE_SCREEN | IO_WRITE_SERIAL, "Not sent.");
+  }
+}
+
+void ListSMTPSettings(){
+  char *buffer = (char *)malloc(STRING_LENGTH);
+  IOWrite(IO_WRITE_SCREEN | IO_WRITE_CLEAN_BEFORE_WRITE, "Smtp settings:");
+  for (int i = 0; i < SMTP_SETTINGS_COUNT; i++){
+    IOWrite(IO_WRITE_SCREEN, GetSmtpValue(i, buffer));
+  }
+  free(buffer);
+}
+
+void ListWiFiFromMemory(){
+  int counter = GetWiFiCredentialsAmountFromMemory();
+
+  if (counter == 0){
+    IOWrite(IO_WRITE_SCREEN | IO_WRITE_SERIAL, memory_empty_message);
+  } else {
+    char* ssid = (char*) malloc(STRING_LENGTH * sizeof(char));
+    char* password = (char*) malloc(STRING_LENGTH * sizeof(char));
+
+    IOWrite(IO_WRITE_SCREEN | IO_WRITE_CLEAN_BEFORE_WRITE | IO_WRITE_SERIAL, (String(counter) + " networks in memory.").c_str());
+
+    for (int i = 0; i < counter; i++){
+      GetWiFiSsidFromMemory(i, ssid);
+      GetWiFiPasswordFromMemory(i, password);
+      String output = String(i + 1) + ":'" + String(ssid) + "'-'" + String(password) + "'";
+      if (i < MAX_LINES_AMOUNT - 1){
+        IOWrite(IO_WRITE_SCREEN, output.c_str());
+      }
+    }
+
+    free(ssid);
+    free(password);
+  }
 }

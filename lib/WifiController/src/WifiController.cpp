@@ -2,9 +2,57 @@
 
 SMTPData smtpData;
 
+const char* failedToObtainTimeMessage = "Failed to otain time.";
+const char* failedToObtainTimeShortMessage = "<no time>";
+
+const char* timeFormat = "%T";
+const char* timeShortFormat = "%R";
+const char* dateTimeFormat = "%a %b %d %T";
+const char* dateTimeShortFormat = "%T %D";
+
+const char* htmlDateTimeLeftSide = "<br><p>";
+const char* htmlDateTimeRightSize = "</p><br>";
+
+const char* ntpServer1 = "by.pool.ntp.org";
+const char* ntpServer2 = "europe.pool.ntp.org";
+const long  gmtOffset_sec = 10800;
+const int   daylightOffset_sec = 0;
+
 //const char* host = "api.noopschallenge.com";
 
 void InitWiFiController(){
+}
+
+void SyncTime(){
+  struct tm timeInfo;
+  do {
+    configTime(gmtOffset_sec, daylightOffset_sec, ntpServer1, ntpServer2);
+  } while(!getLocalTime(&timeInfo));
+  Serial.println(&timeInfo, "Time synced: %A, %b.%d.%Y %H:%M:%S");
+}
+
+char *GetDateTimeStr(char *buffer, size_t length, bool shortFormat){
+  struct tm timeInfo;
+  if (!getLocalTime(&timeInfo)){
+    strcpy(buffer, shortFormat ? failedToObtainTimeShortMessage : failedToObtainTimeMessage);
+  } else {
+    strftime(buffer, length,
+      shortFormat ? dateTimeShortFormat : dateTimeFormat,
+      &timeInfo);
+  }
+  return buffer;
+}
+
+char *GetTimeStr(char *buffer, size_t length, bool shortFormat){
+  struct tm timeInfo;
+  if (!getLocalTime(&timeInfo)){
+    strcpy(buffer, shortFormat ? failedToObtainTimeShortMessage : failedToObtainTimeMessage);
+  } else {
+    strftime(buffer, length,
+      shortFormat ? timeShortFormat : timeFormat,
+      &timeInfo);
+  }
+  return buffer;
 }
 
 void WiFiControllerOff(){
@@ -12,7 +60,7 @@ void WiFiControllerOff(){
 }
 
 void ConnectToWiFi(const char *ssid, const char *password){
-    WiFi.begin(ssid, password);
+  WiFi.begin(ssid, password);
 }
 
 String GetCurrentWiFiSsid(){
@@ -55,11 +103,12 @@ bool ConnectToAnyWiFiFromMemory(){
 }
 
 bool IsWiFiConnected(){
-    return WiFi.status() == WL_CONNECTED;
+  return WiFi.status() == WL_CONNECTED;
 }
 
 void DisconnectFromWiFi(){
-    WiFi.disconnect();
+  WiFi.disconnect();
+  WiFi.mode(WIFI_OFF);
 }
 
 bool SendLetter(const char *subject, const char *message, bool isHtml, bool retryUntilSuccess){
@@ -74,6 +123,14 @@ bool SendLetter(const char *subject, const char *message, bool isHtml, bool retr
   char *password = GetSmtpValue(SMTP_PASS, (char *)malloc(STRING_LENGTH));
   char *sender = GetSmtpValue(SMTP_SENDER, (char *)malloc(STRING_LENGTH));
   char *recipient = GetSmtpValue(SMTP_RECIPIENT, (char *)malloc(STRING_LENGTH));
+  char *dateTime = GetDateTimeStr((char *)malloc(STRING_LENGTH), STRING_LENGTH, false);
+  
+  String timeStampedMessage = 
+    String(message) +
+    (isHtml ? htmlDateTimeLeftSide : "\n") + 
+    dateTime +
+    (isHtml ? htmlDateTimeRightSize: "\n");
+
   log_v("Email:\n ---\n Smtp server: %s\n Smtp port: %s\n Smtp login: %s\n Smtp sender name: %s\n ---\n Recipient: %s\n Subject: %s\n Message:\n %s\n ---\n",
     server,
     port,
@@ -81,10 +138,8 @@ bool SendLetter(const char *subject, const char *message, bool isHtml, bool retr
     sender,
     recipient,
     subject,
-    message
+    timeStampedMessage.c_str()
   );
-
-  // AwaitForWiFiConnection();
 
   smtpData.setDebug(true);
 
@@ -92,7 +147,7 @@ bool SendLetter(const char *subject, const char *message, bool isHtml, bool retr
   smtpData.setSender(sender, login);
   smtpData.setPriority("High");
   smtpData.setSubject(subject);
-  smtpData.setMessage(message, isHtml);
+  smtpData.setMessage(timeStampedMessage, isHtml);
   smtpData.addRecipient(recipient);
 
   bool result = false;

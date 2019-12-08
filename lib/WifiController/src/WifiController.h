@@ -18,6 +18,11 @@ void AwaitForWiFiConnection();
 void ConnectToWiFi(const char *ssid, const char *password);
 bool ConnectToAnyWiFiFromMemory();
 void DisconnectFromWiFi();
+
 bool SendLetter(const char *subject, const char *message, bool isHtml, bool retryUntilSuccess = false);
+
+void SyncTime();
+char *GetDateTimeStr(char *buffer, size_t length, bool shortFormat = true);
+char *GetTimeStr(char *buffer, size_t length, bool shortFormat = true);
 
 #endif

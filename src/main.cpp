@@ -5,9 +5,6 @@
 
 bool stateIsConfig;
 
-// time syncing
-// wifi connection 
-
 void setup() {
   Serial.begin(115200);
 
@@ -25,6 +22,10 @@ void setup() {
     } else {
       IOWrite(IO_WRITE_SCREEN | IO_WRITE_CLEAN_BEFORE_WRITE, "Connected to ");
       IOWrite(IO_WRITE_SCREEN, GetCurrentWiFiSsid().c_str());
+      SyncTime();
+      char *buffer = (char *)malloc(STRING_LENGTH);
+      IOWrite(IO_WRITE_SCREEN | IO_WRITE_SERIAL, GetDateTimeStr(buffer, STRING_LENGTH));
+      free(buffer);
     }
   }
 
@@ -44,7 +45,6 @@ void setup() {
     //   false
     // );
   }
-
   BindInterrupts(stateIsConfig);
 }
 
