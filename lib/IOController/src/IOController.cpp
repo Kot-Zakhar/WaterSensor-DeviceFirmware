@@ -57,6 +57,12 @@ void IOIndicate(message_t messageType){
             redLed.Reset();
             redLed.Blink(blinkDuration[FAST_BLINK], blinkDuration[FAST_BLINK]).Repeat(2);
             break;
+        case SUCCESS:
+            BlinkRGB(RGB_GREEN, FAST_BLINK, 2);
+            break;
+        case WAIT:
+            BlinkRGB(RGB_PURPLE, BREATH, 100);
+            break;
 
         case Interrupt0:
             log_v("Interrupt0");

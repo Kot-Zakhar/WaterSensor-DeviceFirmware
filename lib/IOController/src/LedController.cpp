@@ -80,17 +80,17 @@ void BlinkRGB(rgb_color_t color, blink_duration_t blinkDurationType, int times =
         .Breathe((rgbColorCodes[color].r > 0 ? 1 : 0) * blinkDuration[blinkDurationType])
         .Repeat(times)
         .DelayBefore(0)
-        .DelayAfter((rgbColorCodes[color].r > 0 ? 2 : 1) * blinkDuration[blinkDurationType]);
+        .DelayAfter((rgbColorCodes[color].r > 0 ? 2 : 1) * blinkDuration[blinkDurationType] / 2);
     rgbLeds[RGB_GREEN_LED]
         .Breathe((rgbColorCodes[color].g > 0 ? 1 : 0) * blinkDuration[blinkDurationType])
         .Repeat(times)
         .DelayBefore(0)
-        .DelayAfter((rgbColorCodes[color].g > 0 ? 2 : 1) * blinkDuration[blinkDurationType]);
+        .DelayAfter((rgbColorCodes[color].g > 0 ? 2 : 1) * blinkDuration[blinkDurationType] / 2);
     rgbLeds[RGB_BLUE_LED]
         .Breathe((rgbColorCodes[color].b > 0 ? 1 : 0) * blinkDuration[blinkDurationType])
         .Repeat(times)
         .DelayBefore(0)
-        .DelayAfter((rgbColorCodes[color].b > 0 ? 2 : 1) * blinkDuration[blinkDurationType]);
+        .DelayAfter((rgbColorCodes[color].b > 0 ? 2 : 1) * blinkDuration[blinkDurationType] / 2);
     rgbLed.Reset();
     portEXIT_CRITICAL(&ledTimerMux);
 }

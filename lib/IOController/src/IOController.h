@@ -32,6 +32,8 @@ enum message_t {
     Interrupt2,
     Interrupt3,
 
+    WAIT,
+    SUCCESS,
     WARNING,
     ERROR,
     FATAL_ERROR,
