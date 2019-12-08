@@ -19,30 +19,38 @@ volatile uint8_t buttonsPins[] = {
 portMUX_TYPE interruptMux = portMUX_INITIALIZER_UNLOCKED;
 
 void IRAM_ATTR Button0Interrupt(){
-  portENTER_CRITICAL_ISR(&interruptMux);
-  buttonsPressed[0] = true;
-  portEXIT_CRITICAL_ISR(&interruptMux);
+  if (!interruptMux.count){
+    portENTER_CRITICAL_ISR(&interruptMux);
+    buttonsPressed[0] = true;
+    portEXIT_CRITICAL_ISR(&interruptMux);
+  }
   delay(100);
 }
 
 void IRAM_ATTR Button1Interrupt(){
-  portENTER_CRITICAL_ISR(&interruptMux);
-  buttonsPressed[1] = true;
-  portEXIT_CRITICAL_ISR(&interruptMux);
+  if (!interruptMux.count){
+    portENTER_CRITICAL_ISR(&interruptMux);
+    buttonsPressed[1] = true;
+    portEXIT_CRITICAL_ISR(&interruptMux);
+  }
   delay(100);
 }
 
 void IRAM_ATTR Button2Interrupt(){
-  portENTER_CRITICAL_ISR(&interruptMux);
-  buttonsPressed[2] = true;
-  portEXIT_CRITICAL_ISR(&interruptMux);
+  if (!interruptMux.count){
+    portENTER_CRITICAL_ISR(&interruptMux);
+    buttonsPressed[2] = true;
+    portEXIT_CRITICAL_ISR(&interruptMux);
+  }
   delay(100);
 }
 
 void IRAM_ATTR Button3Interrupt(){
-  portENTER_CRITICAL_ISR(&interruptMux);
-  buttonsPressed[3] = true;
-  portEXIT_CRITICAL_ISR(&interruptMux);
+  if (!interruptMux.count){
+    portENTER_CRITICAL_ISR(&interruptMux);
+    buttonsPressed[3] = true;
+    portEXIT_CRITICAL_ISR(&interruptMux);
+  }
   delay(100);
 }
 
@@ -65,24 +73,32 @@ void BindInterrupts(bool stateIsConfig){
 
 void ProcessInterrupts(){
 
-  portENTER_CRITICAL(&interruptMux);
   if (buttonsPressed[0]){
     IOIndicate(Interrupt0);
+    portENTER_CRITICAL(&interruptMux);
     buttonsPressed[0] = false;
+    portEXIT_CRITICAL(&interruptMux);
   }
   if (buttonsPressed[1]){
     IOIndicate(Interrupt1);
+    portENTER_CRITICAL(&interruptMux);
     buttonsPressed[1] = false;
+    portEXIT_CRITICAL(&interruptMux);
   }
   if (buttonsPressed[2]){
     IOIndicate(Interrupt2);
+    portENTER_CRITICAL(&interruptMux);
     buttonsPressed[2] = false;
+    portEXIT_CRITICAL(&interruptMux);
   }
   if (buttonsPressed[3]){
     IOIndicate(Interrupt3);
+    SetStateInMemory(!isConfigState);
+    log_v("Switched to %s after restart.", (isConfigState ? "work" : "debug"));
+    portENTER_CRITICAL(&interruptMux);
     buttonsPressed[3] = false;
+    portEXIT_CRITICAL(&interruptMux);
   }
-  portEXIT_CRITICAL(&interruptMux);
 }
 
 

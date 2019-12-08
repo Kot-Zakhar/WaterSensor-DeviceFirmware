@@ -1,8 +1,10 @@
 #include "IOController.h"
 #include <jled.h>
+#include <Ticker.h>
 
 #define LED_TIMER_INDEX 1
 #define LED_TIMER_FREQ_DEVIDER 80
+#define LED_UPDATE_FREQ 50
 
 enum led_t {
     RED_LED,
@@ -44,7 +46,7 @@ const static uint16_t blinkDuration[2] = {300, 1000};
 const static uint8_t ledPins[] = {25, 26};
 const static uint8_t rgbLedPins[] = {15, 13, 12};
 
-hw_timer_t *timer = NULL;
+Ticker updater;
 
 JLed redLed(ledPins[RED_LED]);
 JLed greenLed(ledPins[GREEN_LED]);
@@ -68,11 +70,7 @@ void IRAM_ATTR LedUpdateInterrupt(){
 }
 
 void BindLEDs(){
-    timer = timerBegin(LED_TIMER_INDEX, LED_TIMER_FREQ_DEVIDER, true);
-    timerAttachInterrupt(timer, &LedUpdateInterrupt, true);
-    timerAlarmWrite(timer, 10000, true);
-    timerAlarmEnable(timer);
-    delay(100);
+    updater.attach_ms(LED_UPDATE_FREQ, LedUpdateInterrupt);
 }
 
 void BlinkRGB(rgb_color_t color, blink_duration_t blinkDurationType, int times = 1){
@@ -97,15 +95,20 @@ void BlinkRGB(rgb_color_t color, blink_duration_t blinkDurationType, int times =
     portEXIT_CRITICAL(&ledTimerMux);
 }
 
-void BlinkLed(led_t led, blink_duration_t blinkDurationType, int times = 1){
-    portENTER_CRITICAL(&ledTimerMux);
-    rgbLeds[led]
-        .Breathe(blinkDuration[blinkDurationType])
-        .Repeat(times)
-        .DelayBefore(0)
-        .DelayAfter(blinkDuration[blinkDurationType]);
-    portEXIT_CRITICAL(&ledTimerMux);
-}
+// void BlinkLed(led_t led, blink_duration_t blinkDurationType, int times = 1, bool infinity = false){
+//     portENTER_CRITICAL(&ledTimerMux);
+//     rgbLeds[led]
+//         .Breathe(blinkDuration[blinkDurationType])
+//         .DelayBefore(0)
+//         .DelayAfter(blinkDuration[blinkDurationType]);
+//     if (infinity){
+//         rgbLeds[led].Forever();
+//     } else {
+//         rgbLeds[led].Repeat(times);
+//     }
+//     portEXIT_CRITICAL(&ledTimerMux);
+// }
+
 
 void CheckLeds(){
     portENTER_CRITICAL(&ledTimerMux);
@@ -117,4 +120,5 @@ void CheckLeds(){
     rgbLed.Reset();
     redLed.DelayBefore(2000).Breathe(500);
     portEXIT_CRITICAL(&ledTimerMux);
+    delay(3000);
 }

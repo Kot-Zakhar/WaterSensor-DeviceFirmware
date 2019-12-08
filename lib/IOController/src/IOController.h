@@ -32,7 +32,9 @@ enum message_t {
     Interrupt2,
     Interrupt3,
 
-    FATAL_ERROR
+    WARNING,
+    ERROR,
+    FATAL_ERROR,
 };
 
 enum blink_duration_t {

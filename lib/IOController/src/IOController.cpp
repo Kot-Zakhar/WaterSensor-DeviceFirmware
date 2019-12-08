@@ -1,8 +1,6 @@
 #include "IOController.h"
+#include "LedController.cpp"
 
-void BindLEDs();
-void BlinkRGB(rgb_color_t color, blink_duration_t blinkDurationType, int times = 1);
-void CheckLeds();
 void CheckScreen();
 void InitDisplay();
 
@@ -37,6 +35,29 @@ void IOIndicate(message_t messageType){
         case BT_END_COMMAND:
             BlinkRGB(RGB_WHITE, FAST_BLINK);
             break;
+
+        case MODE_CONFIG_ON:
+            greenLed.Reset();
+            greenLed.Breathe(blinkDuration[BREATH]).Forever();
+            break;
+        case MODE_WORK_ON:
+            greenLed.Reset();
+            greenLed.On().Forever();
+            break;
+
+        case FATAL_ERROR:
+            redLed.Reset();
+            redLed.On();
+            break;
+        case ERROR:
+            redLed.Reset();
+            redLed.Breathe(blinkDuration[BREATH]);
+            break;
+        case WARNING:
+            redLed.Reset();
+            redLed.Blink(blinkDuration[FAST_BLINK], blinkDuration[FAST_BLINK]).Repeat(2);
+            break;
+
         case Interrupt0:
             log_v("Interrupt0");
             break;

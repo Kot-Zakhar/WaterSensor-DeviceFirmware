@@ -262,7 +262,7 @@ void RestartESPCommand(){
 void SwitchModeCommand(){
   IOIndicate(BT_PENDING_COMMAND);
   bool mode = IsConfigStateInMemory();
-  String currentMode = String("Current mode is ") + (mode ? "`configuration`" : "`working`");
+  String currentMode = String("Mode ") + (mode ? "`configuration`" : "`working`");
   WriteBtLine(currentMode.c_str());
   IOWrite(IO_WRITE_SCREEN | IO_WRITE_CLEAN_BEFORE_WRITE, currentMode.c_str());
 
@@ -277,7 +277,7 @@ void SwitchModeCommand(){
   if (!answer.compareTo("y")){
     SetStateInMemory(!mode);
     WriteBtLine(status_ok_message);
-    IOWrite(IO_WRITE_SCREEN | IO_WRITE_SERIAL, (String("Switched to ") + (!mode ? "`configuration`" : "`working`")).c_str());
+    IOWrite(IO_WRITE_SCREEN | IO_WRITE_SERIAL, (String("New mode ") + (!mode ? "`configuration`" : "`working`")).c_str());
   } else {
     WriteBtLine("Aborting.");
   }

@@ -45,12 +45,9 @@ bool ConnectToAnyWiFiFromMemory(){
   char *password = (char *)malloc(STRING_LENGTH);
   int amount = GetWiFiCredentialsAmountFromMemory();
   bool result = false;
-  for (int i = 0; i < amount; i++){
+  for (int i = 0; (i < amount) && (!result); i++){
     ConnectToWiFi(GetWiFiSsidFromMemory(i, ssid), GetWiFiPasswordFromMemory(i, password));
-    if (AwaitForWiFiConnection(2000)){
-      result = true;
-      break;
-    }
+    result = AwaitForWiFiConnection(2000);
   }
   free(ssid);
   free(password);
