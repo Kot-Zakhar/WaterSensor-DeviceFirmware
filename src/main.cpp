@@ -2,10 +2,13 @@
 #include <MemoryController.h>
 #include <InterruptController.h>
 #include <IOController.h>
+#include <SensorController.h>
+#include <WifiController.h>
 
 bool stateIsConfig;
 
 void setup() {
+
   Serial.begin(115200);
 
   InitIOController();
@@ -46,6 +49,7 @@ void setup() {
     // );
   }
   BindInterrupts(stateIsConfig);
+  InitSensorController(stateIsConfig);
 }
 
 void loop() {

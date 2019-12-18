@@ -8,15 +8,17 @@ const char* wifi_ssid_key_prefix = "wf_ssid";
 const char* wifi_password_key_prefix = "wf_pass";
 const char* wifi_amount_key = "wf_amount";
 
-const char *smtp_key_prefix = "smtp";
+const char *email_key_prefix = "@";
 
-const char* smtp_settings[SMTP_SETTINGS_COUNT] = {
-  "server", 
-  "port", 
+const char* email_settings[EMAIL_SETTINGS_COUNT] = {
+  "smtp server", 
+  "smtp port", 
+  "sender", 
+  "recipient",
+  "imap server",
+  "imap port",
   "login", 
   "pass", 
-  "sender", 
-  "recipient"
 };
 
 const char* state_is_config_key = "dbg_state";
@@ -26,25 +28,26 @@ Preferences memory;
 void InitMemoryController(){
   memory.begin(wifi_table_name, false);
 
-  SetStateInMemory(IsConfigStateInMemory());
-  if (!SmtpValuesAvailable()){
-    SetSmtpValue(SMTP_SERVER, PERSONAL_SMTP_SERVER);
-    SetSmtpValue(SMTP_PORT, PERSONAL_SMTP_PORT);
-    SetSmtpValue(SMTP_LOGIN, PERSONAL_SMTP_LOGIN);
-    SetSmtpValue(SMTP_PASS, PERSONAL_SMTP_PASSWORD);
-    SetSmtpValue(SMTP_SENDER, "ESP32");
-    SetSmtpValue(SMTP_RECIPIENT, PERSONAL_SMTP_LOGIN);
+  if (!EmailValuesAvailable()){
+    SetEmailValue(EMAIL_SMTP_SERVER, PERSONAL_SMTP_SERVER);
+    SetEmailValue(EMAIL_SMTP_PORT, PERSONAL_SMTP_PORT);
+    SetEmailValue(EMAIL_IMAP_SERVER, PERSONAL_IMAP_SERVER);
+    SetEmailValue(EMAIL_IMAP_PORT, PERSONAL_IMAP_PORT);
+    SetEmailValue(EMAIL_LOGIN, PERSONAL_EMAIL_LOGIN);
+    SetEmailValue(EMAIL_PASS, PERSONAL_EMAIL_PASSWORD);
+    SetEmailValue(EMAIL_SMTP_SENDER, "ESP32");
+    SetEmailValue(EMAIL_SMTP_RECIPIENT, PERSONAL_EMAIL_LOGIN);
   }
 }
 
 // email and smtp credentials
 
-bool SmtpValuesAvailable(){
+bool EmailValuesAvailable(){
   log_v("Checking smtp values.");
   char *buffer = (char *)malloc(STRING_LENGTH);
   bool result = true;
-  for (int i = 0; i < SMTP_SETTINGS_COUNT; i++){
-    if (memory.getString((String(smtp_key_prefix) + smtp_settings[i]).c_str(), buffer, STRING_LENGTH) == 0){
+  for (int i = 0; i < EMAIL_SETTINGS_COUNT; i++){
+    if (memory.getString((String(email_key_prefix) + email_settings[i]).c_str(), buffer, STRING_LENGTH) == 0){
       // log_v("Value %d not available.", i);
       result = false;
       break;
@@ -62,18 +65,18 @@ bool SmtpValuesAvailable(){
   return result;
 }
 
-char* GetSmtpValue(int key, char* buffer){
+char* GetEmailValue(int key, char* buffer){
   memory.getString(
-    (String(smtp_key_prefix) + smtp_settings[key]).c_str(),
+    (String(email_key_prefix) + email_settings[key]).c_str(),
     buffer,
     STRING_LENGTH
   );
   return buffer;
 }
 
-void SetSmtpValue(int key, const char* buffer){
+void SetEmailValue(int key, const char* buffer){
   memory.putString(
-    (String(smtp_key_prefix) + smtp_settings[key]).c_str(),
+    (String(email_key_prefix) + email_settings[key]).c_str(),
     buffer
   );
 }

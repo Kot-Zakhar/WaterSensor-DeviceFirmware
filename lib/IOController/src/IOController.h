@@ -4,6 +4,7 @@
 #define _IO_CONTROLLER_H_
 
 #include <Adafruit_SSD1306.h>
+#include <Ticker.h>
 
 #define MAX_LINES_AMOUNT 8
 
@@ -31,6 +32,9 @@ enum message_t {
     Interrupt1,
     Interrupt2,
     Interrupt3,
+
+    SensorValueCnaged,
+    SensorValueOutOfRange,
 
     WAIT,
     SUCCESS,

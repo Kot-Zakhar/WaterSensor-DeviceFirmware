@@ -1,6 +1,7 @@
 #include <WifiController.h>
 
 SMTPData smtpData;
+IMAPData imapData;
 
 const char* failedToObtainTimeMessage = "Failed to otain time.";
 const char* failedToObtainTimeShortMessage = "<no time>";
@@ -18,12 +19,15 @@ const char* ntpServer2 = "europe.pool.ntp.org";
 const long  gmtOffset_sec = 10800;
 const int   daylightOffset_sec = 0;
 
+const String SearchCriteria = "UID SEARCH SUBJECT \"esp32\" TEXT \"check\" UNSEEN";
+
 //const char* host = "api.noopschallenge.com";
 
 void InitWiFiController(){
 }
 
 void SyncTime(){
+  IOWrite(IO_WRITE_SCREEN | IO_WRITE_SERIAL, "Syncing time");
   struct tm timeInfo;
   do {
     configTime(gmtOffset_sec, daylightOffset_sec, ntpServer1, ntpServer2);
@@ -113,16 +117,20 @@ void DisconnectFromWiFi(){
 
 bool SendLetter(const char *subject, const char *message, bool isHtml, bool retryUntilSuccess){
   log_v("Sending letter");
-  if (!SmtpValuesAvailable()){
-    log_v("Not all smtp settings are set!");
+  if (!EmailValuesAvailable()){
+    log_v("Not all email settings are set!");
     return false;
   }
-  char *server = GetSmtpValue(SMTP_SERVER, (char *)malloc(STRING_LENGTH));
-  char *port = GetSmtpValue(SMTP_PORT, (char *)malloc(STRING_LENGTH));
-  char *login = GetSmtpValue(SMTP_LOGIN, (char *)malloc(STRING_LENGTH));
-  char *password = GetSmtpValue(SMTP_PASS, (char *)malloc(STRING_LENGTH));
-  char *sender = GetSmtpValue(SMTP_SENDER, (char *)malloc(STRING_LENGTH));
-  char *recipient = GetSmtpValue(SMTP_RECIPIENT, (char *)malloc(STRING_LENGTH));
+  if (!IsWiFiConnected()){
+    log_v("Wifi is not connected.");
+    return false;
+  }
+  char *server = GetEmailValue(EMAIL_SMTP_SERVER, (char *)malloc(STRING_LENGTH));
+  char *port = GetEmailValue(EMAIL_SMTP_PORT, (char *)malloc(STRING_LENGTH));
+  char *login = GetEmailValue(EMAIL_LOGIN, (char *)malloc(STRING_LENGTH));
+  char *password = GetEmailValue(EMAIL_PASS, (char *)malloc(STRING_LENGTH));
+  char *sender = GetEmailValue(EMAIL_SMTP_SENDER, (char *)malloc(STRING_LENGTH));
+  char *recipient = GetEmailValue(EMAIL_SMTP_RECIPIENT, (char *)malloc(STRING_LENGTH));
   char *dateTime = GetDateTimeStr((char *)malloc(STRING_LENGTH), STRING_LENGTH, false);
   
   String timeStampedMessage = 
@@ -168,6 +176,55 @@ bool SendLetter(const char *subject, const char *message, bool isHtml, bool retr
   free(password);
   free(sender);
   free(recipient);
+
+  return result;
+}
+
+bool CheckForIncomingLetter(){
+  log_i("Checking incomming letter");
+  if (!EmailValuesAvailable()){
+    log_v("Not all email settings are set!");
+    return false;
+  }
+  bool result = false;
+
+  char *server = GetEmailValue(EMAIL_IMAP_SERVER, (char *)malloc(STRING_LENGTH));
+  char *port = GetEmailValue(EMAIL_IMAP_PORT, (char *)malloc(STRING_LENGTH));
+  char *login = GetEmailValue(EMAIL_LOGIN, (char *)malloc(STRING_LENGTH));
+  char *password = GetEmailValue(EMAIL_PASS, (char *)malloc(STRING_LENGTH));
+
+  imapData.setLogin(server, String(port).toInt(), login, password);
+  imapData.setSearchCriteria(SearchCriteria);
+  imapData.setRecentSort(true);
+  imapData.setSearchLimit(1);
+
+  if (MailClient.readMail(imapData) && imapData.availableMessages())
+  {
+    IOWrite(IO_WRITE_SCREEN | IO_WRITE_SERIAL, "Got check mail.");
+    IOWrite(IO_WRITE_SCREEN | IO_WRITE_SERIAL, "Replying...");
+    
+    MailClient.setFlag(imapData, imapData.getUID(0).toInt(), "\\Seen");
+
+    String message = String("Got the message. I'm working fine :)\n") +
+      "Sensor value is: " + GetSensorValue();
+    String subject = "Reply to \"" +
+      imapData.getSubject(0) + "\"";
+
+    result = SendLetter(subject.c_str(), message.c_str(), false);
+    if (result){
+      IOWrite(IO_WRITE_SCREEN | IO_WRITE_SERIAL, "Replied successfully.");
+    } else {
+      IOWrite(IO_WRITE_SCREEN | IO_WRITE_SERIAL, "Could not reply.");
+    }
+      
+  } else {
+    log_i("No check letters in mail detected.");
+  }
+
+  free(password);
+  free(login);
+  free(port);
+  free(server);
 
   return result;
 }

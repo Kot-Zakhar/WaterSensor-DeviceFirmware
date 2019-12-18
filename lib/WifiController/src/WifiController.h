@@ -1,12 +1,16 @@
 #pragma once
+
 #ifndef _WIFI_CONTROLLER_H_
 #define _WIFI_CONTROLLER_H_
 
-#define CONNECTING_TIMEOUT 5000
 
-#include <ESP32_MailClient.h>
 #include <MemoryController.h>
+#include <IOController.h>
+#include <SensorController.h>
+#include <ESP32_MailClient.h>
 
+
+#define CONNECTING_TIMEOUT 5000
 
 void InitWiFiController();
 void WiFiControllerOff();
