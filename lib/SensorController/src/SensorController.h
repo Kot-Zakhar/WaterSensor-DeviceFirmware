@@ -6,9 +6,9 @@
 #include <Arduino.h>
 #include <Ticker.h>
 #include <IOController.h>
-#include <WifiController.h>
 
 int GetSensorValue();
-void InitSensorController(bool isConfigState);
+void InitSensorController();
+int UpdateSensorValue();
 
 #endif
