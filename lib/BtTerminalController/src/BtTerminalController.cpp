@@ -24,7 +24,7 @@ static const char* commands[] = {
   "new wifi",
   "clear wifi",
   "show",
-  "smtp",
+  "email",
   "restart",
   "switch mode",
   "help"

@@ -6,8 +6,10 @@
 #include <SensorController.h>
 #include <ESP32_MailClient.h>
 #include <WifiController.h>
+#include <Ticker.h>
 
 bool SendLetter(const char *subject, const char *message, bool isHtml, bool retryUntilSuccess = false);
-
+void InitEmailController();
+void ProcessEmailController();
 
 #endif

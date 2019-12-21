@@ -1,12 +1,27 @@
 #include <EmailController.h>
 
+#define CHECK_INBOX_PERIOD_S 30
+
 SMTPData smtpData;
 IMAPData imapData;
+
+Ticker emailChecker;
+bool needToCheckInbox = false;
 
 const char* htmlLeftSide = "<br><p>";
 const char* htmlSise = "</p><br>";
 
 const String searchCriteria = "UID SEARCH SUBJECT \"esp32\" TEXT \"check\" UNSEEN";
+
+void CheckLetterTimerEvent(){
+  log_v("Check letter event.");
+  needToCheckInbox = true;
+}
+
+void InitEmailController(){
+  log_v("Initializing email checker.");
+  emailChecker.attach(CHECK_INBOX_PERIOD_S, CheckLetterTimerEvent);
+}
 
 bool SendLetter(const char *subject, const char *message, bool isHtml, bool retryUntilSuccess){
   log_v("Sending letter");
@@ -96,17 +111,19 @@ bool CheckForIncomingLetter(){
 
   if (MailClient.readMail(imapData) && imapData.availableMessages())
   {
-    IOWrite(IO_WRITE_SCREEN | IO_WRITE_SERIAL, "Got check mail.");
+    IOWrite(IO_WRITE_SCREEN | IO_WRITE_SERIAL, "Got check letter.");
     IOWrite(IO_WRITE_SCREEN | IO_WRITE_SERIAL, "Replying...");
     
+    String subject = imapData.getSubject(0);
+
+    log_i("from %s\n subject %s", imapData.getFrom(0), subject);
+
     MailClient.setFlag(imapData, imapData.getUID(0).toInt(), "\\Seen");
 
-    String message = String("Got the message. I'm working fine :)\n") +
-      "Sensor value is: " + GetSensorValue();
-    String subject = "Reply to \"" +
-      imapData.getSubject(0) + "\"";
+    String message = String("Got the message. I'm working fine :)\n");
+    String replySubject = "Reply to \"" + subject + "\"";
 
-    result = SendLetter(subject.c_str(), message.c_str(), false);
+    result = SendLetter(replySubject.c_str(), message.c_str(), false);
     if (result){
       IOWrite(IO_WRITE_SCREEN | IO_WRITE_SERIAL, "Replied successfully.");
     } else {
@@ -123,4 +140,11 @@ bool CheckForIncomingLetter(){
   free(server);
 
   return result;
+}
+
+void ProcessEmailController() {
+  if (needToCheckInbox){
+    CheckForIncomingLetter();
+    needToCheckInbox = false;
+  }
 }

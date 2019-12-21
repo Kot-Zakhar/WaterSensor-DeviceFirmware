@@ -6,5 +6,6 @@
 #include <SensorController.h>
 
 void InitSensorChecker(bool isConfigState);
+void ProcessSensorChecker();
 
 #endif
