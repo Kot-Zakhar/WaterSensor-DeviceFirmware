@@ -4,7 +4,7 @@
 #define _INTERRUPT_CONTROLLER_H_
 
 #include <MemoryController.h>
-#include <WifiController.h>
+#include <EmailController.h>
 #include <IOController.h>
 
 #define POTENCIOMETR_PIN 39

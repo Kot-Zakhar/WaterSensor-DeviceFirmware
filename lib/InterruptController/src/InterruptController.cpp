@@ -1,4 +1,4 @@
-#include "InterruptController.h"
+#include <InterruptController.h>
 
 static const char *memory_empty_message = "No networks in memory";
 
@@ -67,6 +67,7 @@ void ProcessInterrupt(int index){
 
   switch(index){
     case 0:
+      IOIndicate(Interrupt0);
       if (isConfigState){
         ListSMTPSettings();
       } else {
@@ -74,17 +75,16 @@ void ProcessInterrupt(int index){
       }
       break;
     case 1:
-        ListWiFiFromMemory();
+      IOIndicate(Interrupt1);
+      ListWiFiFromMemory();
       break;
     case 2:
       break;
     case 3:
       IOIndicate(Interrupt3);
+      delay(100);
       SetStateInMemory(!isConfigState);
-      delay(100);
-      IOWrite(IO_WRITE_SCREEN | IO_WRITE_SERIAL, (String("Switching to ") + (isConfigState ? "work" : "config")).c_str());
-      delay(100);
-      IOWrite(IO_WRITE_SCREEN | IO_WRITE_SERIAL, "after restart.");
+      IOWrite(IO_WRITE_SCREEN | IO_WRITE_SERIAL, (String("After restart: ") + (isConfigState ? "work" : "config")).c_str());
       break;
     default:
       break;
@@ -140,8 +140,9 @@ void SendLetterAboutButtonPressed(){
 void ListSMTPSettings(){
   char *buffer = (char *)malloc(STRING_LENGTH);
   IOWrite(IO_WRITE_SCREEN | IO_WRITE_CLEAN_BEFORE_WRITE, "Smtp settings:");
-  for (int i = 0; i < SMTP_SETTINGS_COUNT; i++){
-    IOWrite(IO_WRITE_SCREEN, GetSmtpValue(i, buffer));
+  for (int i = 0; i < EMAIL_SETTINGS_COUNT; i++){
+    if (i != EMAIL_PASS && i != EMAIL_IMAP_PORT && i != EMAIL_SMTP_PORT)
+      IOWrite(IO_WRITE_SCREEN, GetEmailValue(i, buffer));
   }
   free(buffer);
 }

@@ -1,4 +1,5 @@
 #pragma once
+
 #ifndef _BLUETOOTH_TERMINAL_CONTROLLER_H_
 #define _BLUETOOTH_TERMINAL_CONTROLLER_H_
 

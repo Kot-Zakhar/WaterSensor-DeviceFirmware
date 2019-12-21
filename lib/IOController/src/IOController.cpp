@@ -1,4 +1,4 @@
-#include "IOController.h"
+#include <IOController.h>
 #include "LedController.cpp"
 
 void CheckScreen();
@@ -62,6 +62,13 @@ void IOIndicate(message_t messageType){
             break;
         case WAIT:
             BlinkRGB(RGB_PURPLE, BREATH, 100);
+            break;
+
+        case SensorValueCnaged:
+            BlinkRGB(RGB_GREEN, FAST_BLINK, 1);
+            break;
+        case SensorValueOutOfRange:
+            BlinkRGB(RGB_BLUE, FAST_BLINK, 3);
             break;
 
         case Interrupt0:

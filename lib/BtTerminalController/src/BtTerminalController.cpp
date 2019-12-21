@@ -24,7 +24,7 @@ static const char* commands[] = {
   "new wifi",
   "clear wifi",
   "show",
-  "smtp",
+  "email",
   "restart",
   "switch mode",
   "help"
@@ -181,16 +181,10 @@ void SmtpConfigureCommand(){
   IOIndicate(BT_PENDING_COMMAND);
   IOWrite(IO_WRITE_SCREEN | IO_WRITE_CLEAN_BEFORE_WRITE | IO_WRITE_SERIAL, "Configuring smtp.");
   // todo: Unbind hardcoded index of command to smtp value index
-  WriteBtLine((String(
-    "0 - exit;\n") + 
-    "1 - show all settings;\n" +
-    "2 [server] - set server;\n" +
-    "3 [port] - set port;\n" +
-    "4 [login] - set login;\n" +
-    "5 [password] - set pass;\n" +
-    "6 [sender name] - set sender name;\n" +
-    "7 [recipient email] - set recipient."
-  ).c_str());
+  String helpMessage = "0 - exit;\n1 - show all settings;\n";
+  for (int i = 0; i < EMAIL_SETTINGS_COUNT; i++)
+    helpMessage += (i + 2) + String(" [value] - set ") + email_settings[i] + " to 'value';\n";
+  WriteBtLine(helpMessage.c_str());
 
   String commandLine;
   int command;
@@ -201,10 +195,11 @@ void SmtpConfigureCommand(){
   do {
     currentSettings = String("Smtp settings:");
     IOWrite(IO_WRITE_SCREEN | IO_WRITE_CLEAN_BEFORE_WRITE, currentSettings.c_str());
-    for (int i = 0; i < SMTP_SETTINGS_COUNT; i++){
-      response = GetSmtpValue(i, buffer);
-      IOWrite(IO_WRITE_SCREEN, response.c_str());
-      currentSettings = smtp_settings[i] + String(": ") + currentSettings + "\n" + response;
+    for (int i = 0; i < EMAIL_SETTINGS_COUNT; i++){
+      response = GetEmailValue(i, buffer);
+      if (i != EMAIL_PASS && i != EMAIL_IMAP_PORT && i != EMAIL_SMTP_PORT)
+        IOWrite(IO_WRITE_SCREEN, response.c_str());
+      currentSettings = email_settings[i] + String(": ") + currentSettings + "\n" + response;
     }
 
     WriteBtLine("Write a command in a following way:\n[command number] [value]");    
@@ -224,9 +219,9 @@ void SmtpConfigureCommand(){
         break;
       case 1:
         response = String("Smtp settings:");
-        for (int i = 0; i < SMTP_SETTINGS_COUNT; i++){
+        for (int i = 0; i < EMAIL_SETTINGS_COUNT; i++){
           // todo: check for setting existance
-          response = response + "\n" + smtp_settings[i] + ": " + GetSmtpValue(i, buffer);
+          response = response + "\n" + email_settings[i] + ": " + GetEmailValue(i, buffer);
         }
         break;
       case 2:
@@ -235,7 +230,9 @@ void SmtpConfigureCommand(){
       case 5:
       case 6:
       case 7:
-        SetSmtpValue(SMTP_SERVER + command - 2, commandLine.c_str());
+      case 8:
+      case 9:
+        SetEmailValue(EMAIL_SMTP_SERVER + command - 2, commandLine.c_str());
         response = String(status_ok_message);
         break;
       default:
