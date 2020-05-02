@@ -53,10 +53,10 @@ void RestartESPCommand();
 void SwitchModeCommand();
 void HelpCommand();
 
-void WriteBtLine(const char* line);
-int ReadBtLine(char *buffer, int maxLength);
+void WriteBt(const char* line);
+int ReadBt(char *buffer, int maxLength);
 int ReadBtCommand(char *buffer, int maxLength);
-int AwaitAndReadBtLine(char *buffer, int maxLength);
+int AwaitAndReadBt(char *buffer, int maxLength);
 void BtInterruptCallback(esp_spp_cb_event_t event, esp_spp_cb_param_t *param);
 
 void InitBtTerminalController(){
@@ -108,7 +108,7 @@ void ProcessBt(){
     HelpCommand();
     break;
   case NOT_RECOGNISED:
-    WriteBtLine(unknown_command_message);
+    WriteBt(unknown_command_message);
     break;
   }
 
@@ -116,7 +116,7 @@ void ProcessBt(){
 }
 
 void PingCommand(){
-  WriteBtLine(pong_message);
+  WriteBt(pong_message);
 }
 
 void AddWiFiCredentialsCommand(){
@@ -125,23 +125,23 @@ void AddWiFiCredentialsCommand(){
   char *ssid = (char *)malloc(STRING_LENGTH);
   char *password = (char *)malloc(STRING_LENGTH);
     
-  WriteBtLine(wifi_ssid_request_message);
-  if (AwaitAndReadBtLine(ssid, STRING_LENGTH) < 0){
-    WriteBtLine(status_error_message);
+  WriteBt(wifi_ssid_request_message);
+  if (AwaitAndReadBt(ssid, STRING_LENGTH) < 0){
+    WriteBt(status_error_message);
     return;
   }
   Serial.println(wifi_ssid_confirmation_message);
 
-  WriteBtLine(wifi_password_request_message);
-  if (AwaitAndReadBtLine(password, STRING_LENGTH) < 0){
-    WriteBtLine(status_error_message);
+  WriteBt(wifi_password_request_message);
+  if (AwaitAndReadBt(password, STRING_LENGTH) < 0){
+    WriteBt(status_error_message);
     return;
   }
   Serial.println(wifi_password_confirmation_message);
 
   int newAmount = SaveWiFiCredentialsInMemory(ssid, password);
 
-  WriteBtLine(status_ok_message);
+  WriteBt(status_ok_message);
   IOWrite(IO_WRITE_SCREEN, (String(ssid) + " saved.").c_str());
   IOWrite(IO_WRITE_SCREEN, (String(newAmount) + " networks in memory.").c_str());
   IOIndicate(BT_END_COMMAND);
@@ -154,7 +154,7 @@ void PrintNetworksFromMemoryCommand(){
   int counter = GetWiFiCredentialsAmountFromMemory();
 
   if (counter == 0){
-      WriteBtLine(memory_empty_message);
+      WriteBt(memory_empty_message);
       IOWrite(IO_WRITE_SCREEN | IO_WRITE_SERIAL, memory_empty_message);
   } else {
     char* ssid = (char*) malloc(STRING_LENGTH * sizeof(char));
@@ -166,7 +166,7 @@ void PrintNetworksFromMemoryCommand(){
       GetWiFiSsidFromMemory(i, ssid);
       GetWiFiPasswordFromMemory(i, password);
       String output = String(i + 1) + ":'" + String(ssid) + "'-'" + String(password) + "'";
-      WriteBtLine(output.c_str());
+      WriteBt(output.c_str());
       if (i < MAX_LINES_AMOUNT - 1){
         IOWrite(IO_WRITE_SCREEN, output.c_str());
       }
@@ -184,7 +184,7 @@ void SmtpConfigureCommand(){
   String helpMessage = "0 - exit;\n1 - show all settings;\n";
   for (int i = 0; i < EMAIL_SETTINGS_COUNT; i++)
     helpMessage += (i + 2) + String(" [value] - set ") + email_settings[i] + " to 'value';\n";
-  WriteBtLine(helpMessage.c_str());
+  WriteBt(helpMessage.c_str());
 
   String commandLine;
   int command;
@@ -202,9 +202,9 @@ void SmtpConfigureCommand(){
       currentSettings = email_settings[i] + String(": ") + currentSettings + "\n" + response;
     }
 
-    WriteBtLine("Write a command in a following way:\n[command number] [value]");    
-    if (AwaitAndReadBtLine(buffer, STRING_LENGTH) < 0){
-      WriteBtLine(status_error_message);
+    WriteBt("Write a command in a following way:\n[command number] [value]");    
+    if (AwaitAndReadBt(buffer, STRING_LENGTH) < 0){
+      WriteBt(status_error_message);
       return;
     }
 
@@ -238,7 +238,7 @@ void SmtpConfigureCommand(){
       default:
         response = String("Command not recognize.");
     }
-    WriteBtLine(response.c_str());
+    WriteBt(response.c_str());
   } while (command != 0);
   free(buffer);
   ClearDisplay();
@@ -246,13 +246,13 @@ void SmtpConfigureCommand(){
 }
 
 void ClearWiFiCredentialsCommand(){
-  WriteBtLine(erasing_wifi_credentials_message);
+  WriteBt(erasing_wifi_credentials_message);
   ClearWiFiCredentials();
   IOWrite(IO_WRITE_SCREEN, erasing_wifi_credentials_message);
 }
 
 void RestartESPCommand(){
-  WriteBtLine(restart_message);
+  WriteBt(restart_message);
   ESP.restart();
 }
 
@@ -260,23 +260,23 @@ void SwitchModeCommand(){
   IOIndicate(BT_PENDING_COMMAND);
   bool mode = IsConfigStateInMemory();
   String currentMode = String("Mode ") + (mode ? "`configuration`" : "`working`");
-  WriteBtLine(currentMode.c_str());
+  WriteBt(currentMode.c_str());
   IOWrite(IO_WRITE_SCREEN | IO_WRITE_CLEAN_BEFORE_WRITE, currentMode.c_str());
 
   String answer;
   char *buffer = (char *)malloc(STRING_LENGTH);
   do {
-    WriteBtLine((String("Would you like to switch it to ") + (!mode ? "`configuration`" : "`working`") + "? (y/n)").c_str());
-    AwaitAndReadBtLine(buffer, STRING_LENGTH);
+    WriteBt((String("Would you like to switch it to ") + (!mode ? "`configuration`" : "`working`") + "? (y/n)").c_str());
+    AwaitAndReadBt(buffer, STRING_LENGTH);
     answer = String(buffer);
     answer.toLowerCase();
   } while (answer.compareTo("y") && answer.compareTo("n"));
   if (!answer.compareTo("y")){
     SetStateInMemory(!mode);
-    WriteBtLine(status_ok_message);
+    WriteBt(status_ok_message);
     IOWrite(IO_WRITE_SCREEN | IO_WRITE_SERIAL, (String("New mode ") + (!mode ? "`configuration`" : "`working`")).c_str());
   } else {
-    WriteBtLine("Aborting.");
+    WriteBt("Aborting.");
   }
   free(buffer);
   IOIndicate(BT_END_COMMAND);
@@ -284,12 +284,12 @@ void SwitchModeCommand(){
 
 void HelpCommand(){
   IOIndicate(BT_PENDING_COMMAND);
-  WriteBtLine("List of commands:");
+  WriteBt("List of commands:");
   String message;
   for (int i = 0; i < COMMAND_AMOUNT; i++){
     message += String(commands[i]) + "\n";
   }
-  WriteBtLine(message.c_str());
+  WriteBt(message.c_str());
   IOIndicate(BT_END_COMMAND);
 }
 
@@ -299,7 +299,7 @@ int ReadBtCommand(char *buffer, int maxLength){
   if (!BT.available())
       return NOT_AVAILABLE;
   
-  ReadBtLine(buffer, maxLength);
+  ReadBt(buffer, maxLength);
   
   String line = String(buffer);
 
@@ -311,32 +311,28 @@ int ReadBtCommand(char *buffer, int maxLength){
   return NOT_RECOGNISED;
 }
 
-int AwaitAndReadBtLine(char *buffer, int maxLength){
+int AwaitAndReadBt(char *buffer, int maxLength){
   while (!BT.available()){}
-  return ReadBtLine(buffer, maxLength);
+  return ReadBt(buffer, maxLength);
 }
 
-int ReadBtLine(char *buffer, int maxLength){
+int ReadBt(char *buffer, int maxLength){
   if (!BT.available())
       return -1;
 
+  int realAmount = BT.available();
+  
   int charAmount = BT.readBytes(buffer, maxLength);
 
-  
-  for (int i = 0; i < charAmount; i++){
-    if ((buffer[i] == '\n') || (buffer[i] == '\r')){
-      buffer[i] = 0;
-      charAmount = i;
-      break;
-    }
-  }
+  if (realAmount > charAmount)
+    while (BT.available())
+      BT.read();
 
   return charAmount;
 }
 
-void WriteBtLine(const char* line){
+void WriteBt(const char* line){
   BT.write((const uint8_t *)line, strlen(line));
-  BT.write('\n');
   Serial.println(line);
   delay(100);
 }
