@@ -1,5 +1,3 @@
-#pragma once
-
 #ifndef _MEMORY_CONTROLLER_H_
 #define _MEMORY_CONTROLLER_H_
 

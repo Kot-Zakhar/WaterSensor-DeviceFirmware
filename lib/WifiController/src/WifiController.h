@@ -1,5 +1,3 @@
-#pragma once
-
 #ifndef _WIFI_CONTROLLER_H_
 #define _WIFI_CONTROLLER_H_
 

@@ -1,5 +1,3 @@
-#pragma once
-
 #ifndef _INTERRUPT_CONTROLLER_H_
 #define _INTERRUPT_CONTROLLER_H_
 

@@ -1,4 +1,3 @@
-#pragma once
 #ifndef _SENSOR_CHECKER_H_
 #define _SENSOR_CHECKER_H_
 

@@ -1,5 +1,3 @@
-#pragma once
-
 #ifndef _SENSOR_CONTROLLER_H_
 #define _SENSOR_CONTROLLER_H_
 

@@ -1,5 +1,3 @@
-#pragma once
-
 #ifndef _IO_CONTROLLER_H_
 #define _IO_CONTROLLER_H_
 
