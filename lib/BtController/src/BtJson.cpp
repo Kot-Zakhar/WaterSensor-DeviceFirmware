@@ -1,6 +1,7 @@
 #include <BtJson.h>
 
 void PrintNetworksFromMemoryJsonCommand();
+void AddWiFiCredentialsJsonCommand();
 
 void ProcessBtJsonCommand(int command) {
   if (command < 0){
@@ -14,15 +15,15 @@ void ProcessBtJsonCommand(int command) {
 //   case JSON_BT_PING:
 //     PingJsonCommand();
 //     break;
-//   case JSON_WIFI_SSID_AND_PASSWORD:
-//     AddWiFiCredentialsJsonCommand();
-//     break;
+  case JSON_WIFI_SSID_AND_PASSWORD:
+    AddWiFiCredentialsJsonCommand();
+    break;
 //   case JSON_WIFI_ERASE:
 //     ClearWiFiCredentialsJsonCommand();
 //     break;
   case JSON_WIFI_SHOW_NETWORKS:
     PrintNetworksFromMemoryJsonCommand();
-//     break;
+    break;
 //   case JSON_SMTP_SETTINGS:
 //     SmtpConfigureJsonCommand();
 //     break;
@@ -46,8 +47,7 @@ void PrintNetworksFromMemoryJsonCommand() {
 
   int counter = GetWiFiCredentialsAmountFromMemory();
 
-  // StaticJsonDocument<256> doc;
-  DynamicJsonDocument doc(2048);
+  DynamicJsonDocument doc(1024);
   JsonArray rootArr = doc.to<JsonArray>();
 
   if (counter == 0){
@@ -64,11 +64,6 @@ void PrintNetworksFromMemoryJsonCommand() {
         JsonObject record = rootArr.createNestedObject();
         record["ssid"] = ssid;
         record["password"] = password;
-    //   String output = String(i + 1) + ":'" + String(ssid) + "'-'" + String(password) + "'";
-    // //   WriteBt(output.c_str());
-    //   if (i < MAX_LINES_AMOUNT - 1){
-    //     IOWrite(IO_WRITE_SCREEN, output.c_str());
-    //   }
     }
 
     free(ssid);
@@ -84,6 +79,19 @@ void PrintNetworksFromMemoryJsonCommand() {
   WriteBt(buffer);
 
   free(buffer);
+}
 
-  // log_d("flushing json to bt");
+void AddWiFiCredentialsJsonCommand() {
+  DynamicJsonDocument jsonWifiRecord(200);
+
+  BluetoothSerial *bt = GetCurrentBtSerial();
+
+  deserializeJson(jsonWifiRecord, *bt);
+
+  const char *ssid = jsonWifiRecord["ssid"];
+  const char *pwd = jsonWifiRecord["password"];
+
+  SaveWiFiCredentialsInMemory(ssid, pwd);
+
+  WriteBt("ok");
 }
