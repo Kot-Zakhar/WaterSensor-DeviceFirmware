@@ -1,4 +1,4 @@
-#include <BtTerminalController.h>
+#include <BtController.h>
 #include <MemoryController.h>
 #include <InterruptController.h>
 #include <IOController.h>
@@ -37,7 +37,7 @@ void setup() {
     IOWrite(IO_WRITE_SCREEN, "Configuration mode.");
     IOIndicate(MODE_CONFIG_ON);
     WiFiControllerOff();
-    InitBtTerminalController();
+    InitBtController();
   } else {
     Serial.println("Working mode.");
     IOWrite(IO_WRITE_SCREEN, "Working mode.");

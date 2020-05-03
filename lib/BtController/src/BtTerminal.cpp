@@ -1,86 +1,13 @@
-#include <BtTerminalController.h>
-
-BluetoothSerial BT;
-
-const char* bt_credentials_name = "ESP32";
-
-enum bt_command_t {
-  NOT_AVAILABLE = -2,
-  NOT_RECOGNISED,
-  BT_PING,
-  WIFI_SSID_AND_PASSWORD,
-  WIFI_ERASE,
-  WIFI_SHOW_NETWORKS,
-  SMTP_SETTINGS,
-  RESTART,
-  SWITCH_MODE,
-  HELP,
-  COMMAND_AMOUNT,
-};
-
-// commands
-static const char* commands[] = {
-  "ping",
-  "new wifi",
-  "clear wifi",
-  "show",
-  "email",
-  "restart",
-  "switch mode",
-  "help"
-};
-
-// bt messages
-static const char *wifi_ssid_request_message = "Provide ssid of network:";
-static const char *wifi_ssid_confirmation_message = "Ssid received.";
-static const char *wifi_password_request_message = "Provide passowrd of network:";
-static const char *wifi_password_confirmation_message = "Password received.";
-static const char *erasing_wifi_credentials_message = "Erasing wifi credentials.";
-static const char *status_ok_message = "Ok.";
-static const char *status_error_message = "Error.";
-static const char *unknown_command_message = "Unknown command.";
-static const char *restart_message = "Restarting...";
-static const char *pong_message = "pong";
-static const char *memory_empty_message = "No networks in memory";
+#include <BtTerminal.h>
 
 
-void PingCommand();
-void AddWiFiCredentialsCommand();
-void ClearWiFiCredentialsCommand();
-void PrintNetworksFromMemoryCommand();
-void SmtpConfigureCommand();
-void RestartESPCommand();
-void SwitchModeCommand();
-void HelpCommand();
-
-void WriteBt(const char* line);
-int ReadBt(char *buffer, int maxLength);
-int ReadBtCommand(char *buffer, int maxLength);
-int AwaitAndReadBt(char *buffer, int maxLength);
-void BtInterruptCallback(esp_spp_cb_event_t event, esp_spp_cb_param_t *param);
-
-void InitBtTerminalController(){
-  BT.begin(bt_credentials_name);
-  IOWrite(IO_WRITE_SCREEN | IO_WRITE_SERIAL, ("BT - " + String(bt_credentials_name)).c_str());
-  BT.register_callback(BtInterruptCallback);
-}
-
-void ProcessBt(){
-  if (!BT.available())
-    return;
-
-  char *commandLine = (char *)malloc(STRING_LENGTH);
-
-  int command = ReadBtCommand(commandLine, STRING_LENGTH);
-
-  IOWrite(IO_WRITE_SCREEN | IO_WRITE_SERIAL, ("Command: " + String(commands[command]) + ".").c_str());
-
+void ProcessBtTerminalCommand(int command){
   if (command < 0){
     IOIndicate(BT_GOT_BAD_COMMAND);
   } else {
     IOIndicate(BT_GOT_GOOD_COMMAND);
   }
-
+  
   switch (command)
   {
   case BT_PING:
@@ -111,8 +38,6 @@ void ProcessBt(){
     WriteBt(unknown_command_message);
     break;
   }
-
-  free(commandLine);
 }
 
 void PingCommand(){
@@ -291,61 +216,4 @@ void HelpCommand(){
   }
   WriteBt(message.c_str());
   IOIndicate(BT_END_COMMAND);
-}
-
-// IO
-
-int ReadBtCommand(char *buffer, int maxLength){
-  if (!BT.available())
-      return NOT_AVAILABLE;
-  
-  ReadBt(buffer, maxLength);
-  
-  String line = String(buffer);
-
-  for (int j = 0; j < COMMAND_AMOUNT; j++){
-    if (!line.compareTo(String(commands[j])))
-      return j;
-  }
-  
-  return NOT_RECOGNISED;
-}
-
-int AwaitAndReadBt(char *buffer, int maxLength){
-  while (!BT.available()){}
-  return ReadBt(buffer, maxLength);
-}
-
-int ReadBt(char *buffer, int maxLength){
-  if (!BT.available())
-      return -1;
-
-  int realAmount = BT.available();
-  
-  int charAmount = BT.readBytes(buffer, maxLength);
-
-  if (realAmount > charAmount)
-    while (BT.available())
-      BT.read();
-
-  return charAmount;
-}
-
-void WriteBt(const char* line){
-  BT.write((const uint8_t *)line, strlen(line));
-  Serial.println(line);
-  delay(100);
-}
-
-// Interrupts
-
-void BtInterruptCallback(esp_spp_cb_event_t event, esp_spp_cb_param_t *param){
-  if (event == ESP_SPP_SRV_OPEN_EVT){
-    IOWrite(IO_WRITE_SCREEN | IO_WRITE_SERIAL, "Connected to bt.");
-    IOIndicate(BT_CONNECTED);
-  }
-  if (event == ESP_SPP_CLOSE_EVT){
-    IOWrite(IO_WRITE_SCREEN | IO_WRITE_SERIAL, "Disconnected from bt.");
-    IOIndicate(BT_DISCONNECTED);
-  }
 }
