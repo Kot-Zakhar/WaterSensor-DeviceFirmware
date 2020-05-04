@@ -14,6 +14,11 @@ BluetoothSerial *GetCurrentBtSerial() {
   return &BT;
 }
 
+int BtAvailable() {
+  return BT.available();
+}
+
+
 // IO
 
 int AwaitAndReadBt(char *buffer, int maxLength){
@@ -27,15 +32,20 @@ int ReadBt(char *buffer, int maxLength){
 
   int realAmount = BT.available();
 
-  log_d("%d symbols available", realAmount);
+  int ableToRead = realAmount < maxLength - 1 ? realAmount : maxLength - 1;
 
-  int charAmount = BT.readBytes(buffer, realAmount < maxLength ? realAmount : maxLength);
+  int charAmount = BT.readBytes(buffer, ableToRead);
 
   buffer[charAmount] = '\0';
 
-  if (realAmount > charAmount)
-    while (BT.available())
-      BT.read();
+  if (realAmount > ableToRead){
+    // TODO: reallocate space if realAmount > charAmount
+    char *tail = (char *) malloc(realAmount - ableToRead + 1);
+    int tailLength = BT.readBytes(tail, realAmount - ableToRead);
+    tail[tailLength] = '\0';
+    log_e("Cutting the tail of the message: '%s'", tail);
+    free(tail);
+  }
 
   log_d("%s", buffer);
 

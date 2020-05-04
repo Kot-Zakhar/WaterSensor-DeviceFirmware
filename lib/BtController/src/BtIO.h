@@ -10,5 +10,6 @@ void WriteBt(const char* line);
 int ReadBt(char *buffer, int maxLength);
 int AwaitAndReadBt(char *buffer, int maxLength);
 BluetoothSerial *GetCurrentBtSerial();
+int BtAvailable();
 
 #endif

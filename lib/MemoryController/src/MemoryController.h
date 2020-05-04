@@ -15,6 +15,7 @@
 
 #define STRING_LENGTH 50
 #define STRING_MESSAGE_LENGTH 150
+#define STRING_JSON_LENGTH 200
 
 enum email_setting_t {
     EMAIL_SMTP_SERVER,

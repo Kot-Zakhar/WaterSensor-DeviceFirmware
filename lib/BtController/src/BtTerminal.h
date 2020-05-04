@@ -7,15 +7,8 @@
 #include <MemoryController.h>
 
 void ProcessBtTerminalCommand(int command);
+void ProcessBtTerminalMessage(const char* message, int length);
 
 
-void PingCommand();
-void AddWiFiCredentialsCommand();
-void RemoveAllWiFiCredentialsCommand();
-void PrintNetworksFromMemoryCommand();
-void SmtpConfigureCommand();
-void RestartESPCommand();
-void SwitchModeCommand();
-void HelpCommand();
 
 #endif

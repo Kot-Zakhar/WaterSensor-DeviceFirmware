@@ -6,7 +6,8 @@
 #include <BtCommands.h>
 #include <MemoryController.h>
 
-void ProcessBtJsonCommand(int command);
+// void ProcessBtJsonCommand(int command);
+void ProcessBtJsonMessage(JsonObject &jsonMessage);
 
 // void PingJsonCommand();
 // void AddWiFiCredentialsJsonCommand();

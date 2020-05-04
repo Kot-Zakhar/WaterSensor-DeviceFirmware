@@ -5,7 +5,6 @@
 #include <WifiController.h>
 #include <IOController.h>
 
-#include <BtCommands.h>
 #include <BtIO.h>
 
 #include <BtTerminal.h>
@@ -13,6 +12,5 @@
 
 void InitBtController();
 void ProcessBt();
-int ReadBtCommand(char *buffer, int maxLength);
 
 #endif

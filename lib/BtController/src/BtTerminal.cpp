@@ -1,5 +1,34 @@
 #include <BtTerminal.h>
 
+void PingCommand();
+void AddWiFiCredentialsCommand();
+void RemoveAllWiFiCredentialsCommand();
+void PrintNetworksFromMemoryCommand();
+void SmtpConfigureCommand();
+void RestartESPCommand();
+void SwitchModeCommand();
+void HelpCommand();
+
+
+void ProcessBtTerminalMessage(const char* message, int length) {
+  
+  String line = String(message);
+  int commandIndex;
+
+  for (commandIndex = 0; commandIndex < COMMAND_AMOUNT; commandIndex++){
+    log_d("Comparing two strings: actual command '%s' vs template '%s'", message, commands[commandIndex]);
+    if (!line.compareTo(String(commands[commandIndex])))
+      break;
+  }
+
+  if (commandIndex == COMMAND_AMOUNT){
+    IOWrite(IO_WRITE_SCREEN | IO_WRITE_SERIAL, "Cmd not recognized");
+  } else {
+    ProcessBtTerminalCommand(commandIndex);
+  }
+
+}
+
 
 void ProcessBtTerminalCommand(int command){
   if (command < 0){
