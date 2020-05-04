@@ -19,7 +19,7 @@ void ProcessBtJsonCommand(int command) {
     AddWiFiCredentialsJsonCommand();
     break;
 //   case JSON_WIFI_ERASE:
-//     ClearWiFiCredentialsJsonCommand();
+//     RemoveAllWiFiCredentialsJsonCommand();
 //     break;
   case JSON_WIFI_SHOW_NETWORKS:
     PrintNetworksFromMemoryJsonCommand();

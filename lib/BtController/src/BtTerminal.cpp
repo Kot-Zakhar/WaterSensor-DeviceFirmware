@@ -17,7 +17,7 @@ void ProcessBtTerminalCommand(int command){
     AddWiFiCredentialsCommand();
     break;
   case WIFI_ERASE:
-    ClearWiFiCredentialsCommand();
+    RemoveAllWiFiCredentialsCommand();
     break;
   case WIFI_SHOW_NETWORKS:
     PrintNetworksFromMemoryCommand();
@@ -170,9 +170,9 @@ void SmtpConfigureCommand(){
   IOIndicate(BT_END_COMMAND);
 }
 
-void ClearWiFiCredentialsCommand(){
+void RemoveAllWiFiCredentialsCommand(){
   WriteBt(erasing_wifi_credentials_message);
-  ClearWiFiCredentials();
+  RemoveAllWiFiCredentials();
   IOWrite(IO_WRITE_SCREEN, erasing_wifi_credentials_message);
 }
 

@@ -11,7 +11,7 @@ void ProcessBtTerminalCommand(int command);
 
 void PingCommand();
 void AddWiFiCredentialsCommand();
-void ClearWiFiCredentialsCommand();
+void RemoveAllWiFiCredentialsCommand();
 void PrintNetworksFromMemoryCommand();
 void SmtpConfigureCommand();
 void RestartESPCommand();

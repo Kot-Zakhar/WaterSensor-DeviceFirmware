@@ -10,7 +10,7 @@ void ProcessBtJsonCommand(int command);
 
 // void PingJsonCommand();
 // void AddWiFiCredentialsJsonCommand();
-// void ClearWiFiCredentialsJsonCommand();
+// void RemoveAllWiFiCredentialsJsonCommand();
 // void PrintNetworksFromMemoryJsonCommand();
 // void SmtpConfigureJsonCommand();
 // void RestartESPJsonCommand();

@@ -127,7 +127,43 @@ char* GetWiFiPasswordFromMemory(int index, char* buffer){
   return buffer;
 }
 
-void ClearWiFiCredentials(){
+bool RemoveWiFiCredentials(int index) {
+  int amount = GetWiFiCredentialsAmountFromMemory();
+  if (index >= amount || index < 0)
+    return false;
+
+  char *key = (char*) malloc(MEMORY_KEY_MAX_LENGTH * sizeof(char));
+  char *buffer = (char *) malloc(STRING_LENGTH * sizeof(char));
+
+  for (int i = index + 1; i < amount; i++) {
+    sprintf(key, "%s%d", wifi_ssid_key_prefix, i);
+    memory.getString(key, buffer, STRING_LENGTH);
+    sprintf(key, "%s%d", wifi_ssid_key_prefix, i - 1);
+    memory.putString(key, buffer);
+
+    sprintf(key, "%s%d", wifi_password_key_prefix, i);
+    memory.getString(key, buffer, STRING_LENGTH);
+    sprintf(key, "%s%d", wifi_password_key_prefix, i - 1);
+    memory.putString(key, buffer);
+
+  }
+
+  sprintf(key, "%s%d", wifi_ssid_key_prefix, amount);
+  memory.remove(key);
+  sprintf(key, "%s%d", wifi_password_key_prefix, amount);
+  memory.remove(key);
+  
+  amount = amount - 1;
+
+  memory.putUInt(wifi_amount_key, amount);
+
+  free(buffer);
+  free(key);
+
+  return true;
+}
+
+void RemoveAllWiFiCredentials(){
   int amount = GetWiFiCredentialsAmountFromMemory();
   char* key = (char*)malloc(MEMORY_KEY_MAX_LENGTH * sizeof(char));
   

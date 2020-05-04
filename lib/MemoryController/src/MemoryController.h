@@ -36,7 +36,8 @@ void InitMemoryController();
 
 int SaveWiFiCredentialsInMemory(const char* ssid, const char* password);
 
-void ClearWiFiCredentials();
+void RemoveAllWiFiCredentials();
+bool RemoveWiFiCredentials(int index);
 
 int GetWiFiCredentialsAmountFromMemory();
 char* GetWiFiSsidFromMemory(int index, char* buffer);
