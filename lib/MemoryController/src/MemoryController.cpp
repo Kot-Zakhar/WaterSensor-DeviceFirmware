@@ -127,6 +127,36 @@ char* GetWiFiPasswordFromMemory(int index, char* buffer){
   return buffer;
 }
 
+int RemoveWiFiCredentials(const char *uuid) {
+  int amount = GetWiFiCredentialsAmountFromMemory();
+  if (amount == 0)
+    return 0;
+
+  int removedAmount = 0;
+
+  char *key = (char*) malloc(MEMORY_KEY_MAX_LENGTH * sizeof(char));
+  char *buffer = (char *) malloc(STRING_LENGTH * sizeof(char));
+
+  for (int i = 0; i < amount;) {
+    sprintf(key, "%s%d", wifi_ssid_key_prefix, i);
+    memory.getString(key, buffer, STRING_LENGTH);
+
+    if (!strcmp(uuid, buffer) && RemoveWiFiCredentials(i)) {
+      removedAmount++;
+      amount--;
+    } else {
+      i++;
+    }
+  }
+
+  log_d("%d records of '%s' were removed from memory.", removedAmount, uuid);
+  
+  free(buffer);
+  free(key);
+
+  return removedAmount;
+}
+
 bool RemoveWiFiCredentials(int index) {
   int amount = GetWiFiCredentialsAmountFromMemory();
   if (index >= amount || index < 0)
@@ -148,9 +178,9 @@ bool RemoveWiFiCredentials(int index) {
 
   }
 
-  sprintf(key, "%s%d", wifi_ssid_key_prefix, amount);
+  sprintf(key, "%s%d", wifi_ssid_key_prefix, amount - 1);
   memory.remove(key);
-  sprintf(key, "%s%d", wifi_password_key_prefix, amount);
+  sprintf(key, "%s%d", wifi_password_key_prefix, amount - 1);
   memory.remove(key);
   
   amount = amount - 1;

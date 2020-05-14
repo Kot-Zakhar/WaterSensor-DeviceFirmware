@@ -8,7 +8,8 @@ enum bt_command_t {
 
   BT_PING,
   WIFI_SSID_AND_PASSWORD,
-  WIFI_ERASE,
+  WIFI_REMOVE_ALL,
+  WIFI_REMOVE_SINGLE,
   WIFI_SHOW_NETWORKS,
   SMTP_SETTINGS,
   RESTART,
@@ -22,7 +23,8 @@ enum bt_command_t {
 static const char* commands[] = {
   "ping",
   "new wifi",
-  "clear wifi",
+  "remove wifi all",
+  "remove wifi single",
   "show",
   "email",
   "restart",
@@ -36,9 +38,11 @@ static const char *wifi_ssid_confirmation_message = "Ssid received.";
 static const char *wifi_password_request_message = "Provide passowrd of network:";
 static const char *wifi_password_confirmation_message = "Password received.";
 static const char *erasing_wifi_credentials_message = "Erasing wifi credentials.";
+static const char *specify_wifi_index_or_uuid_message = "Specify index or uuid.";
 static const char *status_ok_message = "Ok.";
 static const char *status_error_message = "Error.";
 static const char *unknown_command_message = "Unknown command.";
+static const char *not_supported_command_message = "Not supported.";
 static const char *restart_message = "Restarting...";
 static const char *pong_message = "pong";
 static const char *memory_empty_message = "No networks in memory";

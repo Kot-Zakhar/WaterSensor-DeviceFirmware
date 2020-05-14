@@ -39,6 +39,7 @@ int SaveWiFiCredentialsInMemory(const char* ssid, const char* password);
 
 void RemoveAllWiFiCredentials();
 bool RemoveWiFiCredentials(int index);
+int RemoveWiFiCredentials(const char *uuid);
 
 int GetWiFiCredentialsAmountFromMemory();
 char* GetWiFiSsidFromMemory(int index, char* buffer);

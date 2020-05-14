@@ -1,6 +1,8 @@
 #include <BtJson.h>
 
 void SendPongJson();
+void AddWiFiCredentialsJson(JsonObject wifiRecord);
+void RemoveWifiSingleJson(JsonObject payload);
 void SendNetworksFromMemoryJson();
 void SendNotRecognizedJson();
 
@@ -42,19 +44,22 @@ void ProcessBtJsonMessage(JsonObject &reqMessage) {
   if (commandIndex == COMMAND_AMOUNT){
     IOWrite(IO_WRITE_SCREEN | IO_WRITE_SERIAL, "Cmd not recognized.");
   } else {
-    JsonObject payload;
+    JsonObject payload = reqMessage["payload"];
 
     switch (commandIndex)
     {
     case BT_PING:
       SendPongJson();
       break;
-    // case JSON_WIFI_SSID_AND_PASSWORD:
-    //   AddWiFiCredentialsJsonCommand();
-    //   break;
-  //   case JSON_WIFI_ERASE:
+    case WIFI_SSID_AND_PASSWORD:
+      AddWiFiCredentialsJson(payload);
+      break;
+  //   case JSON_WIFI_REMOVE_ALL:
   //     RemoveAllWiFiCredentialsJsonCommand();
   //     break;
+    case WIFI_REMOVE_SINGLE:
+      RemoveWifiSingleJson(payload);
+      break;
     case WIFI_SHOW_NETWORKS:
       SendNetworksFromMemoryJson();
       break;
@@ -91,7 +96,7 @@ void SendNetworksFromMemoryJson() {
 
   int counter = GetWiFiCredentialsAmountFromMemory();
 
-  DynamicJsonDocument doc(1024);
+  DynamicJsonDocument doc(20 + 60 * counter);
   JsonObject res = doc.to<JsonObject>();
   res["status"] = "OK";
   JsonArray wifiRecordArr = res.createNestedArray("payload");
@@ -119,20 +124,27 @@ void SendNetworksFromMemoryJson() {
   SendJsonResponse(doc);
 }
 
-// void AddWiFiCredentialsJsonCommand() {
-//   DynamicJsonDocument jsonWifiRecord(200);
+void AddWiFiCredentialsJson(JsonObject wifiRecord) {
+  const char *ssid = wifiRecord["ssid"];
+  const char *pwd = wifiRecord["password"];
 
-//   BluetoothSerial *bt = GetCurrentBtSerial();
+  SaveWiFiCredentialsInMemory(ssid, pwd);
 
-//   deserializeJson(jsonWifiRecord, *bt);
+  DynamicJsonDocument answer(20);
+  answer["status"] = "OK";
 
-//   const char *ssid = jsonWifiRecord["ssid"];
-//   const char *pwd = jsonWifiRecord["password"];
+  SendJsonResponse(answer);
+}
 
-//   SaveWiFiCredentialsInMemory(ssid, pwd);
+void RemoveWifiSingleJson(JsonObject payload) {
+  int index = payload["index"];
+  // TODO: validate index
+  bool removed = RemoveWiFiCredentials(index);
 
-//   WriteBt("ok");
-// }
+  DynamicJsonDocument answer(20);
+  answer["status"] = removed ? "OK" : "Invalid index specified";
+  SendJsonResponse(answer);
+}
 
 void SendNotRecognizedJson() {
   DynamicJsonDocument doc(50);

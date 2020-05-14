@@ -3,6 +3,7 @@
 void PingCommand();
 void AddWiFiCredentialsCommand();
 void RemoveAllWiFiCredentialsCommand();
+void RemoveSingleWiFiCredentialCommand();
 void PrintNetworksFromMemoryCommand();
 void SmtpConfigureCommand();
 void RestartESPCommand();
@@ -11,22 +12,18 @@ void HelpCommand();
 
 
 void ProcessBtTerminalMessage(const char* message, int length) {
-  
-  String line = String(message);
   int commandIndex;
 
   for (commandIndex = 0; commandIndex < COMMAND_AMOUNT; commandIndex++){
     log_d("Comparing two strings: actual command '%s' vs template '%s'", message, commands[commandIndex]);
-    if (!line.compareTo(String(commands[commandIndex])))
+    if (!strcmp(message, commands[commandIndex]))
       break;
   }
 
-  if (commandIndex == COMMAND_AMOUNT){
-    IOWrite(IO_WRITE_SCREEN | IO_WRITE_SERIAL, "Cmd not recognized");
-  } else {
-    ProcessBtTerminalCommand(commandIndex);
-  }
+  if (commandIndex == COMMAND_AMOUNT)
+    commandIndex = NOT_RECOGNISED;
 
+  ProcessBtTerminalCommand(commandIndex);
 }
 
 
@@ -45,8 +42,11 @@ void ProcessBtTerminalCommand(int command){
   case WIFI_SSID_AND_PASSWORD:
     AddWiFiCredentialsCommand();
     break;
-  case WIFI_ERASE:
+  case WIFI_REMOVE_ALL:
     RemoveAllWiFiCredentialsCommand();
+    break;
+  case WIFI_REMOVE_SINGLE:
+    RemoveSingleWiFiCredentialCommand();
     break;
   case WIFI_SHOW_NETWORKS:
     PrintNetworksFromMemoryCommand();
@@ -65,6 +65,9 @@ void ProcessBtTerminalCommand(int command){
     break;
   case NOT_RECOGNISED:
     WriteBt(unknown_command_message);
+    break;
+  default:
+    WriteBt(not_supported_command_message);
     break;
   }
 }
@@ -203,6 +206,25 @@ void RemoveAllWiFiCredentialsCommand(){
   WriteBt(erasing_wifi_credentials_message);
   RemoveAllWiFiCredentials();
   IOWrite(IO_WRITE_SCREEN, erasing_wifi_credentials_message);
+}
+
+void RemoveSingleWiFiCredentialCommand() {
+  WriteBt(specify_wifi_index_or_uuid_message);
+  char *response = (char *) malloc(STRING_LENGTH);
+  AwaitAndReadBt(response, STRING_LENGTH);
+  int index;
+  int removed;
+  if (sscanf(response, "%d", &index)) {
+    removed = RemoveWiFiCredentials(index);
+  } else {
+    removed = RemoveWiFiCredentials(response);
+  }
+
+  log_d("%d wifi credentials '%s' are removed.", removed, response);
+
+  IOWrite(IO_WRITE_SCREEN, erasing_wifi_credentials_message);
+
+  free(response);
 }
 
 void RestartESPCommand(){
