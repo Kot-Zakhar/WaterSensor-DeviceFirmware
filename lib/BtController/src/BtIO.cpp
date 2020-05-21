@@ -6,8 +6,8 @@ void BtInterruptCallback(esp_spp_cb_event_t event, esp_spp_cb_param_t *param);
 BluetoothSerial BT;
 
 void InitBtIO(const char *name) {
-    BT.begin(name);
-    BT.register_callback(BtInterruptCallback);
+  BT.begin(name);
+  BT.register_callback(BtInterruptCallback);
 }
 
 BluetoothSerial *GetCurrentBtSerial() {

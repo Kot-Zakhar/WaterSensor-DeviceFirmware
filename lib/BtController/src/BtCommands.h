@@ -12,8 +12,10 @@ enum bt_command_t {
   WIFI_REMOVE_SINGLE,
   WIFI_SHOW_NETWORKS,
   SMTP_SETTINGS,
+  SET_SMTP_SETTINGS,
   RESTART,
   SWITCH_MODE,
+  GET_MODE,
   HELP,
 
   COMMAND_AMOUNT,
@@ -27,8 +29,10 @@ static const char* commands[] = {
   "remove wifi single",
   "show",
   "email",
+  "set email",
   "restart",
   "switch mode",
+  "get mode",
   "help"
 };
 

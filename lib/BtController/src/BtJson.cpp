@@ -4,6 +4,12 @@ void SendPongJson();
 void AddWiFiCredentialsJson(JsonObject wifiRecord);
 void RemoveWifiSingleJson(JsonObject payload);
 void SendNetworksFromMemoryJson();
+void GetEmailSettingsJson();
+void SetEmailSettingsJson(JsonObject payload);
+void GetModeJson();
+void SwitchModeJson(JsonObject payload);
+void RestartESPJson();
+
 void SendNotRecognizedJson();
 
 
@@ -33,17 +39,19 @@ void ProcessBtJsonMessage(JsonObject &reqMessage) {
 
   // parsing the command
   const char* command = reqMessage["command"];
-  String line = String(command);
   int commandIndex;
   for (commandIndex = 0; commandIndex < COMMAND_AMOUNT; commandIndex++){
-    if (!line.compareTo(String(commands[commandIndex])))
+    if (!strcmp(command, commands[commandIndex]))
       break;
   }
   // result is in commandIndex
 
   if (commandIndex == COMMAND_AMOUNT){
     IOWrite(IO_WRITE_SCREEN | IO_WRITE_SERIAL, "Cmd not recognized.");
+    IOIndicate(BT_GOT_BAD_COMMAND);
   } else {
+    IOWrite(IO_WRITE_SCREEN, ("JSON " + String(command)).c_str());
+    IOIndicate(BT_GOT_GOOD_COMMAND);
     JsonObject payload = reqMessage["payload"];
 
     switch (commandIndex)
@@ -63,21 +71,21 @@ void ProcessBtJsonMessage(JsonObject &reqMessage) {
     case WIFI_SHOW_NETWORKS:
       SendNetworksFromMemoryJson();
       break;
-  //   case JSON_SMTP_SETTINGS:
-  //     SmtpConfigureJsonCommand();
-  //     break;
-  //   case JSON_RESTART:
-  //     RestartESPJsonCommand();
-  //     break;
-  //   case JSON_SWITCH_MODE:
-  //     SwitchModeJsonCommand();
-  //     break;
-  //   case JSON_HELP:
-  //     HelpJsonCommand();
-  //     break;
-  //   case JSON_NOT_RECOGNISED:
-  //     WriteBt(unknown_command_message);
-  //     break;
+    case SMTP_SETTINGS:
+      GetEmailSettingsJson();
+      break;
+    case SET_SMTP_SETTINGS:
+      SetEmailSettingsJson(payload);
+      break;
+    case RESTART:
+      RestartESPJson();
+      break;
+    case GET_MODE:
+      GetModeJson();
+      break;
+    case SWITCH_MODE:
+      SwitchModeJson(payload);
+      break;
     default:
       SendNotRecognizedJson();
       break;
@@ -89,6 +97,7 @@ void SendPongJson() {
   DynamicJsonDocument doc(50);
   JsonObject res = doc.to<JsonObject>();
   res["status"] = "OK";
+  // res["payload"] = "pong";
   SendJsonResponse(doc);
 }
 
@@ -146,6 +155,63 @@ void RemoveWifiSingleJson(JsonObject payload) {
   SendJsonResponse(answer);
 }
 
+
+void GetEmailSettingsJson() {
+  DynamicJsonDocument answer(STRING_LENGTH * EMAIL_SETTINGS_COUNT);
+  answer["status"] = "OK";
+  JsonObject payload = answer.createNestedObject("payload");
+  char *buffer = (char *)malloc(STRING_LENGTH);
+  for (int i = 0; i < EMAIL_SETTINGS_COUNT; i++) {
+    // TODO: check if values are initialized
+    // On first start they are nulls
+    GetEmailValue(i, buffer);
+    payload[email_settings[i]] = buffer;
+  }
+
+  free(buffer);
+  SendJsonResponse(answer);
+}
+
+void SetEmailSettingsJson(JsonObject payload) {
+  DynamicJsonDocument response(STRING_LENGTH);
+  response["status"] = "OK";
+
+  for (int i = 0; i < EMAIL_SETTINGS_COUNT; i++) {
+    const char *value = payload[email_settings[i]];
+    // TODO: Check if this if really do its job
+    if (value != NULL)
+      SetEmailValue(i, value);
+  }
+
+  SendJsonResponse(response);
+}
+
+void SwitchModeJson(JsonObject payload) {
+  bool config = payload["config"];
+  SetStateInMemory(config);
+
+  DynamicJsonDocument response(STRING_LENGTH);
+  response["status"] = "OK";
+  SendJsonResponse(response);
+}
+
+void GetModeJson() {
+  DynamicJsonDocument response(STRING_LENGTH);
+  response["status"] = "OK";
+  bool config = IsConfigStateInMemory();
+  response.createNestedObject("payload")["config"] = config;
+  SendJsonResponse(response);
+}
+
+void RestartESPJson() {
+  DynamicJsonDocument response(STRING_LENGTH);
+  response["status"] = "OK";
+  SendJsonResponse(response);
+
+  delay(1000);
+  ESP.restart();
+}
+
 void SendNotRecognizedJson() {
   DynamicJsonDocument doc(50);
   JsonObject res = doc.to<JsonObject>();
@@ -154,6 +220,12 @@ void SendNotRecognizedJson() {
 }
 
 void SendJsonResponse(JsonDocument &res) {
-  BluetoothSerial *bt = GetCurrentBtSerial();
-  serializeJson(res, *bt);
+  // BluetoothSerial *bt = GetCurrentBtSerial();
+  // serializeJson(res, *bt);
+  int length = measureJson(res) + 1;
+
+  char *buffer = (char *) malloc(length);
+  serializeJson(res, buffer, length);
+  WriteBt(buffer);
+  free(buffer);
 }
