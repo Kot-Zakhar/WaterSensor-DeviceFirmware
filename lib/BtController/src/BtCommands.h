@@ -16,6 +16,7 @@ enum bt_command_t {
   RESTART,
   SWITCH_MODE,
   GET_MODE,
+  SENSOR_VALUE,
   HELP,
 
   COMMAND_AMOUNT,
@@ -33,6 +34,7 @@ static const char* commands[] = {
   "restart",
   "switch mode",
   "get mode",
+  "sensor value",
   "help"
 };
 

@@ -8,6 +8,7 @@ void GetEmailSettingsJson();
 void SetEmailSettingsJson(JsonObject payload);
 void GetModeJson();
 void SwitchModeJson(JsonObject payload);
+void GetSensorValueJson();
 void RestartESPJson();
 
 void SendNotRecognizedJson();
@@ -41,6 +42,7 @@ void ProcessBtJsonMessage(JsonObject &reqMessage) {
   const char* command = reqMessage["command"];
   int commandIndex;
   for (commandIndex = 0; commandIndex < COMMAND_AMOUNT; commandIndex++){
+    // log_d("Comparing two strings: actual command '%s' vs template '%s'", command, commands[commandIndex]);
     if (!strcmp(command, commands[commandIndex]))
       break;
   }
@@ -50,7 +52,7 @@ void ProcessBtJsonMessage(JsonObject &reqMessage) {
     IOWrite(IO_WRITE_SCREEN | IO_WRITE_SERIAL, "Cmd not recognized.");
     IOIndicate(BT_GOT_BAD_COMMAND);
   } else {
-    IOWrite(IO_WRITE_SCREEN, ("JSON " + String(command)).c_str());
+    // IOWrite(IO_WRITE_SCREEN, ("JSON " + String(command)).c_str());
     IOIndicate(BT_GOT_GOOD_COMMAND);
     JsonObject payload = reqMessage["payload"];
 
@@ -82,6 +84,9 @@ void ProcessBtJsonMessage(JsonObject &reqMessage) {
       break;
     case GET_MODE:
       GetModeJson();
+      break;
+    case SENSOR_VALUE:
+      GetSensorValueJson();
       break;
     case SWITCH_MODE:
       SwitchModeJson(payload);
@@ -116,7 +121,7 @@ void SendNetworksFromMemoryJson() {
     char* ssid = (char*) malloc(STRING_LENGTH * sizeof(char));
     char* password = (char*) malloc(STRING_LENGTH * sizeof(char));
 
-    IOWrite(IO_WRITE_SCREEN | IO_WRITE_CLEAN_BEFORE_WRITE | IO_WRITE_SERIAL, (String(counter) + " networks in memory.").c_str());
+    IOWrite(IO_WRITE_SCREEN | IO_WRITE_SERIAL, (String(counter) + " networks in memory.").c_str());
 
     for (int i = 0; i < counter; i++){
         GetWiFiSsidFromMemory(i, ssid);
@@ -203,6 +208,14 @@ void GetModeJson() {
   SendJsonResponse(response);
 }
 
+void GetSensorValueJson() {
+  DynamicJsonDocument response(STRING_LENGTH);
+  response["status"] = "OK";
+  int sensorValue = GetSensorValue();
+  response["payload"] = sensorValue;
+  SendJsonResponse(response);
+}
+
 void RestartESPJson() {
   DynamicJsonDocument response(STRING_LENGTH);
   response["status"] = "OK";
@@ -225,6 +238,7 @@ void SendJsonResponse(JsonDocument &res) {
   int length = measureJson(res) + 1;
 
   char *buffer = (char *) malloc(length);
+  log_d("Sending buffer to client:\n%s", buffer);
   serializeJson(res, buffer, length);
   WriteBt(buffer);
   free(buffer);

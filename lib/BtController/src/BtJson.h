@@ -5,6 +5,7 @@
 #include <BtIO.h>
 #include <BtCommands.h>
 #include <MemoryController.h>
+#include <SensorController.h>
 
 // void ProcessBtJsonCommand(int command);
 void ProcessBtJsonMessage(JsonObject &jsonMessage);
