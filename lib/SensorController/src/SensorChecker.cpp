@@ -11,55 +11,55 @@ bool stateIsConfigForSensor;
 
 Ticker sensorChecker;
 
-bool SendNotificationAboutSensor();
+bool sendNotificationAboutSensor();
 
-void CheckSensorValue(){
-    int16_t oldValue = GetSensorValue();
-    int16_t newValue = UpdateSensorValue();
+void checkSensorValue(){
+    int16_t oldValue = getSensorValue();
+    int16_t newValue = updateSensorValue();
 
     if (newValue > oldValue + radius || newValue < oldValue - radius){
         log_v("Sensor - %d", newValue);
         
         if (newValue > maxValue || newValue < minValue){
-            IOIndicate(SensorValueOutOfRange);
+            ioIndicate(SensorValueOutOfRange);
             needToSendLetter = true;           
         } else {
-            IOIndicate(SensorValueCnaged);
+            ioIndicate(SensorValueCnaged);
             notificationWasSent = false;
         }
     }
 }
 
-void InitSensorChecker(bool isConfigState){
-    InitSensorController();
+void initSensorChecker(bool isConfigState){
+    initSensorController();
     stateIsConfigForSensor = isConfigState;
 
-    sensorChecker.attach(1, CheckSensorValue);
+    sensorChecker.attach(1, checkSensorValue);
 }
 
-bool SendNotificationAboutSensor(){    
+bool sendNotificationAboutSensor(){    
     if (stateIsConfigForSensor){
-        IOWrite(IO_WRITE_SCREEN, "Sensor out of bounds!");
+        ioWrite(IO_WRITE_SCREEN, "Sensor out of bounds!");
     } else {
-        IOWrite(IO_WRITE_SCREEN, "Sending sensor letter");
-        IOIndicate(WAIT);
-        if (SendLetter("ESP32 Sensor", ("Sensor's value has gone out of bounds [" + String(minValue) + ": " + String(maxValue) + "].").c_str(), false, true)){
-            IOIndicate(SUCCESS);
+        ioWrite(IO_WRITE_SCREEN, "Sending sensor letter");
+        ioIndicate(WAIT);
+        if (sendLetter("ESP32 Sensor", ("Sensor's value has gone out of bounds [" + String(minValue) + ": " + String(maxValue) + "].").c_str(), false, true)){
+            ioIndicate(SUCCESS);
         } else {
-            IOIndicate(ERROR);
+            ioIndicate(ERROR);
             return false;
         }
     }
     return true;
 }
 
-void ProcessSensorChecker(){
+void processSensorChecker(){
     if (needToSendLetter && !stateIsConfigForSensor){
         if (!notificationWasSent){
 
-            notificationWasSent = SendNotificationAboutSensor();
+            notificationWasSent = sendNotificationAboutSensor();
         } else {
-            log_i("Sensor value still out of range - %d", GetSensorValue()); 
+            log_i("Sensor value still out of range - %d", getSensorValue()); 
         }
         needToSendLetter = false;
     }

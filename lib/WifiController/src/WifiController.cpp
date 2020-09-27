@@ -13,10 +13,10 @@ const char* ntpServer2 = "europe.pool.ntp.org";
 const long  gmtOffset_sec = 10800;
 const int   daylightOffset_sec = 0;
 
-void InitWiFiController(){
+void initWiFiController(){
 }
 
-void SyncTime(){
+void syncTime(){
   // IOWrite(IO_WRITE_SCREEN | IO_WRITE_SERIAL, "Syncing time");
   struct tm timeInfo;
   do {
@@ -25,7 +25,7 @@ void SyncTime(){
   Serial.println(&timeInfo, "Time synced: %A, %b.%d.%Y %H:%M:%S");
 }
 
-char *GetDateTimeStr(char *buffer, size_t length, bool shortFormat){
+char *getDateTimeStr(char *buffer, size_t length, bool shortFormat){
   struct tm timeInfo;
   if (!getLocalTime(&timeInfo)){
     strcpy(buffer, shortFormat ? failedToObtainTimeShortMessage : failedToObtainTimeMessage);
@@ -37,7 +37,7 @@ char *GetDateTimeStr(char *buffer, size_t length, bool shortFormat){
   return buffer;
 }
 
-char *GetTimeStr(char *buffer, size_t length, bool shortFormat){
+char *getTimeStr(char *buffer, size_t length, bool shortFormat){
   struct tm timeInfo;
   if (!getLocalTime(&timeInfo)){
     strcpy(buffer, shortFormat ? failedToObtainTimeShortMessage : failedToObtainTimeMessage);
@@ -49,58 +49,58 @@ char *GetTimeStr(char *buffer, size_t length, bool shortFormat){
   return buffer;
 }
 
-void WiFiControllerOff(){
-  DisconnectFromWiFi();
+void wifiControllerOff(){
+  disconnectFromWiFi();
 }
 
-void ConnectToWiFi(const char *ssid, const char *password){
+void connectToWiFi(const char *ssid, const char *password){
   WiFi.begin(ssid, password);
 }
 
-String GetCurrentWiFiSsid(){
+String getCurrentWiFiSsid(){
   return WiFi.SSID();
 }
 
-void AwaitForWiFiConnection(){
+void awaitForWiFiConnection(){
   log_v("Awaiting for wifi connection...");
-  while (!IsWiFiConnected())
+  while (!isWiFiConnected())
   {
     log_v(".");
     delay(200);
   }
 }
 
-bool AwaitForWiFiConnection(int timeout){
+bool awaitForWiFiConnection(int timeout){
   int time = 0;
   log_v("Awaiting for wifi connection...");
-  while (!IsWiFiConnected() && (time <= timeout))
+  while (!isWiFiConnected() && (time <= timeout))
   {
     log_v(".");
     delay(200);
     time+= 200;
   }
-  return IsWiFiConnected();
+  return isWiFiConnected();
 }
 
-bool ConnectToAnyWiFiFromMemory(){
+bool connectToAnyWiFiFromMemory(){
   char *ssid = (char *)malloc(STRING_LENGTH);
   char *password = (char *)malloc(STRING_LENGTH);
-  int amount = GetWiFiCredentialsAmountFromMemory();
+  int amount = getWiFiCredentialsAmountFromMemory();
   bool result = false;
   for (int i = 0; (i < amount) && (!result); i++){
-    ConnectToWiFi(GetWiFiSsidFromMemory(i, ssid), GetWiFiPasswordFromMemory(i, password));
-    result = AwaitForWiFiConnection(2000);
+    connectToWiFi(GetWiFiSsidFromMemory(i, ssid), GetWiFiPasswordFromMemory(i, password));
+    result = awaitForWiFiConnection(2000);
   }
   free(ssid);
   free(password);
   return result;
 }
 
-bool IsWiFiConnected(){
+bool isWiFiConnected(){
   return WiFi.status() == WL_CONNECTED;
 }
 
-void DisconnectFromWiFi(){
+void disconnectFromWiFi(){
   WiFi.disconnect();
   WiFi.mode(WIFI_OFF);
 }

@@ -5,8 +5,8 @@
 #include <Ticker.h>
 #include <IOController.h>
 
-int GetSensorValue();
-void InitSensorController();
-int UpdateSensorValue();
+int getSensorValue();
+void initSensorController();
+int updateSensorValue();
 
 #endif

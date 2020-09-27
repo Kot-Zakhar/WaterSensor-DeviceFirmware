@@ -26,6 +26,11 @@ enum message_t {
     MODE_CONFIG_ON,
     MODE_WORK_ON,
 
+    EMAIL_CHECKING,
+    EMAIL_MESSAGE_FOUND,
+    EMAIL_NO_MESSAGE_FOUND,
+    EMAIL_SENDING_LETTER,
+
     Interrupt0,
     Interrupt1,
     Interrupt2,
@@ -62,9 +67,9 @@ enum rgb_color_t {
     RGB_LEAF_GREEN
 };
 
-void InitIOController();
-void ClearDisplay();
-void IOWrite(int writeTo, const char *str);
-void IOIndicate(message_t messageType);
+void initIOController();
+void clearDisplay();
+void ioWrite(int writeTo, const char *str);
+void ioIndicate(message_t messageType);
 
 #endif

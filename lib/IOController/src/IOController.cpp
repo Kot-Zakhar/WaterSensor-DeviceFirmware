@@ -1,39 +1,39 @@
 #include <IOController.h>
 #include "LedController.cpp"
 
-void CheckScreen();
-void InitDisplay();
+void checkScreen();
+void initDisplay();
 
-void InitIOController(){
-  BindLEDs();
+void initIOController(){
+  bindLEDs();
   
-  InitDisplay();
+  initDisplay();
 
-  CheckScreen();
-  CheckLeds();
+  checkScreen();
+  checkLeds();
 
-  ClearDisplay();
+  clearDisplay();
 }
 
-void IOIndicate(message_t messageType){
+void ioIndicate(message_t messageType){
     switch(messageType){
         case BT_CONNECTED:
-            BlinkRGB(RGB_GREEN, FAST_BLINK);
+            blinkRGB(RGB_GREEN, FAST_BLINK);
             break;
         case BT_DISCONNECTED:
-            BlinkRGB(RGB_RED, FAST_BLINK);
+            blinkRGB(RGB_RED, FAST_BLINK);
             break;
         case BT_GOT_GOOD_COMMAND:
-            BlinkRGB(RGB_BLUE, FAST_BLINK);
+            blinkRGB(RGB_BLUE, FAST_BLINK);
             break;
         case BT_GOT_BAD_COMMAND:
-            BlinkRGB(RGB_MAGNETTA, FAST_BLINK);
+            blinkRGB(RGB_MAGNETTA, FAST_BLINK);
             break;
         case BT_PENDING_COMMAND:
-            BlinkRGB(RGB_BLUE, BREATH, 1000);
+            blinkRGB(RGB_BLUE, BREATH, 1000);
             break;
         case BT_END_COMMAND:
-            BlinkRGB(RGB_WHITE, FAST_BLINK);
+            blinkRGB(RGB_WHITE, FAST_BLINK);
             break;
 
         case MODE_CONFIG_ON:
@@ -58,17 +58,30 @@ void IOIndicate(message_t messageType){
             redLed.Blink(blinkDuration[FAST_BLINK], blinkDuration[FAST_BLINK]).Repeat(2);
             break;
         case SUCCESS:
-            BlinkRGB(RGB_GREEN, FAST_BLINK, 2);
+            blinkRGB(RGB_GREEN, FAST_BLINK, 2);
             break;
         case WAIT:
-            BlinkRGB(RGB_PURPLE, BREATH, 100);
+            blinkRGB(RGB_PURPLE, BREATH, 100);
             break;
 
         case SensorValueCnaged:
-            BlinkRGB(RGB_GREEN, FAST_BLINK, 1);
+            blinkRGB(RGB_GREEN, FAST_BLINK, 1);
             break;
         case SensorValueOutOfRange:
-            BlinkRGB(RGB_BLUE, FAST_BLINK, 3);
+            blinkRGB(RGB_BLUE, FAST_BLINK, 3);
+            break;
+
+        case EMAIL_CHECKING:
+            blinkRGB(RGB_YELLOW, BREATH, 1000);
+            break;
+        case EMAIL_MESSAGE_FOUND:
+            blinkRGB(RGB_YELLOW, FAST_BLINK);
+            break;
+        case EMAIL_NO_MESSAGE_FOUND:
+            blinkRGB(RGB_YELLOW, FAST_BLINK, 3);
+            break;
+        case EMAIL_SENDING_LETTER:
+            blinkRGB(RGB_CYAN, BREATH, 100);
             break;
 
         case Interrupt0:

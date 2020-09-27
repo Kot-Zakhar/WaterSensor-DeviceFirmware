@@ -1,20 +1,20 @@
 #include <BtJson.h>
 
-void SendPongJson();
-void AddWiFiCredentialsJson(JsonObject wifiRecord);
-void RemoveWifiSingleJson(JsonObject payload);
-void SendNetworksFromMemoryJson();
-void GetEmailSettingsJson();
-void SetEmailSettingsJson(JsonObject payload);
-void GetModeJson();
-void SwitchModeJson(JsonObject payload);
-void GetSensorValueJson();
-void RestartESPJson();
+void sendPongJson();
+void addWiFiCredentialsJson(JsonObject wifiRecord);
+void removeWifiSingleJson(JsonObject payload);
+void sendNetworksFromMemoryJson();
+void getEmailSettingsJson();
+void setEmailSettingsJson(JsonObject payload);
+void getModeJson();
+void switchModeJson(JsonObject payload);
+void getSensorValueJson();
+void restartESPJson();
 
-void SendNotRecognizedJson();
+void sendNotRecognizedJson();
 
 
-void SendJsonResponse(JsonDocument &res);
+void sendJsonResponse(JsonDocument &res);
 
 // void AddWiFiCredentialsJsonCommand();
 
@@ -36,7 +36,7 @@ void SendJsonResponse(JsonDocument &res);
  * }
 */
 
-void ProcessBtJsonMessage(JsonObject &reqMessage) {
+void processBtJsonMessage(JsonObject &reqMessage) {
 
   // parsing the command
   const char* command = reqMessage["command"];
@@ -49,66 +49,66 @@ void ProcessBtJsonMessage(JsonObject &reqMessage) {
   // result is in commandIndex
 
   if (commandIndex == COMMAND_AMOUNT){
-    IOWrite(IO_WRITE_SCREEN | IO_WRITE_SERIAL, "Cmd not recognized.");
-    IOIndicate(BT_GOT_BAD_COMMAND);
+    ioWrite(IO_WRITE_SCREEN | IO_WRITE_SERIAL, "Cmd not recognized.");
+    ioIndicate(BT_GOT_BAD_COMMAND);
   } else {
     // IOWrite(IO_WRITE_SCREEN, ("JSON " + String(command)).c_str());
-    IOIndicate(BT_GOT_GOOD_COMMAND);
+    ioIndicate(BT_GOT_GOOD_COMMAND);
     JsonObject payload = reqMessage["payload"];
 
     switch (commandIndex)
     {
     case BT_PING:
-      SendPongJson();
+      sendPongJson();
       break;
     case WIFI_SSID_AND_PASSWORD:
-      AddWiFiCredentialsJson(payload);
+      addWiFiCredentialsJson(payload);
       break;
   //   case JSON_WIFI_REMOVE_ALL:
   //     RemoveAllWiFiCredentialsJsonCommand();
   //     break;
     case WIFI_REMOVE_SINGLE:
-      RemoveWifiSingleJson(payload);
+      removeWifiSingleJson(payload);
       break;
     case WIFI_SHOW_NETWORKS:
-      SendNetworksFromMemoryJson();
+      sendNetworksFromMemoryJson();
       break;
     case SMTP_SETTINGS:
-      GetEmailSettingsJson();
+      getEmailSettingsJson();
       break;
     case SET_SMTP_SETTINGS:
-      SetEmailSettingsJson(payload);
+      setEmailSettingsJson(payload);
       break;
     case RESTART:
-      RestartESPJson();
+      restartESPJson();
       break;
     case GET_MODE:
-      GetModeJson();
+      getModeJson();
       break;
     case SENSOR_VALUE:
-      GetSensorValueJson();
+      getSensorValueJson();
       break;
     case SWITCH_MODE:
-      SwitchModeJson(payload);
+      switchModeJson(payload);
       break;
     default:
-      SendNotRecognizedJson();
+      sendNotRecognizedJson();
       break;
     }
   }
 }
 
-void SendPongJson() {
+void sendPongJson() {
   DynamicJsonDocument doc(50);
   JsonObject res = doc.to<JsonObject>();
   res["status"] = "OK";
   // res["payload"] = "pong";
-  SendJsonResponse(doc);
+  sendJsonResponse(doc);
 }
 
-void SendNetworksFromMemoryJson() {
+void sendNetworksFromMemoryJson() {
 
-  int counter = GetWiFiCredentialsAmountFromMemory();
+  int counter = getWiFiCredentialsAmountFromMemory();
 
   DynamicJsonDocument doc(20 + 60 * counter);
   JsonObject res = doc.to<JsonObject>();
@@ -116,12 +116,12 @@ void SendNetworksFromMemoryJson() {
   JsonArray wifiRecordArr = res.createNestedArray("payload");
 
   if (counter == 0){
-    IOWrite(IO_WRITE_SCREEN | IO_WRITE_SERIAL, memory_empty_message);
+    ioWrite(IO_WRITE_SCREEN | IO_WRITE_SERIAL, memory_empty_message);
   } else {
     char* ssid = (char*) malloc(STRING_LENGTH * sizeof(char));
     char* password = (char*) malloc(STRING_LENGTH * sizeof(char));
 
-    IOWrite(IO_WRITE_SCREEN | IO_WRITE_SERIAL, (String(counter) + " networks in memory.").c_str());
+    ioWrite(IO_WRITE_SCREEN | IO_WRITE_SERIAL, (String(counter) + " networks in memory.").c_str());
 
     for (int i = 0; i < counter; i++){
         GetWiFiSsidFromMemory(i, ssid);
@@ -135,10 +135,10 @@ void SendNetworksFromMemoryJson() {
     free(password);
   }
 
-  SendJsonResponse(doc);
+  sendJsonResponse(doc);
 }
 
-void AddWiFiCredentialsJson(JsonObject wifiRecord) {
+void addWiFiCredentialsJson(JsonObject wifiRecord) {
   const char *ssid = wifiRecord["ssid"];
   const char *pwd = wifiRecord["password"];
 
@@ -147,21 +147,21 @@ void AddWiFiCredentialsJson(JsonObject wifiRecord) {
   DynamicJsonDocument answer(20);
   answer["status"] = "OK";
 
-  SendJsonResponse(answer);
+  sendJsonResponse(answer);
 }
 
-void RemoveWifiSingleJson(JsonObject payload) {
+void removeWifiSingleJson(JsonObject payload) {
   int index = payload["index"];
   // TODO: validate index
   bool removed = RemoveWiFiCredentials(index);
 
   DynamicJsonDocument answer(20);
   answer["status"] = removed ? "OK" : "Invalid index specified";
-  SendJsonResponse(answer);
+  sendJsonResponse(answer);
 }
 
 
-void GetEmailSettingsJson() {
+void getEmailSettingsJson() {
   DynamicJsonDocument answer(STRING_LENGTH * EMAIL_SETTINGS_COUNT);
   answer["status"] = "OK";
   JsonObject payload = answer.createNestedObject("payload");
@@ -169,15 +169,15 @@ void GetEmailSettingsJson() {
   for (int i = 0; i < EMAIL_SETTINGS_COUNT; i++) {
     // TODO: check if values are initialized
     // On first start they are nulls
-    GetEmailValue(i, buffer);
+    getEmailValue(i, buffer);
     payload[email_settings[i]] = buffer;
   }
 
   free(buffer);
-  SendJsonResponse(answer);
+  sendJsonResponse(answer);
 }
 
-void SetEmailSettingsJson(JsonObject payload) {
+void setEmailSettingsJson(JsonObject payload) {
   DynamicJsonDocument response(STRING_LENGTH);
   response["status"] = "OK";
 
@@ -188,51 +188,51 @@ void SetEmailSettingsJson(JsonObject payload) {
       SetEmailValue(i, value);
   }
 
-  SendJsonResponse(response);
+  sendJsonResponse(response);
 }
 
-void SwitchModeJson(JsonObject payload) {
+void switchModeJson(JsonObject payload) {
   bool config = payload["config"];
-  SetStateInMemory(config);
+  setStateInMemory(config);
 
   DynamicJsonDocument response(STRING_LENGTH);
   response["status"] = "OK";
-  SendJsonResponse(response);
+  sendJsonResponse(response);
 }
 
-void GetModeJson() {
+void getModeJson() {
   DynamicJsonDocument response(STRING_LENGTH);
   response["status"] = "OK";
-  bool config = IsConfigStateInMemory();
+  bool config = isConfigStateInMemory();
   response.createNestedObject("payload")["config"] = config;
-  SendJsonResponse(response);
+  sendJsonResponse(response);
 }
 
-void GetSensorValueJson() {
+void getSensorValueJson() {
   DynamicJsonDocument response(STRING_LENGTH);
   response["status"] = "OK";
-  int sensorValue = GetSensorValue();
+  int sensorValue = getSensorValue();
   response["payload"] = sensorValue;
-  SendJsonResponse(response);
+  sendJsonResponse(response);
 }
 
-void RestartESPJson() {
+void restartESPJson() {
   DynamicJsonDocument response(STRING_LENGTH);
   response["status"] = "OK";
-  SendJsonResponse(response);
+  sendJsonResponse(response);
 
   delay(1000);
   ESP.restart();
 }
 
-void SendNotRecognizedJson() {
+void sendNotRecognizedJson() {
   DynamicJsonDocument doc(50);
   JsonObject res = doc.to<JsonObject>();
   res["status"] = "Not recognized";
-  SendJsonResponse(doc);
+  sendJsonResponse(doc);
 }
 
-void SendJsonResponse(JsonDocument &res) {
+void sendJsonResponse(JsonDocument &res) {
   // BluetoothSerial *bt = GetCurrentBtSerial();
   // serializeJson(res, *bt);
   int length = measureJson(res) + 1;
@@ -240,6 +240,6 @@ void SendJsonResponse(JsonDocument &res) {
   char *buffer = (char *) malloc(length);
   log_d("Sending buffer to client:\n%s", buffer);
   serializeJson(res, buffer, length);
-  WriteBt(buffer);
+  writeBt(buffer);
   free(buffer);
 }

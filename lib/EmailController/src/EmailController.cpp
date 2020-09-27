@@ -13,38 +13,51 @@ const char* htmlSise = "</p><br>";
 
 const String searchCriteria = "UID SEARCH SUBJECT \"esp32\" TEXT \"check\" UNSEEN";
 
-void CheckLetterTimerEvent(){
+void checkLetterTimerEvent(){
   log_v("Check letter event.");
   needToCheckInbox = true;
 }
 
-void InitEmailController(){
+void initEmailController(){
   log_v("Initializing email checker.");
-  emailChecker.attach(CHECK_INBOX_PERIOD_S, CheckLetterTimerEvent);
+  emailChecker.attach(CHECK_INBOX_PERIOD_S, checkLetterTimerEvent);
 }
 
-bool SendLetter(const char *subject, const char *message, bool isHtml, bool retryUntilSuccess){
+void stopEmailChecker() {
+  log_v("Stopping email checker.");
+  emailChecker.detach();
+}
+
+void restartEmailChecker() {
+  log_v("Restarting email checker.");
+  emailChecker.attach(CHECK_INBOX_PERIOD_S, checkLetterTimerEvent);
+}
+
+bool sendLetter(const char *subject, const char *message, bool isHtml, bool retryUntilSuccess){
   log_v("Sending letter");
-  if (!EmailValuesAvailable()){
+  if (!EmailValuesAvailable()) {
     log_v("Not all email settings are set!");
     return false;
   }
-  if (!IsWiFiConnected()){
+  if (!isWiFiConnected()) {
     log_v("Wifi is not connected.");
     return false;
   }
-  char *server = GetEmailValue(EMAIL_SMTP_SERVER, (char *)malloc(STRING_LENGTH));
-  char *port = GetEmailValue(EMAIL_SMTP_PORT, (char *)malloc(STRING_LENGTH));
-  char *login = GetEmailValue(EMAIL_LOGIN, (char *)malloc(STRING_LENGTH));
-  char *password = GetEmailValue(EMAIL_PASS, (char *)malloc(STRING_LENGTH));
-  char *sender = GetEmailValue(EMAIL_SMTP_SENDER, (char *)malloc(STRING_LENGTH));
-  char *recipient = GetEmailValue(EMAIL_SMTP_RECIPIENT, (char *)malloc(STRING_LENGTH));
-  char *dateTime = GetDateTimeStr((char *)malloc(STRING_LENGTH), STRING_LENGTH, false);
+
+  ioIndicate(EMAIL_SENDING_LETTER);
+
+  char *server = getEmailValue(EMAIL_SMTP_SERVER, (char *)malloc(STRING_LENGTH));
+  char *port = getEmailValue(EMAIL_SMTP_PORT, (char *)malloc(STRING_LENGTH));
+  char *login = getEmailValue(EMAIL_LOGIN, (char *)malloc(STRING_LENGTH));
+  char *password = getEmailValue(EMAIL_PASS, (char *)malloc(STRING_LENGTH));
+  char *sender = getEmailValue(EMAIL_SMTP_SENDER, (char *)malloc(STRING_LENGTH));
+  char *recipient = getEmailValue(EMAIL_SMTP_RECIPIENT, (char *)malloc(STRING_LENGTH));
+  char *dateTime = getDateTimeStr((char *)malloc(STRING_LENGTH), STRING_LENGTH, false);
   
   String timeStampedMessage = 
     String(message) +
     (isHtml ? htmlLeftSide : "\n") + 
-    "Sensor value is: " + GetSensorValue() +
+    "Sensor value is: " + getSensorValue() +
     (isHtml ? htmlSise: "\n") + 
     (isHtml ? htmlLeftSide : "\n") + 
     dateTime +
@@ -79,6 +92,12 @@ bool SendLetter(const char *subject, const char *message, bool isHtml, bool retr
       log_v("Not sent.");
   } while(!result && retryUntilSuccess);
 
+  if (result) {
+    ioIndicate(SUCCESS);
+  } else {
+    ioIndicate(ERROR);
+  }
+
   smtpData.empty();
 
   free(server);
@@ -91,7 +110,7 @@ bool SendLetter(const char *subject, const char *message, bool isHtml, bool retr
   return result;
 }
 
-bool CheckForIncomingLetter(){
+bool checkForIncomingLetter(){
   log_i("Checking incomming letter");
   if (!EmailValuesAvailable()){
     log_v("Not all email settings are set!");
@@ -99,10 +118,12 @@ bool CheckForIncomingLetter(){
   }
   bool result = false;
 
-  char *server = GetEmailValue(EMAIL_IMAP_SERVER, (char *)malloc(STRING_LENGTH));
-  char *port = GetEmailValue(EMAIL_IMAP_PORT, (char *)malloc(STRING_LENGTH));
-  char *login = GetEmailValue(EMAIL_LOGIN, (char *)malloc(STRING_LENGTH));
-  char *password = GetEmailValue(EMAIL_PASS, (char *)malloc(STRING_LENGTH));
+  ioIndicate(EMAIL_CHECKING);
+
+  char *server = getEmailValue(EMAIL_IMAP_SERVER, (char *)malloc(STRING_LENGTH));
+  char *port = getEmailValue(EMAIL_IMAP_PORT, (char *)malloc(STRING_LENGTH));
+  char *login = getEmailValue(EMAIL_LOGIN, (char *)malloc(STRING_LENGTH));
+  char *password = getEmailValue(EMAIL_PASS, (char *)malloc(STRING_LENGTH));
 
   imapData.setLogin(server, String(port).toInt(), login, password);
   imapData.setSearchCriteria(searchCriteria);
@@ -111,8 +132,9 @@ bool CheckForIncomingLetter(){
 
   if (MailClient.readMail(imapData) && imapData.availableMessages())
   {
-    IOWrite(IO_WRITE_SCREEN | IO_WRITE_SERIAL, "Got check letter.");
-    IOWrite(IO_WRITE_SCREEN | IO_WRITE_SERIAL, "Replying...");
+    ioWrite(IO_WRITE_SCREEN | IO_WRITE_SERIAL, "Got check letter.");
+    ioWrite(IO_WRITE_SCREEN | IO_WRITE_SERIAL, "Replying...");
+    ioIndicate(EMAIL_MESSAGE_FOUND);
     
     String subject = imapData.getSubject(0);
 
@@ -123,15 +145,16 @@ bool CheckForIncomingLetter(){
     String message = String("Got the message. I'm working fine :)\n");
     String replySubject = "Reply to \"" + subject + "\"";
 
-    result = SendLetter(replySubject.c_str(), message.c_str(), false);
+    result = sendLetter(replySubject.c_str(), message.c_str(), false);
     if (result){
-      IOWrite(IO_WRITE_SCREEN | IO_WRITE_SERIAL, "Replied successfully.");
+      ioWrite(IO_WRITE_SCREEN | IO_WRITE_SERIAL, "Replied successfully.");
     } else {
-      IOWrite(IO_WRITE_SCREEN | IO_WRITE_SERIAL, "Could not reply.");
+      ioWrite(IO_WRITE_SCREEN | IO_WRITE_SERIAL, "Could not reply.");
     }
       
   } else {
     log_i("No check letters in mail detected.");
+    ioIndicate(EMAIL_NO_MESSAGE_FOUND);
   }
 
   free(password);
@@ -142,9 +165,13 @@ bool CheckForIncomingLetter(){
   return result;
 }
 
-void ProcessEmailController() {
+bool shouldEmailBeProcessed() {
+  return needToCheckInbox;
+}
+
+void processEmailController() {
   if (needToCheckInbox){
-    CheckForIncomingLetter();
+    checkForIncomingLetter();
     needToCheckInbox = false;
   }
 }

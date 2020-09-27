@@ -25,7 +25,7 @@ const char* state_is_config_key = "dbg_state";
 
 Preferences memory;
 
-void InitMemoryController(){
+void initMemoryController(){
   memory.begin(wifi_table_name, false);
 
   if (!EmailValuesAvailable()){
@@ -65,7 +65,7 @@ bool EmailValuesAvailable(){
   return result;
 }
 
-char* GetEmailValue(int key, char* buffer){
+char* getEmailValue(int key, char* buffer){
   memory.getString(
     (String(email_key_prefix) + email_settings[key]).c_str(),
     buffer,
@@ -87,7 +87,7 @@ int SaveWiFiCredentialsInMemory(const char* ssid, const char* password){
   char* ssid_key = (char*) malloc(MEMORY_KEY_MAX_LENGTH * sizeof(char));
   char* password_key = (char*) malloc(MEMORY_KEY_MAX_LENGTH * sizeof(char));
 
-  int counter = GetWiFiCredentialsAmountFromMemory();
+  int counter = getWiFiCredentialsAmountFromMemory();
   
   sprintf(ssid_key, "%s%d", wifi_ssid_key_prefix, counter);
   sprintf(password_key, "%s%d", wifi_password_key_prefix, counter);
@@ -107,7 +107,7 @@ int SaveWiFiCredentialsInMemory(const char* ssid, const char* password){
   return counter;
 }
 
-int GetWiFiCredentialsAmountFromMemory(){
+int getWiFiCredentialsAmountFromMemory(){
   return memory.getUInt(wifi_amount_key, 0);
 }
 
@@ -128,7 +128,7 @@ char* GetWiFiPasswordFromMemory(int index, char* buffer){
 }
 
 int RemoveWiFiCredentials(const char *uuid) {
-  int amount = GetWiFiCredentialsAmountFromMemory();
+  int amount = getWiFiCredentialsAmountFromMemory();
   if (amount == 0)
     return 0;
 
@@ -158,7 +158,7 @@ int RemoveWiFiCredentials(const char *uuid) {
 }
 
 bool RemoveWiFiCredentials(int index) {
-  int amount = GetWiFiCredentialsAmountFromMemory();
+  int amount = getWiFiCredentialsAmountFromMemory();
   if (index >= amount || index < 0)
     return false;
 
@@ -194,7 +194,7 @@ bool RemoveWiFiCredentials(int index) {
 }
 
 void RemoveAllWiFiCredentials(){
-  int amount = GetWiFiCredentialsAmountFromMemory();
+  int amount = getWiFiCredentialsAmountFromMemory();
   char* key = (char*)malloc(MEMORY_KEY_MAX_LENGTH * sizeof(char));
   
   for (int i = 0; i < amount; i++){
@@ -211,11 +211,11 @@ void RemoveAllWiFiCredentials(){
 
 // States (modes)
 
-bool IsConfigStateInMemory(){
+bool isConfigStateInMemory(){
   log_v("Getting state from memory");
   return memory.getBool(state_is_config_key, CONFIG_IS_DEFAULT);
 }
 
-void SetStateInMemory(bool debug) {
+void setStateInMemory(bool debug) {
   memory.putBool(state_is_config_key, debug);
 }

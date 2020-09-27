@@ -33,7 +33,7 @@ enum email_setting_t {
 
 extern const char* email_settings[];
 
-void InitMemoryController();
+void initMemoryController();
 
 int SaveWiFiCredentialsInMemory(const char* ssid, const char* password);
 
@@ -41,15 +41,15 @@ void RemoveAllWiFiCredentials();
 bool RemoveWiFiCredentials(int index);
 int RemoveWiFiCredentials(const char *uuid);
 
-int GetWiFiCredentialsAmountFromMemory();
+int getWiFiCredentialsAmountFromMemory();
 char* GetWiFiSsidFromMemory(int index, char* buffer);
 char* GetWiFiPasswordFromMemory(int index, char* buffer);
 
-bool IsConfigStateInMemory();
-void SetStateInMemory(bool debug = CONFIG_IS_DEFAULT);
+bool isConfigStateInMemory();
+void setStateInMemory(bool debug = CONFIG_IS_DEFAULT);
 
 bool EmailValuesAvailable();
-char* GetEmailValue(int key, char* buffer);
+char* getEmailValue(int key, char* buffer);
 void SetEmailValue(int key, const char* buffer);
 
 #endif

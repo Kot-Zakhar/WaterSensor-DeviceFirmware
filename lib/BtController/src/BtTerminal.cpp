@@ -11,7 +11,7 @@ void SwitchModeCommand();
 void HelpCommand();
 
 
-void ProcessBtTerminalMessage(const char* message, int length) {
+void processBtTerminalMessage(const char* message, int length) {
   int commandIndex;
 
   for (commandIndex = 0; commandIndex < COMMAND_AMOUNT; commandIndex++){
@@ -23,15 +23,15 @@ void ProcessBtTerminalMessage(const char* message, int length) {
   if (commandIndex == COMMAND_AMOUNT)
     commandIndex = NOT_RECOGNISED;
 
-  ProcessBtTerminalCommand(commandIndex);
+  processBtTerminalCommand(commandIndex);
 }
 
 
-void ProcessBtTerminalCommand(int command){
+void processBtTerminalCommand(int command){
   if (command < 0){
-    IOIndicate(BT_GOT_BAD_COMMAND);
+    ioIndicate(BT_GOT_BAD_COMMAND);
   } else {
-    IOIndicate(BT_GOT_GOOD_COMMAND);
+    ioIndicate(BT_GOT_GOOD_COMMAND);
   }
   
   switch (command)
@@ -64,68 +64,68 @@ void ProcessBtTerminalCommand(int command){
     HelpCommand();
     break;
   case NOT_RECOGNISED:
-    WriteBt(unknown_command_message);
+    writeBt(unknown_command_message);
     break;
   default:
-    WriteBt(not_supported_command_message);
+    writeBt(not_supported_command_message);
     break;
   }
 }
 
 void PingCommand(){
-  WriteBt(pong_message);
+  writeBt(pong_message);
 }
 
 void AddWiFiCredentialsCommand(){
-  IOIndicate(BT_PENDING_COMMAND);
+  ioIndicate(BT_PENDING_COMMAND);
 
   char *ssid = (char *)malloc(STRING_LENGTH);
   char *password = (char *)malloc(STRING_LENGTH);
     
-  WriteBt(wifi_ssid_request_message);
-  if (AwaitAndReadBt(ssid, STRING_LENGTH) < 0){
-    WriteBt(status_error_message);
+  writeBt(wifi_ssid_request_message);
+  if (awaitAndReadBt(ssid, STRING_LENGTH) < 0){
+    writeBt(status_error_message);
     return;
   }
   Serial.println(wifi_ssid_confirmation_message);
 
-  WriteBt(wifi_password_request_message);
-  if (AwaitAndReadBt(password, STRING_LENGTH) < 0){
-    WriteBt(status_error_message);
+  writeBt(wifi_password_request_message);
+  if (awaitAndReadBt(password, STRING_LENGTH) < 0){
+    writeBt(status_error_message);
     return;
   }
   Serial.println(wifi_password_confirmation_message);
 
   int newAmount = SaveWiFiCredentialsInMemory(ssid, password);
 
-  WriteBt(status_ok_message);
-  IOWrite(IO_WRITE_SCREEN, (String(ssid) + " saved.").c_str());
-  IOWrite(IO_WRITE_SCREEN, (String(newAmount) + " networks in memory.").c_str());
-  IOIndicate(BT_END_COMMAND);
+  writeBt(status_ok_message);
+  ioWrite(IO_WRITE_SCREEN, (String(ssid) + " saved.").c_str());
+  ioWrite(IO_WRITE_SCREEN, (String(newAmount) + " networks in memory.").c_str());
+  ioIndicate(BT_END_COMMAND);
 
   free(ssid);
   free(password);
 }
 
 void PrintNetworksFromMemoryCommand(){
-  int counter = GetWiFiCredentialsAmountFromMemory();
+  int counter = getWiFiCredentialsAmountFromMemory();
 
   if (counter == 0){
-      WriteBt(memory_empty_message);
-      IOWrite(IO_WRITE_SCREEN | IO_WRITE_SERIAL, memory_empty_message);
+      writeBt(memory_empty_message);
+      ioWrite(IO_WRITE_SCREEN | IO_WRITE_SERIAL, memory_empty_message);
   } else {
     char* ssid = (char*) malloc(STRING_LENGTH * sizeof(char));
     char* password = (char*) malloc(STRING_LENGTH * sizeof(char));
 
-    IOWrite(IO_WRITE_SCREEN | IO_WRITE_CLEAN_BEFORE_WRITE | IO_WRITE_SERIAL, (String(counter) + " networks in memory.").c_str());
+    ioWrite(IO_WRITE_SCREEN | IO_WRITE_CLEAN_BEFORE_WRITE | IO_WRITE_SERIAL, (String(counter) + " networks in memory.").c_str());
 
     for (int i = 0; i < counter; i++){
       GetWiFiSsidFromMemory(i, ssid);
       GetWiFiPasswordFromMemory(i, password);
       String output = String(i + 1) + ":'" + String(ssid) + "'-'" + String(password) + "'";
-      WriteBt(output.c_str());
+      writeBt(output.c_str());
       if (i < MAX_LINES_AMOUNT - 1){
-        IOWrite(IO_WRITE_SCREEN, output.c_str());
+        ioWrite(IO_WRITE_SCREEN, output.c_str());
       }
     }
 
@@ -135,13 +135,13 @@ void PrintNetworksFromMemoryCommand(){
 }
 
 void SmtpConfigureCommand(){
-  IOIndicate(BT_PENDING_COMMAND);
-  IOWrite(IO_WRITE_SCREEN | IO_WRITE_CLEAN_BEFORE_WRITE | IO_WRITE_SERIAL, "Configuring smtp.");
+  ioIndicate(BT_PENDING_COMMAND);
+  ioWrite(IO_WRITE_SCREEN | IO_WRITE_CLEAN_BEFORE_WRITE | IO_WRITE_SERIAL, "Configuring smtp.");
   // todo: Unbind hardcoded index of command to smtp value index
   String helpMessage = "0 - exit;\n1 - show all settings;\n";
   for (int i = 0; i < EMAIL_SETTINGS_COUNT; i++)
     helpMessage += (i + 2) + String(" [value] - set ") + email_settings[i] + " to 'value';\n";
-  WriteBt(helpMessage.c_str());
+  writeBt(helpMessage.c_str());
 
   String commandLine;
   int command;
@@ -151,17 +151,17 @@ void SmtpConfigureCommand(){
 
   do {
     currentSettings = String("Smtp settings:");
-    IOWrite(IO_WRITE_SCREEN | IO_WRITE_CLEAN_BEFORE_WRITE, currentSettings.c_str());
+    ioWrite(IO_WRITE_SCREEN | IO_WRITE_CLEAN_BEFORE_WRITE, currentSettings.c_str());
     for (int i = 0; i < EMAIL_SETTINGS_COUNT; i++){
-      response = GetEmailValue(i, buffer);
+      response = getEmailValue(i, buffer);
       if (i != EMAIL_PASS && i != EMAIL_IMAP_PORT && i != EMAIL_SMTP_PORT)
-        IOWrite(IO_WRITE_SCREEN, response.c_str());
+        ioWrite(IO_WRITE_SCREEN, response.c_str());
       currentSettings = email_settings[i] + String(": ") + currentSettings + "\n" + response;
     }
 
-    WriteBt("Write a command in a following way:\n[command number] [value]");    
-    if (AwaitAndReadBt(buffer, STRING_LENGTH) < 0){
-      WriteBt(status_error_message);
+    writeBt("Write a command in a following way:\n[command number] [value]");    
+    if (awaitAndReadBt(buffer, STRING_LENGTH) < 0){
+      writeBt(status_error_message);
       return;
     }
 
@@ -178,7 +178,7 @@ void SmtpConfigureCommand(){
         response = String("Smtp settings:");
         for (int i = 0; i < EMAIL_SETTINGS_COUNT; i++){
           // todo: check for setting existance
-          response = response + "\n" + email_settings[i] + ": " + GetEmailValue(i, buffer);
+          response = response + "\n" + email_settings[i] + ": " + getEmailValue(i, buffer);
         }
         break;
       case 2:
@@ -195,23 +195,23 @@ void SmtpConfigureCommand(){
       default:
         response = String("Command not recognize.");
     }
-    WriteBt(response.c_str());
+    writeBt(response.c_str());
   } while (command != 0);
   free(buffer);
-  ClearDisplay();
-  IOIndicate(BT_END_COMMAND);
+  clearDisplay();
+  ioIndicate(BT_END_COMMAND);
 }
 
 void RemoveAllWiFiCredentialsCommand(){
-  WriteBt(erasing_wifi_credentials_message);
+  writeBt(erasing_wifi_credentials_message);
   RemoveAllWiFiCredentials();
-  IOWrite(IO_WRITE_SCREEN, erasing_wifi_credentials_message);
+  ioWrite(IO_WRITE_SCREEN, erasing_wifi_credentials_message);
 }
 
 void RemoveSingleWiFiCredentialCommand() {
-  WriteBt(specify_wifi_index_or_uuid_message);
+  writeBt(specify_wifi_index_or_uuid_message);
   char *response = (char *) malloc(STRING_LENGTH);
-  AwaitAndReadBt(response, STRING_LENGTH);
+  awaitAndReadBt(response, STRING_LENGTH);
   int index;
   int removed;
   if (sscanf(response, "%d", &index)) {
@@ -222,49 +222,49 @@ void RemoveSingleWiFiCredentialCommand() {
 
   log_d("%d wifi credentials '%s' are removed.", removed, response);
 
-  IOWrite(IO_WRITE_SCREEN, erasing_wifi_credentials_message);
+  ioWrite(IO_WRITE_SCREEN, erasing_wifi_credentials_message);
 
   free(response);
 }
 
 void RestartESPCommand(){
-  WriteBt(restart_message);
+  writeBt(restart_message);
   ESP.restart();
 }
 
 void SwitchModeCommand(){
-  IOIndicate(BT_PENDING_COMMAND);
-  bool mode = IsConfigStateInMemory();
+  ioIndicate(BT_PENDING_COMMAND);
+  bool mode = isConfigStateInMemory();
   String currentMode = String("Mode ") + (mode ? "`configuration`" : "`working`");
-  WriteBt(currentMode.c_str());
-  IOWrite(IO_WRITE_SCREEN | IO_WRITE_CLEAN_BEFORE_WRITE, currentMode.c_str());
+  writeBt(currentMode.c_str());
+  ioWrite(IO_WRITE_SCREEN | IO_WRITE_CLEAN_BEFORE_WRITE, currentMode.c_str());
 
   String answer;
   char *buffer = (char *)malloc(STRING_LENGTH);
   do {
-    WriteBt((String("Would you like to switch it to ") + (!mode ? "`configuration`" : "`working`") + "? (y/n)").c_str());
-    AwaitAndReadBt(buffer, STRING_LENGTH);
+    writeBt((String("Would you like to switch it to ") + (!mode ? "`configuration`" : "`working`") + "? (y/n)").c_str());
+    awaitAndReadBt(buffer, STRING_LENGTH);
     answer = String(buffer);
     answer.toLowerCase();
   } while (answer.compareTo("y") && answer.compareTo("n"));
   if (!answer.compareTo("y")){
-    SetStateInMemory(!mode);
-    WriteBt(status_ok_message);
-    IOWrite(IO_WRITE_SCREEN | IO_WRITE_SERIAL, (String("New mode ") + (!mode ? "`configuration`" : "`working`")).c_str());
+    setStateInMemory(!mode);
+    writeBt(status_ok_message);
+    ioWrite(IO_WRITE_SCREEN | IO_WRITE_SERIAL, (String("New mode ") + (!mode ? "`configuration`" : "`working`")).c_str());
   } else {
-    WriteBt("Aborting.");
+    writeBt("Aborting.");
   }
   free(buffer);
-  IOIndicate(BT_END_COMMAND);
+  ioIndicate(BT_END_COMMAND);
 }
 
 void HelpCommand(){
-  IOIndicate(BT_PENDING_COMMAND);
-  WriteBt("List of commands:");
+  ioIndicate(BT_PENDING_COMMAND);
+  writeBt("List of commands:");
   String message;
   for (int i = 0; i < COMMAND_AMOUNT; i++){
     message += String(commands[i]) + "\n";
   }
-  WriteBt(message.c_str());
-  IOIndicate(BT_END_COMMAND);
+  writeBt(message.c_str());
+  ioIndicate(BT_END_COMMAND);
 }

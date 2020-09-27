@@ -61,7 +61,7 @@ JLedSequence rgbLed(JLedSequence::eMode::PARALLEL, rgbLeds);
 
 portMUX_TYPE ledTimerMux = portMUX_INITIALIZER_UNLOCKED;
 
-void IRAM_ATTR LedUpdateInterrupt(){
+void IRAM_ATTR ledUpdateInterrupt(){
     portENTER_CRITICAL_ISR(&ledTimerMux);
     rgbLed.Update();
     redLed.Update();
@@ -69,11 +69,11 @@ void IRAM_ATTR LedUpdateInterrupt(){
     portEXIT_CRITICAL_ISR(&ledTimerMux);
 }
 
-void BindLEDs(){
-    updater.attach_ms(LED_UPDATE_FREQ, LedUpdateInterrupt);
+void bindLEDs(){
+    updater.attach_ms(LED_UPDATE_FREQ, ledUpdateInterrupt);
 }
 
-void BlinkRGB(rgb_color_t color, blink_duration_t blinkDurationType, int times = 1){
+void blinkRGB(rgb_color_t color, blink_duration_t blinkDurationType, int times = 1){
     portENTER_CRITICAL(&ledTimerMux);
     rgbLed.Stop();
     rgbLeds[RGB_RED_LED]
@@ -110,7 +110,7 @@ void BlinkRGB(rgb_color_t color, blink_duration_t blinkDurationType, int times =
 // }
 
 
-void CheckLeds(){
+void checkLeds(){
     portENTER_CRITICAL(&ledTimerMux);
     greenLed.Breathe(500).DelayAfter(2000);
     rgbLed.Stop();

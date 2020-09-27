@@ -1,18 +1,18 @@
 #include <SensorController.h>
 
-#define SENSOR_PIN 39
+#define SENSOR_PIN 36
 int16_t value = 0;
 
-void InitSensorController(){
+void initSensorController(){
     pinMode(SENSOR_PIN, INPUT);
-    UpdateSensorValue();
+    updateSensorValue();
 }
 
-int UpdateSensorValue(){
+int updateSensorValue(){
     value = analogRead(SENSOR_PIN);
     return value;
 }
 
-int GetSensorValue(){
+int getSensorValue(){
     return value;
 }

@@ -10,7 +10,8 @@
 #include <BtTerminal.h>
 #include <BtJson.h>
 
-void InitBtController();
-void ProcessBt();
+void initBtController();
+bool shouldBtBeProcessed();
+void processBt();
 
 #endif

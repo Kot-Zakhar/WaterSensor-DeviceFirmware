@@ -10,7 +10,7 @@ Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 int currentScreenLinesAmount = 0;
 
 
-void ClearDisplay(){
+void clearDisplay(){
   display.clearDisplay();
 
   display.setTextColor(WHITE);
@@ -20,14 +20,14 @@ void ClearDisplay(){
   currentScreenLinesAmount = 0;
 }
 
-void IOWrite(int writeTo, const char *str){
+void ioWrite(int writeTo, const char *str){
   if (writeTo & IO_WRITE_SERIAL){
     log_i("%s", str);
   }
   delay(50);
   if (writeTo & IO_WRITE_SCREEN){
     if ((writeTo & IO_WRITE_CLEAN_BEFORE_WRITE) || (currentScreenLinesAmount == MAX_LINES_AMOUNT))
-      ClearDisplay();
+      clearDisplay();
     display.println(str);
     display.display();
     delay(50);
@@ -35,8 +35,8 @@ void IOWrite(int writeTo, const char *str){
   }
 }
 
-void CheckScreen(){
-  ClearDisplay();
+void checkScreen(){
+  clearDisplay();
 
   display.println("Screen check...");
   display.display();
@@ -44,13 +44,13 @@ void CheckScreen(){
   delay(500);
 }
 
-void InitDisplay(){
+void initDisplay(){
 
   Wire.begin(5,4);
 
   if(!display.begin(SSD1306_SWITCHCAPVCC, 0x3c, false, false)){
     log_e("SSD1306 allocation failed");
-    IOIndicate(FATAL_ERROR);
+    ioIndicate(FATAL_ERROR);
     // todo: add sending error to ledController
     for(;;); // Don't proceed, loop forever
   }

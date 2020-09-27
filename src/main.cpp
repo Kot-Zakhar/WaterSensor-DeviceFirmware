@@ -11,55 +11,62 @@ void setup() {
 
   Serial.begin(115200);
 
-  InitIOController();
-  InitMemoryController();
-  InitWiFiController();
+  initIOController();
+  initMemoryController();
+  initWiFiController();
 
-  stateIsConfig = IsConfigStateInMemory();
+  stateIsConfig = isConfigStateInMemory();
 
   if (!stateIsConfig) {
-    IOWrite(IO_WRITE_SCREEN, "Connecting to wifi...");
-    stateIsConfig = (GetWiFiCredentialsAmountFromMemory() == 0) || !ConnectToAnyWiFiFromMemory();
+    ioWrite(IO_WRITE_SCREEN, "Connecting to wifi...");
+    stateIsConfig = (getWiFiCredentialsAmountFromMemory() == 0) || !connectToAnyWiFiFromMemory();
     if (stateIsConfig) {
-      IOWrite(IO_WRITE_SCREEN, "Couldn't connect.");
+      ioWrite(IO_WRITE_SCREEN, "Couldn't connect.");
     } else {
-      IOWrite(IO_WRITE_SCREEN | IO_WRITE_CLEAN_BEFORE_WRITE, "Connected to ");
-      IOWrite(IO_WRITE_SCREEN, GetCurrentWiFiSsid().c_str());
-      SyncTime();
+      ioWrite(IO_WRITE_SCREEN | IO_WRITE_CLEAN_BEFORE_WRITE, "Connected to ");
+      ioWrite(IO_WRITE_SCREEN, getCurrentWiFiSsid().c_str());
+      syncTime();
       char *buffer = (char *)malloc(STRING_LENGTH);
-      IOWrite(IO_WRITE_SCREEN | IO_WRITE_SERIAL, GetDateTimeStr(buffer, STRING_LENGTH));
+      ioWrite(IO_WRITE_SCREEN | IO_WRITE_SERIAL, getDateTimeStr(buffer, STRING_LENGTH));
       free(buffer);
     }
   }
 
   if (stateIsConfig) {
     Serial.println("Config mode is on.");
-    IOWrite(IO_WRITE_SCREEN, "Configuration mode.");
-    IOIndicate(MODE_CONFIG_ON);
-    WiFiControllerOff();
-    InitBtController();
+    ioWrite(IO_WRITE_SCREEN, "Configuration mode.");
+    ioIndicate(MODE_CONFIG_ON);
+    wifiControllerOff();
+    initBtController();
   } else {
     Serial.println("Working mode.");
-    IOWrite(IO_WRITE_SCREEN, "Working mode.");
-    IOIndicate(MODE_WORK_ON);
-    // SendLetter(
-    //   "First letter",
-    //   "I've started to work. Everything is ok so far.",
-    //   false
-    // );
-    InitEmailController();
+    ioWrite(IO_WRITE_SCREEN, "Working mode.");
+    ioIndicate(MODE_WORK_ON);
+    initEmailController();
   }
-  BindInterrupts(stateIsConfig);
-  InitSensorChecker(stateIsConfig);
+  bindInterrupts(stateIsConfig);
+  initSensorChecker(stateIsConfig);
 }
 
 void loop() {
   if (stateIsConfig){
-    ProcessBt();
+    if (shouldBtBeProcessed()) {
+      stopEmailChecker();
+      unbindInterrupts();
+      processBt();
+      restartEmailChecker();
+      rebindInterrupts();
+    }
   } else {
-    ProcessEmailController();
+    if (shouldEmailBeProcessed()) {
+      stopEmailChecker();
+      unbindInterrupts();
+      processEmailController();
+      restartEmailChecker();
+      rebindInterrupts();
+    }
   }
-  ProcessInterrupts();
-  ProcessSensorChecker();
+  processInterrupts();
+  processSensorChecker();
   delay(100);
 }

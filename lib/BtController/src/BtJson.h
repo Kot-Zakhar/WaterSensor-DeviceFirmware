@@ -8,7 +8,7 @@
 #include <SensorController.h>
 
 // void ProcessBtJsonCommand(int command);
-void ProcessBtJsonMessage(JsonObject &jsonMessage);
+void processBtJsonMessage(JsonObject &jsonMessage);
 
 // void PingJsonCommand();
 // void AddWiFiCredentialsJsonCommand();

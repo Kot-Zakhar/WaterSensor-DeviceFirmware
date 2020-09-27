@@ -2,29 +2,33 @@
 
 const char* bt_credentials_name = "ESP32";
 
-void InitBtController(){
-  InitBtIO(bt_credentials_name);
-  IOWrite(IO_WRITE_SCREEN | IO_WRITE_SERIAL, ("BT - " + String(bt_credentials_name)).c_str());
+void initBtController(){
+  initBtIO(bt_credentials_name);
+  ioWrite(IO_WRITE_SCREEN | IO_WRITE_SERIAL, ("BT - " + String(bt_credentials_name)).c_str());
 }
 
-void ProcessBt() {
-  int length = BtAvailable();
+bool shouldBtBeProcessed() {
+  return btAvailable() > 0;
+}
+
+void processBt() {
+  int length = btAvailable();
   if (length <= 0)
     return;
 
   char *message = (char *)malloc(length + 1);
-  ReadBt(message, length + 1);
+  readBt(message, length + 1);
 
   // DynamicJsonDocument *jsonDoc = new DynamicJsonDocument(length);
   DynamicJsonDocument jsonDoc(length);
   DeserializationError err = deserializeJson(jsonDoc, message);
   if (err) {
     log_d("It's a bt terminal message.");
-    ProcessBtTerminalMessage(message, length);
+    processBtTerminalMessage(message, length);
   } else {
     log_d("It's a bt json message.");
     JsonObject obj = jsonDoc.as<JsonObject>();
-    ProcessBtJsonMessage(obj);
+    processBtJsonMessage(obj);
   }
 
   // delete(jsonDoc);

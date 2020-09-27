@@ -4,7 +4,7 @@
 #include <EmailController.h>
 #include <SensorController.h>
 
-void InitSensorChecker(bool isConfigState);
-void ProcessSensorChecker();
+void initSensorChecker(bool isConfigState);
+void processSensorChecker();
 
 #endif

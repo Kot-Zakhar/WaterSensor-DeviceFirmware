@@ -7,7 +7,8 @@
 
 #define POTENCIOMETR_PIN 39
 
-void BindInterrupts(bool stateIsConfig);
-void ProcessInterrupts();
-
+void bindInterrupts(bool stateIsConfig);
+void processInterrupts();
+void unbindInterrupts();
+void rebindInterrupts();
 #endif

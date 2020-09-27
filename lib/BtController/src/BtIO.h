@@ -4,12 +4,12 @@
 #include <BluetoothSerial.h>
 #include <IOController.h>
 
-void InitBtIO(const char *name);
+void initBtIO(const char *name);
 
-void WriteBt(const char* line);
-int ReadBt(char *buffer, int maxLength);
-int AwaitAndReadBt(char *buffer, int maxLength);
-BluetoothSerial *GetCurrentBtSerial();
-int BtAvailable();
+void writeBt(const char* line);
+int readBt(char *buffer, int maxLength);
+int awaitAndReadBt(char *buffer, int maxLength);
+BluetoothSerial *getCurrentBtSerial();
+int btAvailable();
 
 #endif

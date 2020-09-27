@@ -6,8 +6,8 @@
 #include <BtIO.h>
 #include <MemoryController.h>
 
-void ProcessBtTerminalCommand(int command);
-void ProcessBtTerminalMessage(const char* message, int length);
+void processBtTerminalCommand(int command);
+void processBtTerminalMessage(const char* message, int length);
 
 
 

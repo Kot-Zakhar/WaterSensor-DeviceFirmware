@@ -6,9 +6,14 @@
 #include <ESP32_MailClient.h>
 #include <WifiController.h>
 #include <Ticker.h>
+#include <IOController.h>
 
-bool SendLetter(const char *subject, const char *message, bool isHtml, bool retryUntilSuccess = false);
-void InitEmailController();
-void ProcessEmailController();
+bool sendLetter(const char *subject, const char *message, bool isHtml, bool retryUntilSuccess = false);
+void initEmailController();
+void stopEmailChecker();
+void restartEmailChecker();
+bool shouldEmailBeProcessed();
+bool checkForIncomingLetter();
+void processEmailController();
 
 #endif
