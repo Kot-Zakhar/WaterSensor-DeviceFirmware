@@ -210,13 +210,32 @@ error_t wifiCredsJsonEndpoint(command_method_t method, const JsonVariant &reqPay
         }
         break;
     }
+    case DELETE:
+    {
+        if (reqPayload.is<JsonArray>()) {
+            JsonArray records = reqPayload.as<JsonArray>();
+            for (int i = 0; i < records.size(); i++) {
+                wifiCredsDelete(records[i]["ssid"], records[i]["password"]);
+            }
+        } else if (reqPayload.is<JsonObject>()) {
+            JsonObject record = reqPayload.as<JsonObject>();
+            wifiCredsDelete(record["ssid"], record["password"]);
+        } else if (reqPayload.is<char *>()) {
+            const char * ssid = reqPayload.as<char *>();
+            wifiCredsDelete(ssid);
+        } else if (reqPayload.isNull()) {
+            wifiCredsDeleteAll();
+        } else {
+            success = 1;
+        }
+        break;
+    }
     default:
     {
         success = 2;
         break;
     }
     }
-
 
     return success;
 }

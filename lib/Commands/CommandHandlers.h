@@ -8,6 +8,9 @@ struct WiFiCred *wifiCredsGetAll(struct WiFiCred* credsBuffer, int &amount);
 int wifiCredsGetAmount();
 void wifiCredsAdd(struct WiFiCred creds);
 void wifiCredsAdd(const char *ssid, const char *password);
+void wifiCredsDelete(const char *ssid, const char *password);
+void wifiCredsDelete(const char *ssid);
+void wifiCredsDeleteAll();
 
 // char *pingCommandHandler(char *responseBuffer, size_t len);
 

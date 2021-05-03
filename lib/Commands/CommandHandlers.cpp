@@ -21,7 +21,15 @@ struct WiFiCred *wifiCredsGetAll(struct WiFiCred* credsBuffer, int &amount) {
 void wifiCredsAdd(struct WiFiCred creds) {
     saveWiFiCredentialsToMemory(creds.ssid, creds.password);
 }
-
 void wifiCredsAdd(const char *ssid, const char *password) {
     saveWiFiCredentialsToMemory(ssid, password);
+}
+void wifiCredsDelete(const char *ssid, const char *password) {
+    removeWiFiCredentialsFromMemory(ssid, password);
+}
+void wifiCredsDelete(const char *ssid) {
+    removeWiFiCredentialsFromMemory(ssid);
+}
+void wifiCredsDeleteAll() {
+    removeAllWiFiCredentialsFromMemory();
 }
