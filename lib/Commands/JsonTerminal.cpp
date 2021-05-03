@@ -5,6 +5,7 @@
 #include <custom_types.h>
 
 error_t defaultOkEndpoint(command_method_t method, const JsonVariant &reqPayload, DynamicJsonDocument &resDoc);
+error_t defaultErrorEndpoint(command_method_t method, const JsonVariant &reqPayload, DynamicJsonDocument &resDoc);
 error_t pingJsonEndpoint(command_method_t method, const JsonVariant &reqPayload, DynamicJsonDocument &resDoc);
 
 error_t wifiCredsJsonEndpoint(command_method_t method, const JsonVariant &reqPayload, DynamicJsonDocument &resDoc);
@@ -41,7 +42,7 @@ error_t (* jsonEndpoints[COMMAND_AMOUNT + 1])(command_method_t method, const Jso
     defaultOkEndpoint,
     defaultOkEndpoint,
     defaultOkEndpoint,
-    defaultOkEndpoint,
+    defaultErrorEndpoint,
     // emailSmtpJsonEndpoint,
     // emailImapJsonEndpoint,
     // emailRecipientsJsonEndpoint,
@@ -74,7 +75,7 @@ error_t (* jsonEndpoints[COMMAND_AMOUNT + 1])(command_method_t method, const Jso
  *    JsonObject? payload;
  * }
 */
-void processJsonMessage(JsonVariant &reqObj, DynamicJsonDocument &resVariant);
+void processJsonMessage(JsonVariant &reqObj, DynamicJsonDocument &resDoc);
 
 char *processJsonMessage(const char *req, size_t reqLen, char *outputBuffer, size_t outputLen, error_t &parsingError) {
     DynamicJsonDocument reqDoc(reqLen + 100);
@@ -83,11 +84,9 @@ char *processJsonMessage(const char *req, size_t reqLen, char *outputBuffer, siz
     if (!err) {
         log_d("Json was deserialized");
         JsonVariant reqObj = reqDoc.as<JsonVariant>();
-        DynamicJsonDocument resDoc(JSON_DEFAULT_LONG_BUFFER_LENGTH);
-        // JsonVariant resObj = resDoc.as<JsonVariant>();
-        processJsonMessage(reqObj, resDoc);
+        DynamicJsonDocument resDoc(JSON_DEFAULT_BUFFER_LENGTH);
 
-        resDoc.shrinkToFit();
+        processJsonMessage(reqObj, resDoc);
 
         int responseLen = measureJson(resDoc) + 1;
 
@@ -100,6 +99,7 @@ char *processJsonMessage(const char *req, size_t reqLen, char *outputBuffer, siz
     } else {
         log_d("Failing at deserializing json");
     }
+
     return outputBuffer;
 }
 
@@ -152,22 +152,20 @@ error_t defaultOkEndpoint(command_method_t method, const JsonVariant &reqPayload
     return 0;
 }
 
+error_t defaultErrorEndpoint(command_method_t method, const JsonVariant &reqPayload, DynamicJsonDocument &resDoc) {
+    resDoc["payload"] = "Command doesn't exist.";
+    return 1;
+}
+
+
 error_t pingJsonEndpoint(command_method_t method, const JsonVariant &reqPayload, DynamicJsonDocument &resDoc) {
     resDoc["payload"] = "pong";
     return 0;
 }
 
 
-
-
 error_t wifiCredsJsonEndpoint(command_method_t method, const JsonVariant &reqPayload, DynamicJsonDocument &resDoc) {
     error_t success = 0;
-    // int amount = wifiCredsGetAmount();
-
-
-    // DynamicJsonDocument doc(JSON_DEFAULT_BUFFER_LENGTH + amount * sizeof(struct WiFiCred));
-    // JsonObject res = doc.as<JsonObject>();
-    // JsonObject res;
 
     switch (method) {
     case NO_METHOD:
@@ -176,8 +174,10 @@ error_t wifiCredsJsonEndpoint(command_method_t method, const JsonVariant &reqPay
         int amount = 0;
         struct WiFiCred* credsBuffer = (struct WiFiCred*)malloc(sizeof(struct WiFiCred));
         credsBuffer = wifiCredsGetAll(credsBuffer, amount);
+
+        DynamicJsonDocument doc(JSON_DEFAULT_BUFFER_LENGTH + amount * sizeof(struct WiFiCred));
         
-        JsonArray wifiRecordArr = resDoc.createNestedArray("payload");
+        JsonArray wifiRecordArr = doc.createNestedArray("payload");
 
         log_d("Amount of records: %d", amount);
         for (int i = 0; i < amount; i++) {
@@ -189,11 +189,14 @@ error_t wifiCredsJsonEndpoint(command_method_t method, const JsonVariant &reqPay
         }
 
         free(credsBuffer);
+
+        resDoc = std::move(doc);
         break;
     }
     case POST:
     {
         if (reqPayload.is<JsonArray>()) {
+            log_d("saving a list of wifi creds..");
             JsonArray records = reqPayload.as<JsonArray>();
             for (int i = 0; i < records.size(); i++) {
                 const char *ssid = records[i]["ssid"];
@@ -201,6 +204,7 @@ error_t wifiCredsJsonEndpoint(command_method_t method, const JsonVariant &reqPay
                 wifiCredsAdd(ssid, pwd);
             }
         } else if (reqPayload.is<JsonObject>()) {
+            log_d("saving a record of wifi creds");
             JsonObject record = reqPayload.as<JsonObject>();
             const char *ssid = record["ssid"];
             const char *pwd = record["password"];
