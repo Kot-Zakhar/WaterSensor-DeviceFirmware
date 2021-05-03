@@ -35,7 +35,7 @@ void restartEmailChecker() {
 
 bool sendLetter(const char *subject, const char *message, bool isHtml, bool retryUntilSuccess){
   log_v("Sending letter");
-  if (!EmailValuesAvailable()) {
+  if (!emailValuesAvailable()) {
     log_v("Not all email settings are set!");
     return false;
   }
@@ -46,12 +46,11 @@ bool sendLetter(const char *subject, const char *message, bool isHtml, bool retr
 
   ioIndicate(EMAIL_SENDING_LETTER);
 
-  char *server = getEmailValue(EMAIL_SMTP_SERVER, (char *)malloc(STRING_LENGTH));
-  char *port = getEmailValue(EMAIL_SMTP_PORT, (char *)malloc(STRING_LENGTH));
-  char *login = getEmailValue(EMAIL_LOGIN, (char *)malloc(STRING_LENGTH));
-  char *password = getEmailValue(EMAIL_PASS, (char *)malloc(STRING_LENGTH));
-  char *sender = getEmailValue(EMAIL_SMTP_SENDER, (char *)malloc(STRING_LENGTH));
-  char *recipient = getEmailValue(EMAIL_SMTP_RECIPIENT, (char *)malloc(STRING_LENGTH));
+  char *server = getEmailValueFromMemory(EMAIL_SMTP_SERVER, (char *)malloc(STRING_LENGTH));
+  char *port = getEmailValueFromMemory(EMAIL_SMTP_PORT, (char *)malloc(STRING_LENGTH));
+  char *login = getEmailValueFromMemory(EMAIL_LOGIN, (char *)malloc(STRING_LENGTH));
+  char *password = getEmailValueFromMemory(EMAIL_PASS, (char *)malloc(STRING_LENGTH));
+  char *sender = getEmailValueFromMemory(EMAIL_SMTP_SENDER, (char *)malloc(STRING_LENGTH));
   char *dateTime = getDateTimeStr((char *)malloc(STRING_LENGTH), STRING_LENGTH, false);
   
   String timeStampedMessage = 
@@ -63,12 +62,11 @@ bool sendLetter(const char *subject, const char *message, bool isHtml, bool retr
     dateTime +
     (isHtml ? htmlSise: "\n");
 
-  log_v("Email:\n ---\n Smtp server: %s\n Smtp port: %s\n Smtp login: %s\n Smtp sender name: %s\n ---\n Recipient: %s\n Subject: %s\n Message:\n %s\n ---\n",
+  log_v("Email:\n ---\n Smtp server: %s\n Smtp port: %s\n Smtp login: %s\n Smtp sender name: %s\n ---\n Subject: %s\n Message:\n %s\n ---\n",
     server,
     port,
     login,
     sender,
-    recipient,
     subject,
     timeStampedMessage.c_str()
   );
@@ -80,7 +78,14 @@ bool sendLetter(const char *subject, const char *message, bool isHtml, bool retr
   smtpData.setPriority("High");
   smtpData.setSubject(subject);
   smtpData.setMessage(timeStampedMessage, isHtml);
-  smtpData.addRecipient(recipient);
+
+  char *recipient = (char *)malloc(STRING_LENGTH);
+  int recipientCount = getEmailRecipientsAmountFromMemory();
+
+  for (int i = 0; i < recipientCount; i++) {
+    getEmailRecipientFromMemory(i, recipient);
+    smtpData.addRecipient(recipient);
+  }
 
   bool result = false;
   do {
@@ -112,7 +117,7 @@ bool sendLetter(const char *subject, const char *message, bool isHtml, bool retr
 
 bool checkForIncomingLetter(){
   log_i("Checking incomming letter");
-  if (!EmailValuesAvailable()){
+  if (!emailValuesAvailable()){
     log_v("Not all email settings are set!");
     return false;
   }
@@ -120,10 +125,10 @@ bool checkForIncomingLetter(){
 
   ioIndicate(EMAIL_CHECKING);
 
-  char *server = getEmailValue(EMAIL_IMAP_SERVER, (char *)malloc(STRING_LENGTH));
-  char *port = getEmailValue(EMAIL_IMAP_PORT, (char *)malloc(STRING_LENGTH));
-  char *login = getEmailValue(EMAIL_LOGIN, (char *)malloc(STRING_LENGTH));
-  char *password = getEmailValue(EMAIL_PASS, (char *)malloc(STRING_LENGTH));
+  char *server = getEmailValueFromMemory(EMAIL_IMAP_SERVER, (char *)malloc(STRING_LENGTH));
+  char *port = getEmailValueFromMemory(EMAIL_IMAP_PORT, (char *)malloc(STRING_LENGTH));
+  char *login = getEmailValueFromMemory(EMAIL_LOGIN, (char *)malloc(STRING_LENGTH));
+  char *password = getEmailValueFromMemory(EMAIL_PASS, (char *)malloc(STRING_LENGTH));
 
   imapData.setLogin(server, String(port).toInt(), login, password);
   imapData.setSearchCriteria(searchCriteria);

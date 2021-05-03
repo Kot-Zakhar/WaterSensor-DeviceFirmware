@@ -19,19 +19,13 @@ void processBt() {
   char *message = (char *)malloc(length + 1);
   readBt(message, length + 1);
 
-  // DynamicJsonDocument *jsonDoc = new DynamicJsonDocument(length);
-  DynamicJsonDocument jsonDoc(length);
-  DeserializationError err = deserializeJson(jsonDoc, message);
-  if (err) {
-    log_d("It's a bt terminal message.");
-    processBtTerminalMessage(message, length);
-  } else {
-    log_d("It's a bt json message.");
-    JsonObject obj = jsonDoc.as<JsonObject>();
-    processBtJsonMessage(obj);
-  }
+  char *response = (char *)malloc(STRING_LENGTH);
 
-  // delete(jsonDoc);
+  response = processMessage(message, length, response, STRING_LENGTH);
+
+  writeBt(response);
+
+  free(response);
   free(message);
   log_d("Bt command processing is finished.");
 }

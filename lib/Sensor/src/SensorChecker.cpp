@@ -32,8 +32,17 @@ void checkSensorValue(){
 
 void initSensorChecker(bool isConfigState){
     initSensorController();
+    initDHTController();
     stateIsConfigForSensor = isConfigState;
 
+    sensorChecker.attach(1, checkSensorValue);
+}
+
+void stopSensorChecker() {
+    sensorChecker.detach();
+}
+
+void restartSensorChecker() {
     sensorChecker.attach(1, checkSensorValue);
 }
 
@@ -51,6 +60,10 @@ bool sendNotificationAboutSensor(){
         }
     }
     return true;
+}
+
+bool shouldSensorBeProcessed() {
+    return needToSendLetter && !stateIsConfigForSensor;
 }
 
 void processSensorChecker(){

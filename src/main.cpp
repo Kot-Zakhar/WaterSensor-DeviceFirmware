@@ -4,6 +4,7 @@
 #include <IOController.h>
 #include <SensorChecker.h>
 #include <WifiController.h>
+#include <GSMController.h>
 
 bool stateIsConfig;
 
@@ -38,35 +39,50 @@ void setup() {
     ioIndicate(MODE_CONFIG_ON);
     wifiControllerOff();
     initBtController();
+    initGsmController();
   } else {
     Serial.println("Working mode.");
     ioWrite(IO_WRITE_SCREEN, "Working mode.");
     ioIndicate(MODE_WORK_ON);
     initEmailController();
   }
-  bindInterrupts(stateIsConfig);
+  // bindInterrupts(stateIsConfig);
   initSensorChecker(stateIsConfig);
 }
 
+void detachInterruptsAndTimers() {
+  stopEmailChecker();
+  stopSensorChecker();
+  unbindInterrupts();
+}
+
+void reattachInterruptsAndTimers() {
+  restartEmailChecker();
+  restartSensorChecker();
+  rebindInterrupts();
+}
+// TODO: connect to wifi only when needed
 void loop() {
   if (stateIsConfig){
     if (shouldBtBeProcessed()) {
-      stopEmailChecker();
-      unbindInterrupts();
+      detachInterruptsAndTimers();
       processBt();
-      restartEmailChecker();
-      rebindInterrupts();
+      reattachInterruptsAndTimers();
     }
   } else {
     if (shouldEmailBeProcessed()) {
-      stopEmailChecker();
-      unbindInterrupts();
+      detachInterruptsAndTimers();
       processEmailController();
-      restartEmailChecker();
-      rebindInterrupts();
+      reattachInterruptsAndTimers();
     }
   }
   processInterrupts();
-  processSensorChecker();
+  if (shouldSensorBeProcessed()) {
+    detachInterruptsAndTimers();
+    processSensorChecker();
+    reattachInterruptsAndTimers();
+  }
   delay(100);
+  pipeSimToSerial();
+  
 }

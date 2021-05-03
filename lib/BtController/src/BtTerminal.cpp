@@ -1,5 +1,10 @@
 #include <BtTerminal.h>
 
+// NOT USED
+// TODO: Remove
+
+/*
+
 void PingCommand();
 void AddWiFiCredentialsCommand();
 void RemoveAllWiFiCredentialsCommand();
@@ -9,6 +14,7 @@ void SmtpConfigureCommand();
 void RestartESPCommand();
 void SwitchModeCommand();
 void HelpCommand();
+void SendSMSCommand();
 
 
 void processBtTerminalMessage(const char* message, int length) {
@@ -42,16 +48,16 @@ void processBtTerminalCommand(int command){
   case WIFI_SSID_AND_PASSWORD:
     AddWiFiCredentialsCommand();
     break;
-  case WIFI_REMOVE_ALL:
+  case WIFI_DELETE_ALL:
     RemoveAllWiFiCredentialsCommand();
     break;
-  case WIFI_REMOVE_SINGLE:
+  case WIFI_DELETE_SINGLE:
     RemoveSingleWiFiCredentialCommand();
     break;
   case WIFI_SHOW_NETWORKS:
     PrintNetworksFromMemoryCommand();
     break;
-  case SMTP_SETTINGS:
+  case EMAIL_SMTP_SETTINGS:
     SmtpConfigureCommand();
     break;
   case RESTART:
@@ -62,6 +68,9 @@ void processBtTerminalCommand(int command){
     break;
   case HELP:
     HelpCommand();
+    break;
+  case SMS:
+    SendSMSCommand();
     break;
   case NOT_RECOGNISED:
     writeBt(unknown_command_message);
@@ -96,7 +105,7 @@ void AddWiFiCredentialsCommand(){
   }
   Serial.println(wifi_password_confirmation_message);
 
-  int newAmount = SaveWiFiCredentialsInMemory(ssid, password);
+  int newAmount = saveWiFiCredentialsToMemory(ssid, password);
 
   writeBt(status_ok_message);
   ioWrite(IO_WRITE_SCREEN, (String(ssid) + " saved.").c_str());
@@ -120,8 +129,8 @@ void PrintNetworksFromMemoryCommand(){
     ioWrite(IO_WRITE_SCREEN | IO_WRITE_CLEAN_BEFORE_WRITE | IO_WRITE_SERIAL, (String(counter) + " networks in memory.").c_str());
 
     for (int i = 0; i < counter; i++){
-      GetWiFiSsidFromMemory(i, ssid);
-      GetWiFiPasswordFromMemory(i, password);
+      getWiFiSsidFromMemory(i, ssid);
+      getWiFiPasswordFromMemory(i, password);
       String output = String(i + 1) + ":'" + String(ssid) + "'-'" + String(password) + "'";
       writeBt(output.c_str());
       if (i < MAX_LINES_AMOUNT - 1){
@@ -153,7 +162,7 @@ void SmtpConfigureCommand(){
     currentSettings = String("Smtp settings:");
     ioWrite(IO_WRITE_SCREEN | IO_WRITE_CLEAN_BEFORE_WRITE, currentSettings.c_str());
     for (int i = 0; i < EMAIL_SETTINGS_COUNT; i++){
-      response = getEmailValue(i, buffer);
+      response = getEmailValueFromMemory(i, buffer);
       if (i != EMAIL_PASS && i != EMAIL_IMAP_PORT && i != EMAIL_SMTP_PORT)
         ioWrite(IO_WRITE_SCREEN, response.c_str());
       currentSettings = email_settings[i] + String(": ") + currentSettings + "\n" + response;
@@ -178,7 +187,7 @@ void SmtpConfigureCommand(){
         response = String("Smtp settings:");
         for (int i = 0; i < EMAIL_SETTINGS_COUNT; i++){
           // todo: check for setting existance
-          response = response + "\n" + email_settings[i] + ": " + getEmailValue(i, buffer);
+          response = response + "\n" + email_settings[i] + ": " + getEmailValueFromMemory(i, buffer);
         }
         break;
       case 2:
@@ -189,7 +198,7 @@ void SmtpConfigureCommand(){
       case 7:
       case 8:
       case 9:
-        SetEmailValue(EMAIL_SMTP_SERVER + command - 2, commandLine.c_str());
+        setEmailValueToMemory(EMAIL_SMTP_SERVER + command - 2, commandLine.c_str());
         response = String(status_ok_message);
         break;
       default:
@@ -204,7 +213,7 @@ void SmtpConfigureCommand(){
 
 void RemoveAllWiFiCredentialsCommand(){
   writeBt(erasing_wifi_credentials_message);
-  RemoveAllWiFiCredentials();
+  removeAllWiFiCredentialsFromMemory();
   ioWrite(IO_WRITE_SCREEN, erasing_wifi_credentials_message);
 }
 
@@ -215,9 +224,9 @@ void RemoveSingleWiFiCredentialCommand() {
   int index;
   int removed;
   if (sscanf(response, "%d", &index)) {
-    removed = RemoveWiFiCredentials(index);
+    removed = removeWiFiCredentialsFromMemory(index);
   } else {
-    removed = RemoveWiFiCredentials(response);
+    removed = removeWiFiCredentialsFromMemory(response);
   }
 
   log_d("%d wifi credentials '%s' are removed.", removed, response);
@@ -268,3 +277,35 @@ void HelpCommand(){
   writeBt(message.c_str());
   ioIndicate(BT_END_COMMAND);
 }
+
+void SendSMSCommand() {
+  
+  String number;
+  char *buffer = (char *)malloc(100);
+  do {
+    writeBt("Provide a number to sms (if empty - default is used");
+    delay(10);
+    awaitAndReadBt(buffer, 100);
+    number = String(buffer);
+    number.toLowerCase();
+    number.trim();
+    Serial.printf("number: \"%s\"", number);
+  } while (!number.isEmpty() && number.length() != 13);
+
+  if (number.isEmpty())
+    number = "+375293898944";
+  int sensor_value = getSensorValue();
+  float humidity, temperature;
+  int isHumidity = getHumidity(&humidity);
+  int isTemperature = getTemperature(&temperature);
+
+  Serial.printf("Temp: %.1f*C, Hum: %.1f%%\n", temperature, humidity);
+
+  int written = sprintf(buffer, "Sensor value is: %d. Hum: %.1f%%. Temp: %.1f*C.", sensor_value, humidity, temperature);
+  
+  sendSMS(buffer, number.c_str());
+
+  free(buffer);
+}
+
+*/

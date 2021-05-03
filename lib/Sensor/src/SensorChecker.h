@@ -3,8 +3,12 @@
 
 #include <EmailController.h>
 #include <SensorController.h>
+#include <DHTController.h>
 
 void initSensorChecker(bool isConfigState);
 void processSensorChecker();
+bool shouldSensorBeProcessed();
+void stopSensorChecker();
+void restartSensorChecker();
 
 #endif

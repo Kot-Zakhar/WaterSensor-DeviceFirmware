@@ -7,8 +7,7 @@
 
 #include <BtIO.h>
 
-#include <BtTerminal.h>
-#include <BtJson.h>
+#include <CommandController.h>
 
 void initBtController();
 bool shouldBtBeProcessed();

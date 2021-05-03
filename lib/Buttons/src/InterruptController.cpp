@@ -83,7 +83,7 @@ void ProcessInterrupt(int index){
       delay(100);
       currentSavedStateIsConfig = isConfigStateInMemory();
       setStateInMemory(!currentSavedStateIsConfig);
-      ioWrite(IO_WRITE_SCREEN | IO_WRITE_SERIAL, (String("After restart: ") + (!currentSavedStateIsConfig ? "work" : "config")).c_str());
+      ioWrite(IO_WRITE_SCREEN | IO_WRITE_SERIAL, (String("After restart: ") + (currentSavedStateIsConfig ? "work" : "config")).c_str());
       break;
     case 3:
       ioIndicate(Interrupt3);
@@ -112,10 +112,6 @@ void bindInterrupts(bool stateIsConfig){
 
   isConfigState = stateIsConfig;
 
-  pinMode(buttonsPins[0], INPUT_PULLDOWN);
-  attachInterrupt(buttonsPins[0], Button0Interrupt, RISING);
-  pinMode(buttonsPins[1], INPUT_PULLDOWN);
-  attachInterrupt(buttonsPins[1], Button1Interrupt, RISING);
   pinMode(buttonsPins[2], INPUT_PULLDOWN);
   attachInterrupt(buttonsPins[2], Button2Interrupt, RISING);
   pinMode(buttonsPins[3], INPUT_PULLDOWN);
@@ -124,15 +120,11 @@ void bindInterrupts(bool stateIsConfig){
 }
 
 void unbindInterrupts() {
-  detachInterrupt(buttonsPins[0]);
-  detachInterrupt(buttonsPins[1]);
   detachInterrupt(buttonsPins[2]);
   detachInterrupt(buttonsPins[3]);
 }
 
 void rebindInterrupts() {
-  attachInterrupt(buttonsPins[0], Button0Interrupt, RISING);
-  attachInterrupt(buttonsPins[1], Button1Interrupt, RISING);
   attachInterrupt(buttonsPins[2], Button2Interrupt, RISING);
   attachInterrupt(buttonsPins[3], Button3Interrupt, RISING);
 }
@@ -158,7 +150,7 @@ void ListSMTPSettings(){
   ioWrite(IO_WRITE_SCREEN | IO_WRITE_CLEAN_BEFORE_WRITE, "Smtp settings:");
   for (int i = 0; i < EMAIL_SETTINGS_COUNT; i++){
     if (i != EMAIL_PASS && i != EMAIL_IMAP_PORT && i != EMAIL_SMTP_PORT)
-      ioWrite(IO_WRITE_SCREEN, getEmailValue(i, buffer));
+      ioWrite(IO_WRITE_SCREEN, getEmailValueFromMemory(i, buffer));
   }
   free(buffer);
 }
@@ -175,8 +167,8 @@ void ListWiFiFromMemory(){
     ioWrite(IO_WRITE_SCREEN | IO_WRITE_CLEAN_BEFORE_WRITE | IO_WRITE_SERIAL, (String(counter) + " networks in memory.").c_str());
 
     for (int i = 0; i < counter; i++){
-      GetWiFiSsidFromMemory(i, ssid);
-      GetWiFiPasswordFromMemory(i, password);
+      getWiFiSsidFromMemory(i, ssid);
+      getWiFiPasswordFromMemory(i, password);
       String output = String(i + 1) + ":'" + String(ssid) + "'-'" + String(password) + "'";
       if (i < MAX_LINES_AMOUNT - 1){
         ioWrite(IO_WRITE_SCREEN, output.c_str());

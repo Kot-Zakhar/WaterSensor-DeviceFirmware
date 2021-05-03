@@ -1,5 +1,5 @@
 #include <BtJson.h>
-
+/*
 void sendPongJson();
 void addWiFiCredentialsJson(JsonObject wifiRecord);
 void removeWifiSingleJson(JsonObject payload);
@@ -17,7 +17,7 @@ void sendNotRecognizedJson();
 void sendJsonResponse(JsonDocument &res);
 
 // void AddWiFiCredentialsJsonCommand();
-
+*/
 /**
  * Json API
  * Every request jsonMessage is an object.
@@ -35,7 +35,7 @@ void sendJsonResponse(JsonDocument &res);
  *    JsonObject? payload;
  * }
 */
-
+/*
 void processBtJsonMessage(JsonObject &reqMessage) {
 
   // parsing the command
@@ -67,16 +67,16 @@ void processBtJsonMessage(JsonObject &reqMessage) {
   //   case JSON_WIFI_REMOVE_ALL:
   //     RemoveAllWiFiCredentialsJsonCommand();
   //     break;
-    case WIFI_REMOVE_SINGLE:
+    case WIFI_DELETE_SINGLE:
       removeWifiSingleJson(payload);
       break;
     case WIFI_SHOW_NETWORKS:
       sendNetworksFromMemoryJson();
       break;
-    case SMTP_SETTINGS:
+    case EMAIL_SMTP_SETTINGS:
       getEmailSettingsJson();
       break;
-    case SET_SMTP_SETTINGS:
+    case EMAIL_SMTP_SETTINGS_SET:
       setEmailSettingsJson(payload);
       break;
     case RESTART:
@@ -124,8 +124,8 @@ void sendNetworksFromMemoryJson() {
     ioWrite(IO_WRITE_SCREEN | IO_WRITE_SERIAL, (String(counter) + " networks in memory.").c_str());
 
     for (int i = 0; i < counter; i++){
-        GetWiFiSsidFromMemory(i, ssid);
-        GetWiFiPasswordFromMemory(i, password);
+        getWiFiSsidFromMemory(i, ssid);
+        getWiFiPasswordFromMemory(i, password);
         JsonObject record = wifiRecordArr.createNestedObject();
         record["ssid"] = ssid;
         record["password"] = password;
@@ -142,7 +142,7 @@ void addWiFiCredentialsJson(JsonObject wifiRecord) {
   const char *ssid = wifiRecord["ssid"];
   const char *pwd = wifiRecord["password"];
 
-  SaveWiFiCredentialsInMemory(ssid, pwd);
+  saveWiFiCredentialsToMemory(ssid, pwd);
 
   DynamicJsonDocument answer(20);
   answer["status"] = "OK";
@@ -153,7 +153,7 @@ void addWiFiCredentialsJson(JsonObject wifiRecord) {
 void removeWifiSingleJson(JsonObject payload) {
   int index = payload["index"];
   // TODO: validate index
-  bool removed = RemoveWiFiCredentials(index);
+  bool removed = removeWiFiCredentialsFromMemory(index);
 
   DynamicJsonDocument answer(20);
   answer["status"] = removed ? "OK" : "Invalid index specified";
@@ -169,7 +169,7 @@ void getEmailSettingsJson() {
   for (int i = 0; i < EMAIL_SETTINGS_COUNT; i++) {
     // TODO: check if values are initialized
     // On first start they are nulls
-    getEmailValue(i, buffer);
+    getEmailValueFromMemory(i, buffer);
     payload[email_settings[i]] = buffer;
   }
 
@@ -185,7 +185,7 @@ void setEmailSettingsJson(JsonObject payload) {
     const char *value = payload[email_settings[i]];
     // TODO: Check if this if really do its job
     if (value != NULL)
-      SetEmailValue(i, value);
+      setEmailValueToMemory(i, value);
   }
 
   sendJsonResponse(response);
@@ -243,3 +243,5 @@ void sendJsonResponse(JsonDocument &res) {
   writeBt(buffer);
   free(buffer);
 }
+
+*/
