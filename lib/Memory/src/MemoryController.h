@@ -13,53 +13,78 @@
 */
 #include "personal_info.h"
 #include <custom_defaults.h>
+#include <custom_types.h>
 
-enum email_setting_t {
-  EMAIL_SMTP_SERVER,
-  EMAIL_SMTP_PORT,
-  EMAIL_SMTP_SENDER,
-  EMAIL_SMTP_RECIPIENT,
-  EMAIL_IMAP_SERVER,
-  EMAIL_IMAP_PORT,
-  EMAIL_LOGIN,
-  EMAIL_PASS,
-  EMAIL_SETTINGS_COUNT,
-};
+// enum email_setting_t {
+//   EMAIL_SMTP_SERVER,
+//   EMAIL_SMTP_PORT,
+//   EMAIL_SMTP_SENDER,
+//   EMAIL_SMTP_RECIPIENT,
+//   EMAIL_IMAP_SERVER,
+//   EMAIL_IMAP_PORT,
+//   EMAIL_LOGIN,
+//   EMAIL_PASS,
+//   EMAIL_SETTINGS_COUNT,
+// };
 
-#define CONFIG_IS_DEFAULT true
+#define DEFAULT_DEVICE_CONFIG_STATE DEVICE_STATE_CONFIG_BLUETOOTH
 
 extern const char* email_settings[];
 
 void initMemoryController();
 
-int saveWiFiCredentialsToMemory(const char* ssid, const char* password);
+device_state_t getStateFromMemory();
+void setStateInMemory(device_state_t state);
+device_state_t getPreferredConfigStateFromMemory();
+void setPreferredConfigStateFromMemory(device_state_t configState);
 
+void saveWaterSensorBoundariesToMemory(int low, int high);
+bool getWaterSensorBoundariesFromMemory(int &low, int &high);
+void deleteWaterSensorBoundariesFroMemory();
+void saveTemperatureBoundariesToMemory(float &low, float &high);
+bool getTemperatureBoundariesFromMemory(float &low, float &high);
+void deleteTemperatureBoundariesFroMemory();
+void saveHumidityBoundariesToMemory(float &low, float &high);
+bool getHumidityBoundariesFromMemory(float &low, float &high);
+void deleteHumidityBoundariesFroMemory();
+
+int saveWiFiCredentialsToMemory(const char* ssid, const char* password);
 void removeAllWiFiCredentialsFromMemory();
 bool removeWiFiCredentialsFromMemory(int index);
 int removeWiFiCredentialsFromMemory(const char *ssid, const char *password);
 int removeWiFiCredentialsFromMemory(const char *ssid);
-
 int getWiFiCredentialsAmountFromMemory();
 char* getWiFiSsidFromMemory(int index, char* buffer);
 char* getWiFiPasswordFromMemory(int index, char* buffer);
 
-bool isConfigStateInMemory();
-void setStateInMemory(bool debug = CONFIG_IS_DEFAULT);
+bool emailServerSettingsAvailable(email_server_type_t serverType);
+void saveEmailServerSettingsToMemory(email_server_type_t serverType, EmailServerSettings &serverSettings);
+void getEmailServerSettingsFromMemory(email_server_type_t serverType, EmailServerSettings &serverSettings);
+void removeEmailServerSettingsFromMemory(email_server_type_t serverType);
 
-bool emailValuesAvailable();
-char* getEmailValueFromMemory(int key, char* buffer);
-void setEmailValueToMemory(int key, const char* buffer);
+bool gprsSettingsAvailableImMemory();
+bool getGprsPermFromMemory();
+void saveGprsPermToMemory(bool perm);
+void saveGprsSettingsToMemory(GprsSettings &serverSettings);
+void getGprsSettingsFromMemory(GprsSettings &serverSettings);
+void removeGprsSettingsFromMemory();
 
 int saveEmailRecipientToMemory(const char *email);
 bool removeEmailRecipientFromMemory(int index);
 int removeEmailRecipientFromMemory(const char *email);
+void removeAllEmailRecipientsFromMemory();
 int getEmailRecipientsAmountFromMemory();
-char *getEmailRecipientFromMemory(int index, char *buffer);
+char *getEmailRecipientFromMemory(int index, char *buffer, size_t len);
 
-int savePhoneRecipientToMemory(const char *phone);
-bool removePhoneRecipientFromMemory(int index);
-int removePhoneRecipientFromMemory(const char *phone);
-int getPhoneRecipientsAmountFromMemory();
-char *getPhoneRecipientFromMemory(int index, char *buffer);
+int saveGsmRecipientToMemory(const char *phone);
+bool removeGsmRecipientFromMemory(int index);
+int removeGsmRecipientFromMemory(const char *phone);
+void removeAllGsmRecipientsFromMemory();
+int getGsmRecipientsAmountFromMemory();
+char *getGsmRecipientFromMemory(int index, char *buffer, size_t len);
+
+void saveGsmPinToMemory(const char *pin);
+char *getPinFromMemory(char *buffer, size_t len);
+void removeGsmPinFromMemory();
 
 #endif

@@ -3,24 +3,36 @@
 #define MEMORY_KEY_MAX_LENGTH 15
 
 // memory keys
-const char* table_name = "bt_wifi";
+const char* table_name = "mem";
 const char* wifi_ssid_key_prefix = "wf_ssid";
 const char* wifi_password_key_prefix = "wf_pass";
 const char* wifi_amount_key = "wf_amount";
 
 const char *email_key_prefix = "@";
-const char* email_settings[EMAIL_SETTINGS_COUNT] = {
-  "smtp server", 
-  "smtp port", 
-  "sender", 
-  "recipient",
-  "imap server",
-  "imap port",
-  "login", 
-  "pass", 
+const char *email_server_keys[] = {
+  "smtp",
+  "imap"
+};
+const char *email_server_settings_key_prefixes[] = {
+  "srv",
+  "port",
+  "login",
+  "pwd",
+  "ssl"
 };
 
-const char* state_is_config_key = "dbg_state";
+const char *gsm_pin_key = "gsmpin";
+
+const char *gprs_key_prefix = "gprs";
+const char *gprs_perm_key = "gprs_perm";
+const char *gprs_settings_keys[] = {
+  "apn",
+  "usr",
+  "pwd"
+};
+
+const char *device_state_key = "st";
+const char *preferred_device_config_state_key = "c_st";
 
 const char *email_recipient_key_prefix = "e_cred";
 const char *email_recipients_amount_key = "e_amount";
@@ -32,60 +44,178 @@ Preferences memory;
 void initMemoryController(){
   memory.begin(table_name, false);
 
-  if (!emailValuesAvailable()){
-    setEmailValueToMemory(EMAIL_SMTP_SERVER, PERSONAL_SMTP_SERVER);
-    setEmailValueToMemory(EMAIL_SMTP_PORT, PERSONAL_SMTP_PORT);
-    setEmailValueToMemory(EMAIL_IMAP_SERVER, PERSONAL_IMAP_SERVER);
-    setEmailValueToMemory(EMAIL_IMAP_PORT, PERSONAL_IMAP_PORT);
-    setEmailValueToMemory(EMAIL_LOGIN, PERSONAL_EMAIL_LOGIN);
-    setEmailValueToMemory(EMAIL_PASS, PERSONAL_EMAIL_PASSWORD);
-    setEmailValueToMemory(EMAIL_SMTP_SENDER, "ESP32");
-    setEmailValueToMemory(EMAIL_SMTP_RECIPIENT, PERSONAL_EMAIL_LOGIN);
+  // TODO: initialization with defined values
+}
+
+#pragma region  sensors bounds
+
+void saveWaterSensorBoundariesToMemory(int low, int high) {
+  memory.putInt("ws_l", low);
+  memory.putInt("ws_h", high);
+  memory.putBool("ws", true);
+}
+
+bool getWaterSensorBoundariesFromMemory(int &low, int &high) {
+  if (memory.getBool("ws")) {
+    low = memory.getInt("ws_l");
+    high = memory.getInt("ws_h");
+    return true;
+  } else {
+    return false;
   }
 }
+
+void deleteWaterSensorBoundariesFroMemory() {
+  memory.remove("ws");
+  memory.remove("ws_l");
+  memory.remove("ws_l");
+}
+
+void saveTemperatureBoundariesToMemory(float &low, float &high) {
+  memory.putFloat("ts_l", low);
+  memory.putFloat("ts_h", high);
+  memory.putBool("ts", true);
+}
+
+bool getTemperatureBoundariesFromMemory(float &low, float &high) {
+  if (memory.getBool("ts")) {
+    low = memory.getFloat("ts_l");
+    high = memory.getFloat("ts_h");
+    return true;
+  } else {
+    return false;
+  }
+}
+
+void deleteTemperatureBoundariesFroMemory() {
+  memory.remove("ts");
+  memory.remove("ts_l");
+  memory.remove("ts_l");
+}
+
+void saveHumidityBoundariesToMemory(float &low, float &high) {
+  memory.putFloat("hs_l", low);
+  memory.putFloat("hs_h", high);
+  memory.putBool("hs", true);
+}
+
+bool getHumidityBoundariesFromMemory(float &low, float &high) {
+  if (memory.getBool("hs")) {
+    low = memory.getFloat("hs_l");
+    high = memory.getFloat("hs_h");
+    return true;
+  } else {
+    return false;
+  }
+}
+
+void deleteHumidityBoundariesFroMemory() {
+  memory.remove("hs");
+  memory.remove("hs_l");
+  memory.remove("hs_l");
+}
+
+#pragma endregion  sensors bounds
 
 #pragma region  email and smtp credentials
 
-bool emailValuesAvailable(){
-  log_v("Checking smtp values.");
-  char *buffer = (char *)malloc(STRING_LENGTH);
-  bool result = true;
-  for (int i = 0; i < EMAIL_SETTINGS_COUNT; i++){
-    if (memory.getString((String(email_key_prefix) + email_settings[i]).c_str(), buffer, STRING_LENGTH) == 0){
-      // log_v("Value %d not available.", i);
-      result = false;
-      break;
-    } else {
-      // log_v("Value %d: %s", i, buffer);
-    }
-  }
-
-  if (result)
-    log_v("Values are checked.");
-  else
-    log_v("Values are not available.");
-
-  free(buffer);
-  return result;
+bool emailServerSettingsAvailable(email_server_type_t serverType) {
+  return memory.getBool(email_server_keys[serverType]);
 }
 
-char* getEmailValueFromMemory(int key, char* buffer){
-  memory.getString(
-    (String(email_key_prefix) + email_settings[key]).c_str(),
-    buffer,
-    STRING_LENGTH
-  );
-  return buffer;
+void saveEmailServerSettingsToMemory(email_server_type_t serverType, struct EmailServerSettings &serverSettings) {
+  char key_buffer[STRING_LENGTH];
+  sprintf(key_buffer, "%s_%s", email_server_keys[serverType], email_server_keys[EMAIL_SERVER_ADDRESS]);
+  memory.putString(key_buffer, serverSettings.server);
+  sprintf(key_buffer, "%s_%s", email_server_keys[serverType], email_server_keys[EMAIL_SERVER_PORT]);
+  memory.putString(key_buffer, serverSettings.port);
+  sprintf(key_buffer, "%s_%s", email_server_keys[serverType], email_server_keys[EMAIL_SERVER_LOGIN]);
+  memory.putString(key_buffer, serverSettings.login);
+  sprintf(key_buffer, "%s_%s", email_server_keys[serverType], email_server_keys[EMAIL_SERVER_PASSWORD]);
+  memory.putString(key_buffer, serverSettings.password);
+  sprintf(key_buffer, "%s_%s", email_server_keys[serverType], email_server_keys[EMAIL_SERVER_SSL]);
+  memory.putBool(key_buffer, serverSettings.ssl);
+  memory.putBool(email_server_keys[serverType], true);
 }
 
-void setEmailValueToMemory(int key, const char* buffer){
-  memory.putString(
-    (String(email_key_prefix) + email_settings[key]).c_str(),
-    buffer
-  );
+void getEmailServerSettingsFromMemory(email_server_type_t serverType, struct EmailServerSettings &serverSettings) {
+  char key_buffer[STRING_LENGTH];
+  sprintf(key_buffer, "%s_%s", email_server_keys[serverType], email_server_keys[EMAIL_SERVER_ADDRESS]);
+  memory.getString(key_buffer, serverSettings.server, STRING_LENGTH);
+  sprintf(key_buffer, "%s_%s", email_server_keys[serverType], email_server_keys[EMAIL_SERVER_PORT]);
+  memory.getString(key_buffer, serverSettings.port, STRING_LENGTH);
+  sprintf(key_buffer, "%s_%s", email_server_keys[serverType], email_server_keys[EMAIL_SERVER_LOGIN]);
+  memory.getString(key_buffer, serverSettings.login, STRING_LENGTH);
+  sprintf(key_buffer, "%s_%s", email_server_keys[serverType], email_server_keys[EMAIL_SERVER_PASSWORD]);
+  memory.getString(key_buffer, serverSettings.password, STRING_LENGTH);
+  sprintf(key_buffer, "%s_%s", email_server_keys[serverType], email_server_keys[EMAIL_SERVER_SSL]);
+  serverSettings.ssl = memory.getBool(key_buffer);
+}
+
+void removeEmailServerSettingsFromMemory(email_server_type_t serverType) {
+  char key_buffer[STRING_LENGTH];
+  sprintf(key_buffer, "%s_%s", email_server_keys[serverType], email_server_keys[EMAIL_SERVER_ADDRESS]);
+  memory.remove(key_buffer);
+  sprintf(key_buffer, "%s_%s", email_server_keys[serverType], email_server_keys[EMAIL_SERVER_PORT]);
+  memory.remove(key_buffer);
+  sprintf(key_buffer, "%s_%s", email_server_keys[serverType], email_server_keys[EMAIL_SERVER_LOGIN]);
+  memory.remove(key_buffer);
+  sprintf(key_buffer, "%s_%s", email_server_keys[serverType], email_server_keys[EMAIL_SERVER_PASSWORD]);
+  memory.remove(key_buffer);
+  sprintf(key_buffer, "%s_%s", email_server_keys[serverType], email_server_keys[EMAIL_SERVER_SSL]);
+  memory.remove(key_buffer);
+  memory.putBool(email_server_keys[serverType], false);
 }
 
 #pragma endregion  email and smtp credentials
+
+#pragma region  gprs settings
+
+bool gprsSettingsAvailableImMemory() {
+  return memory.getBool(gprs_key_prefix);
+}
+
+bool getGprsPermFromMemory() {
+  return memory.getBool(gprs_perm_key);
+}
+
+void saveGprsPermToMemory(bool perm) {
+  memory.putBool(gprs_perm_key, perm);
+}
+
+void saveGprsSettingsToMemory(GprsSettings &serverSettings) {
+  char key_buffer[MEMORY_KEY_MAX_LENGTH];
+  sprintf(key_buffer, "%s_%s", gprs_key_prefix, gprs_settings_keys[GPRS_APN]);
+  memory.putString(key_buffer, serverSettings.apn);
+  sprintf(key_buffer, "%s_%s", gprs_key_prefix, gprs_settings_keys[GPRS_USER]);
+  memory.putString(key_buffer, serverSettings.user);
+  sprintf(key_buffer, "%s_%s", gprs_key_prefix, gprs_settings_keys[GPRS_PASSWORD]);
+  memory.putString(key_buffer, serverSettings.password);
+  memory.putBool(gprs_key_prefix, true);
+}
+
+void getGprsSettingsFromMemory(GprsSettings &serverSettings) {
+  char key_buffer[MEMORY_KEY_MAX_LENGTH];
+  sprintf(key_buffer, "%s_%s", gprs_key_prefix, gprs_settings_keys[GPRS_APN]);
+  memory.getString(key_buffer, serverSettings.apn, STRING_LENGTH);
+  sprintf(key_buffer, "%s_%s", gprs_key_prefix, gprs_settings_keys[GPRS_USER]);
+  memory.getString(key_buffer, serverSettings.user, STRING_LENGTH);
+  sprintf(key_buffer, "%s_%s", gprs_key_prefix, gprs_settings_keys[GPRS_PASSWORD]);
+  memory.getString(key_buffer, serverSettings.password, STRING_LENGTH);
+}
+
+void removeGprsSettingsFromMemory() {
+  memory.putBool(gprs_key_prefix, false);
+  char key_buffer[MEMORY_KEY_MAX_LENGTH];
+  sprintf(key_buffer, "%s_%s", gprs_key_prefix, gprs_settings_keys[GPRS_APN]);
+  memory.remove(key_buffer);
+  sprintf(key_buffer, "%s_%s", gprs_key_prefix, gprs_settings_keys[GPRS_USER]);
+  memory.remove(key_buffer);
+  sprintf(key_buffer, "%s_%s", gprs_key_prefix, gprs_settings_keys[GPRS_PASSWORD]);
+  memory.remove(key_buffer);
+}
+
+#pragma endregion  gprs settings
 
 #pragma region  WiFi credentials
 
@@ -118,18 +248,16 @@ int getWiFiCredentialsAmountFromMemory(){
 }
 
 char* getWiFiSsidFromMemory(int index, char* buffer){
-  char* ssid_key = (char*) malloc(MEMORY_KEY_MAX_LENGTH * sizeof(char));
+  char ssid_key[MEMORY_KEY_MAX_LENGTH];
   sprintf(ssid_key, "%s%d", wifi_ssid_key_prefix, index);
   memory.getString(ssid_key, buffer, STRING_LENGTH);
-  free(ssid_key);
   return buffer;
 }
 
 char* getWiFiPasswordFromMemory(int index, char* buffer){
-  char* password_key = (char*) malloc(MEMORY_KEY_MAX_LENGTH * sizeof(char));
+  char password_key[MEMORY_KEY_MAX_LENGTH];
   sprintf(password_key, "%s%d", wifi_password_key_prefix, index);
   memory.getString(password_key, buffer, STRING_LENGTH);
-  free(password_key);
   return buffer;
 }
 
@@ -140,9 +268,9 @@ int removeWiFiCredentialsFromMemory(const char *ssid, const char *password) {
 
   int removedAmount = 0;
 
-  char *key = (char*) malloc(MEMORY_KEY_MAX_LENGTH * sizeof(char));
-  char *ssid_buffer = (char *) malloc(STRING_LENGTH * sizeof(char));
-  char *password_buffer = (char *) malloc(STRING_LENGTH * sizeof(char));
+  char key[MEMORY_KEY_MAX_LENGTH];
+  char ssid_buffer[STRING_LENGTH];
+  char password_buffer[STRING_LENGTH];
 
   for (int i = 0; i < amount;) {
     sprintf(key, "%s%d", wifi_ssid_key_prefix, i);
@@ -161,10 +289,6 @@ int removeWiFiCredentialsFromMemory(const char *ssid, const char *password) {
 
   log_d("%d records of '%s' were removed from memory.", removedAmount, ssid);
   
-  free(ssid_buffer);
-  free(password_buffer);
-  free(key);
-
   return removedAmount;
 }
 
@@ -175,8 +299,8 @@ int removeWiFiCredentialsFromMemory(const char *ssid) {
 
   int removedAmount = 0;
 
-  char *key = (char*) malloc(MEMORY_KEY_MAX_LENGTH * sizeof(char));
-  char *buffer = (char *) malloc(STRING_LENGTH * sizeof(char));
+  char key[MEMORY_KEY_MAX_LENGTH];
+  char buffer[STRING_LENGTH];
 
   for (int i = 0; i < amount;) {
     sprintf(key, "%s%d", wifi_ssid_key_prefix, i);
@@ -192,9 +316,6 @@ int removeWiFiCredentialsFromMemory(const char *ssid) {
 
   log_d("%d records of '%s' were removed from memory.", removedAmount, ssid);
   
-  free(buffer);
-  free(key);
-
   return removedAmount;
 }
 
@@ -203,8 +324,8 @@ bool removeWiFiCredentialsFromMemory(int index) {
   if (index >= amount || index < 0)
     return false;
 
-  char *key = (char*) malloc(MEMORY_KEY_MAX_LENGTH * sizeof(char));
-  char *buffer = (char *) malloc(STRING_LENGTH * sizeof(char));
+  char key[MEMORY_KEY_MAX_LENGTH];
+  char buffer[STRING_LENGTH];
 
   for (int i = index + 1; i < amount; i++) {
     sprintf(key, "%s%d", wifi_ssid_key_prefix, i);
@@ -228,15 +349,12 @@ bool removeWiFiCredentialsFromMemory(int index) {
 
   memory.putUInt(wifi_amount_key, amount);
 
-  free(buffer);
-  free(key);
-
   return true;
 }
 
 void removeAllWiFiCredentialsFromMemory(){
   int amount = getWiFiCredentialsAmountFromMemory();
-  char* key = (char*)malloc(MEMORY_KEY_MAX_LENGTH * sizeof(char));
+  char key[MEMORY_KEY_MAX_LENGTH];
   
   for (int i = 0; i < amount; i++){
     sprintf(key, "%s%d", wifi_ssid_key_prefix, i);
@@ -246,21 +364,27 @@ void removeAllWiFiCredentialsFromMemory(){
   }
 
   memory.remove(wifi_amount_key);
-    
-  free(key);
 }
 
 #pragma endregion  WiFi credentials
 
 #pragma region  States (modes)
 
-bool isConfigStateInMemory(){
-  log_v("Getting state from memory");
-  return memory.getBool(state_is_config_key, CONFIG_IS_DEFAULT);
+device_state_t getStateFromMemory() {
+  return device_state_t(memory.getChar(device_state_key, DEFAULT_DEVICE_CONFIG_STATE));
 }
 
-void setStateInMemory(bool debug) {
-  memory.putBool(state_is_config_key, debug);
+device_state_t getPreferredConfigStateFromMemory() {
+  return device_state_t(memory.getChar(preferred_device_config_state_key, DEFAULT_DEVICE_CONFIG_STATE));
+}
+
+void setStateInMemory(device_state_t state) {
+  memory.putChar(device_state_key, state);
+}
+
+void setPreferredConfigStateFromMemory(device_state_t configState) {
+  char state = configState & DEVICE_STATE_CONFIG ? configState : DEFAULT_DEVICE_CONFIG_STATE;
+  memory.putChar(preferred_device_config_state_key, state);
 }
 
 #pragma endregion  States (modes)
@@ -268,8 +392,7 @@ void setStateInMemory(bool debug) {
 #pragma region  Email recipients
 
 int saveEmailRecipientToMemory(const char *email) {
-
-  char* email_key = (char*) malloc(MEMORY_KEY_MAX_LENGTH * sizeof(char));
+  char email_key[MEMORY_KEY_MAX_LENGTH];
 
   int counter = getEmailRecipientsAmountFromMemory();
   
@@ -282,8 +405,6 @@ int saveEmailRecipientToMemory(const char *email) {
   Serial.println("saved email");
   Serial.println(email);
 
-  free(email_key);
-
   return counter;
 }
 
@@ -292,8 +413,8 @@ bool removeEmailRecipientFromMemory(int index) {
   if (index >= amount || index < 0)
     return false;
 
-  char* email_key = (char*) malloc(MEMORY_KEY_MAX_LENGTH * sizeof(char));
-  char *buffer = (char *) malloc(STRING_LENGTH * sizeof(char));
+  char email_key[MEMORY_KEY_MAX_LENGTH];
+  char buffer[STRING_LENGTH];
 
   for (int i = index + 1; i < amount; i++) {
     sprintf(email_key, "%s%d", email_recipient_key_prefix, i);
@@ -308,21 +429,18 @@ bool removeEmailRecipientFromMemory(int index) {
   amount = amount - 1;
   memory.putUInt(email_recipients_amount_key, amount);
 
-  free(buffer);
-  free(email_key);
-
   return true;
 }
 
 int removeEmailRecipientFromMemory(const char *email) {
-  int amount = getWiFiCredentialsAmountFromMemory();
+  int amount = getEmailRecipientsAmountFromMemory();
   if (amount == 0)
     return 0;
 
   int removedAmount = 0;
 
-  char *key = (char*) malloc(MEMORY_KEY_MAX_LENGTH * sizeof(char));
-  char *buffer = (char *) malloc(STRING_LENGTH * sizeof(char));
+  char key[MEMORY_KEY_MAX_LENGTH];
+  char buffer[STRING_LENGTH];
 
   for (int i = 0; i < amount;) {
     sprintf(key, "%s%d", email_recipient_key_prefix, i);
@@ -338,9 +456,6 @@ int removeEmailRecipientFromMemory(const char *email) {
 
   log_d("%d records of '%s' were removed from memory.", removedAmount, email);
   
-  free(buffer);
-  free(key);
-
   return removedAmount;
 }
 
@@ -348,23 +463,45 @@ int getEmailRecipientsAmountFromMemory() {
   return memory.getUInt(email_recipients_amount_key, 0);
 }
 
-char *getEmailRecipientFromMemory(int index, char *buffer) {
-  char* email_key = (char*) malloc(MEMORY_KEY_MAX_LENGTH * sizeof(char));
+void removeAllEmailRecipientsFromMemory() {
+  int amount = getEmailRecipientsAmountFromMemory();
+
+  for (int i = 0; i < amount; i++)
+    removeEmailRecipientFromMemory(i);
+}
+
+char *getEmailRecipientFromMemory(int index, char *buffer, size_t len) {
+  char email_key[MEMORY_KEY_MAX_LENGTH];
   sprintf(email_key, "%s%d", email_recipient_key_prefix, index);
-  memory.getString(email_key, buffer, STRING_LENGTH);
-  free(email_key);
+  memory.getString(email_key, buffer, len);
   return buffer;
 }
 
 #pragma endregion  Email recipients
 
+#pragma region  gsm pin
+
+void saveGsmPinToMemory(const char *pin) {
+  memory.putString(gsm_pin_key, pin);
+}
+
+char *getPinFromMemory(char *buffer, size_t len) {
+  memory.getString(gsm_pin_key, buffer, len);
+  return buffer;
+}
+
+void removeGsmPinFromMemory() {
+  memory.remove(gsm_pin_key);
+}
+
+#pragma endregion  gsm pin
+
 #pragma region  Phone recipients
 
-int savePhoneRecipientToMemory(const char *phone) {
+int saveGsmRecipientToMemory(const char *phone) {
+  char phone_key[MEMORY_KEY_MAX_LENGTH];
 
-  char* phone_key = (char*) malloc(MEMORY_KEY_MAX_LENGTH * sizeof(char));
-
-  int counter = getPhoneRecipientsAmountFromMemory();
+  int counter = getGsmRecipientsAmountFromMemory();
   
   sprintf(phone_key, "%s%d", phone_recipient_key_prefix, counter);
 
@@ -375,18 +512,16 @@ int savePhoneRecipientToMemory(const char *phone) {
   Serial.println("saved phone");
   Serial.println(phone);
 
-  free(phone_key);
-
   return counter;
 }
 
-bool removePhoneRecipientFromMemory(int index) {
-  int amount = getPhoneRecipientsAmountFromMemory();
+bool removeGsmRecipientFromMemory(int index) {
+  int amount = getGsmRecipientsAmountFromMemory();
   if (index >= amount || index < 0)
     return false;
 
-  char* phone_key = (char*) malloc(MEMORY_KEY_MAX_LENGTH * sizeof(char));
-  char *buffer = (char *) malloc(STRING_LENGTH * sizeof(char));
+  char phone_key[MEMORY_KEY_MAX_LENGTH];
+  char buffer[STRING_LENGTH];
 
   for (int i = index + 1; i < amount; i++) {
     sprintf(phone_key, "%s%d", phone_recipient_key_prefix, i);
@@ -401,27 +536,24 @@ bool removePhoneRecipientFromMemory(int index) {
   amount = amount - 1;
   memory.putUInt(phone_recipients_amount_key, amount);
 
-  free(buffer);
-  free(phone_key);
-
   return true;
 }
 
-int removePhoneRecipientFromMemory(const char *phone) {
-  int amount = getWiFiCredentialsAmountFromMemory();
+int removeGsmRecipientFromMemory(const char *phone) {
+  int amount = getGsmRecipientsAmountFromMemory();
   if (amount == 0)
     return 0;
 
   int removedAmount = 0;
 
-  char *key = (char*) malloc(MEMORY_KEY_MAX_LENGTH * sizeof(char));
-  char *buffer = (char *) malloc(STRING_LENGTH * sizeof(char));
+  char key[MEMORY_KEY_MAX_LENGTH];
+  char buffer[STRING_LENGTH];
 
   for (int i = 0; i < amount;) {
     sprintf(key, "%s%d", phone_recipient_key_prefix, i);
     memory.getString(key, buffer, STRING_LENGTH);
 
-    if (!strcmp(phone, buffer) && removePhoneRecipientFromMemory(i)) {
+    if (!strcmp(phone, buffer) && removeGsmRecipientFromMemory(i)) {
       removedAmount++;
       amount--;
     } else {
@@ -431,21 +563,24 @@ int removePhoneRecipientFromMemory(const char *phone) {
 
   log_d("%d records of '%s' were removed from memory.", removedAmount, phone);
   
-  free(buffer);
-  free(key);
-
   return removedAmount;
 }
 
-int getPhoneRecipientsAmountFromMemory() {
+int getGsmRecipientsAmountFromMemory() {
   return memory.getUInt(phone_recipients_amount_key, 0);
 }
 
-char *getPhoneRecipientFromMemory(int index, char *buffer) {
-  char* phone_key = (char*) malloc(MEMORY_KEY_MAX_LENGTH * sizeof(char));
+void removeAllGsmRecipientsFromMemory() {
+  int amount = getGsmRecipientsAmountFromMemory();
+
+  for (int i = 0; i < amount; i++)
+    removeGsmRecipientFromMemory(i);
+}
+
+char *getGsmRecipientFromMemory(int index, char *buffer, size_t len) {
+  char phone_key[MEMORY_KEY_MAX_LENGTH];
   sprintf(phone_key, "%s%d", phone_recipient_key_prefix, index);
-  memory.getString(phone_key, buffer, STRING_LENGTH);
-  free(phone_key);
+  memory.getString(phone_key, buffer, len);
   return buffer;
 }
 

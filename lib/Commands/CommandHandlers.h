@@ -3,32 +3,61 @@
 
 #include <custom_defaults.h>
 #include <custom_types.h>
+#include <errno.h>
 
-struct WiFiCred *wifiCredsGetAll(struct WiFiCred* credsBuffer, int &amount);
+struct WiFiCred *wifiCredsGetAll(struct WiFiCred *credsBuffer, int &amount);
 int wifiCredsGetAmount();
 void wifiCredsAdd(struct WiFiCred creds);
 void wifiCredsAdd(const char *ssid, const char *password);
 void wifiCredsDelete(const char *ssid, const char *password);
 void wifiCredsDelete(const char *ssid);
+void wifiCredsDelete(int index);
 void wifiCredsDeleteAll();
 
 // char *pingCommandHandler(char *responseBuffer, size_t len);
 
-// void wifiCredsGetCommandHandler(int payload);
-// void wifiCredsAddCommandHandler(int payload);
-// void wifiCredsDeleteSingleCommandHandler(int payload);
-// void wifiCredsDeleteAllCommandHandler(int payload);
+void emailServerSettingsGet(email_server_type_t serverType, struct EmailServerSettings &settings);
+void emailServerSettingsSet(email_server_type_t serverType, struct EmailServerSettings &settings);
+void emailServerSettingsDelete(email_server_type_t serverType);
 
-// void smtpSettingsGetCommandHandler(int payload);
-// void smtpSettingsSetCommandHandler(int payload);
+int emailRecipientsGetAmount();
+char *emailRecipientGetByIndex(int index, char *buffer, size_t length);
+void emailRecipientAdd(const char *email);
+void emailRecipientDelete(const char *email);
+void emailRecipientDelete(int index);
+void emailRecipientsDeleteAll();
 
-// void imapSettingsGetCommandHandler(int payload);
-// void imapSettingsSetCommandHandler(int payload);
+void gsmPinSet(const char *pin);
+void gsmPinDelete();
 
-// void emailRecipientsGetCommandHandler(int payload);
-// void emailRecipientsAddCommandHandler(int payload);
-// void emailRecipientDeleteSingleCommandHandler(int payload);
-// void emailRecipientsDeleteAllCommandHandler(int payload);
+int gsmRecipientsGetAmount();
+char *gsmRecipientGetByIndex(int index, char *buffer, size_t length);
+void gsmRecipientAdd(const char *phoneNumber);
+void gsmRecipientDelete(const char *phoneNumber);
+void gsmRecipientDelete(int index);
+void gsmRecipientsDeleteAll();
+
+void gprsSettingsGet(struct GprsSettings &settings);
+void gprsSettingsSet(struct GprsSettings &settings);
+void gprsSettingsDelete();
+bool gprsPermGet();
+void gprsPermSet(bool perm);
+
+void sendTestSms();
+void sendTestEmailGprs();
+void sendTestEmailWiFi();
+
+bool getWaterSensorBoundaries(int &low, int &high);
+void setWaterSensorBoundaries(int low, int high);
+void deleteWaterSensorBoundaries();
+bool getTemperatureBoundaries(float &low, float &high);
+void setTemperatureBoundaries(float low, float high);
+void deleteTemperatureBoundaries();
+bool getHumidityBoundaries(float &low, float &high);
+void setHumidityBoundaries(float low, float high);
+void deleteHumidityBoundaries();
+
+void getSensorsValues(SensorsValues &sensors);
 
 // void gsmPinSetCommandHandler(int payload);
 // void gsmUseNetworkPermissionGetCommandHandler(int payload);

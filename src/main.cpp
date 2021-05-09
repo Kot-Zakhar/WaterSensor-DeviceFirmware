@@ -1,88 +1,107 @@
 #include <BtController.h>
 #include <MemoryController.h>
 #include <InterruptController.h>
-#include <IOController.h>
-#include <SensorChecker.h>
+#include <IndicationController.h>
+#include <SensorsChecker.h>
 #include <WifiController.h>
-#include <GSMController.h>
+#include <GsmService.h>
+#include <EmailChecker.h>
+#include <WifiHotspotController.h>
 
-bool stateIsConfig;
+device_state_t currentState;
 
 void setup() {
 
   Serial.begin(115200);
 
-  initIOController();
+  initIndicationController();
+
   initMemoryController();
-  initWiFiController();
+  initGsmService();
 
-  stateIsConfig = isConfigStateInMemory();
+  currentState = getStateFromMemory();
 
-  if (!stateIsConfig) {
-    ioWrite(IO_WRITE_SCREEN, "Connecting to wifi...");
-    stateIsConfig = (getWiFiCredentialsAmountFromMemory() == 0) || !connectToAnyWiFiFromMemory();
-    if (stateIsConfig) {
-      ioWrite(IO_WRITE_SCREEN, "Couldn't connect.");
-    } else {
-      ioWrite(IO_WRITE_SCREEN | IO_WRITE_CLEAN_BEFORE_WRITE, "Connected to ");
-      ioWrite(IO_WRITE_SCREEN, getCurrentWiFiSsid().c_str());
-      syncTime();
-      char *buffer = (char *)malloc(STRING_LENGTH);
-      ioWrite(IO_WRITE_SCREEN | IO_WRITE_SERIAL, getDateTimeStr(buffer, STRING_LENGTH));
-      free(buffer);
-    }
+  // checking availability
+  if (currentState & DEVICE_STATE_WORK) {
+    bool ableToWork =
+      (GsmNotificationIsOn() && GsmConnectionIsAvailable()) ||
+      (GprsNotificationIsOn() && GpssConnectionIsAvailable()) ||
+      (WiFiNotificationIsOn() && WiFiConnectionIsAvailable());
+    if (!ableToWork)
+      currentState = getPreferredConfigStateFromMemory();
   }
 
-  if (stateIsConfig) {
-    Serial.println("Config mode is on.");
-    ioWrite(IO_WRITE_SCREEN, "Configuration mode.");
-    ioIndicate(MODE_CONFIG_ON);
-    wifiControllerOff();
-    initBtController();
-    initGsmController();
+  initSensorsChecker();
+  initButtonsInterrupts(currentState & DEVICE_STATE_CONFIG);
+
+  if (currentState & DEVICE_STATE_CONFIG) {
+    Serial.printf("Config mode. %s\n", currentState & DEVICE_STATE_CONFIG_BLUETOOTH ? "Bluetooth" : "WiFi");
+    if (currentState & DEVICE_STATE_CONFIG_BLUETOOTH)
+      initBtController();
+    else if (currentState & DEVICE_STATE_CONFIG_WIFI_HOTSPOT)
+      initWiFiHotspot();
+    else {
+      Serial.println("Unknown state");
+      setStateInMemory(DEFAULT_DEVICE_CONFIG_STATE);
+      esp_restart();
+    }
+
   } else {
     Serial.println("Working mode.");
-    ioWrite(IO_WRITE_SCREEN, "Working mode.");
-    ioIndicate(MODE_WORK_ON);
-    initEmailController();
+    startEmailChecker();
   }
-  // bindInterrupts(stateIsConfig);
-  initSensorChecker(stateIsConfig);
 }
 
 void detachInterruptsAndTimers() {
-  stopEmailChecker();
-  stopSensorChecker();
+  pauseEmailChecker();
   unbindInterrupts();
 }
 
 void reattachInterruptsAndTimers() {
-  restartEmailChecker();
-  restartSensorChecker();
+  resumeEmailChecker();
   rebindInterrupts();
 }
-// TODO: connect to wifi only when needed
+
 void loop() {
-  if (stateIsConfig){
-    if (shouldBtBeProcessed()) {
+
+  processButtons();
+
+  switch (currentState)
+  {
+  case DEVICE_STATE_WORK:
+    if (emailNeedToBeProcessed()) {
+      detachInterruptsAndTimers();
+      processEmailChecker();
+      reattachInterruptsAndTimers();
+    }
+    break;
+    
+  case DEVICE_STATE_CONFIG_BLUETOOTH:
+    if (btNeedToBeProcessed()) {
       detachInterruptsAndTimers();
       processBt();
       reattachInterruptsAndTimers();
     }
-  } else {
-    if (shouldEmailBeProcessed()) {
-      detachInterruptsAndTimers();
-      processEmailController();
-      reattachInterruptsAndTimers();
-    }
+    break;
+  case DEVICE_STATE_CONFIG_WIFI_HOTSPOT:
+    /* there is going to be wifi hotspot processing */
+    break;
+  
+  default:
+    break;
   }
-  processInterrupts();
-  if (shouldSensorBeProcessed()) {
+
+  if (sensorsNeedToBeProcessed()) {
     detachInterruptsAndTimers();
-    processSensorChecker();
+    processSensorsChecker();
     reattachInterruptsAndTimers();
   }
-  delay(100);
-  pipeSimToSerial();
+
+  if (gsmNeedToBeProcessed()) {
+    detachInterruptsAndTimers();
+    processGsm();
+    reattachInterruptsAndTimers();
+  }
   
+  delay(100);
 }

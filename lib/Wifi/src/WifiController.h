@@ -8,16 +8,19 @@
 
 #define CONNECTING_TIMEOUT 5000
 
-void initWiFiController();
 void wifiControllerOff();
 
 String getCurrentWiFiSsid();
 bool isWiFiConnected();
+void initWiFiController();
 bool awaitForWiFiConnection(int timeout);
 void awaitForWiFiConnection();
 void connectToWiFi(const char *ssid, const char *password);
 bool connectToAnyWiFiFromMemory();
 void disconnectFromWiFi();
+
+bool WiFiNotificationIsOn();
+bool WiFiConnectionIsAvailable();
 
 void syncTime();
 char *getDateTimeStr(char *buffer, size_t length, bool shortFormat = true);

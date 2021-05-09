@@ -13,8 +13,6 @@ const char* ntpServer2 = "europe.pool.ntp.org";
 const long  gmtOffset_sec = 10800;
 const int   daylightOffset_sec = 0;
 
-void initWiFiController(){
-}
 
 void syncTime(){
   // IOWrite(IO_WRITE_SCREEN | IO_WRITE_SERIAL, "Syncing time");
@@ -47,6 +45,10 @@ char *getTimeStr(char *buffer, size_t length, bool shortFormat){
       &timeInfo);
   }
   return buffer;
+}
+
+void initWiFiController() {
+  WiFi.mode(WIFI_STA);
 }
 
 void wifiControllerOff(){
@@ -103,4 +105,16 @@ bool isWiFiConnected(){
 void disconnectFromWiFi(){
   WiFi.disconnect();
   WiFi.mode(WIFI_OFF);
+}
+
+bool WiFiNotificationIsOn() {
+  return getWiFiCredentialsAmountFromMemory() > 0 &&
+    getEmailRecipientsAmountFromMemory() > 0;
+}
+
+bool WiFiConnectionIsAvailable() {
+  initWiFiController();
+  bool result = connectToAnyWiFiFromMemory();
+  disconnectFromWiFi();
+  return result;
 }

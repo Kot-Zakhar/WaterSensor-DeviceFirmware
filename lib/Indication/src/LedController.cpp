@@ -13,7 +13,7 @@ const static uint16_t blinkDuration[2] = {300, 1000};
 const static uint8_t ledPins[] = {25, 26};
 const static uint8_t rgbLedPins[] = {15, 13, 12};
 
-Ticker updater;
+// Ticker updater;
 
 CRGB led;
 // uint8_t brightness = 0;
@@ -35,9 +35,9 @@ void IRAM_ATTR ledUpdateInterrupt(){
 }
 
 void initLED(){
-    updater.attach_ms(LED_UPDATE_FREQ, ledUpdateInterrupt);
+    // updater.attach_ms(LED_UPDATE_FREQ, ledUpdateInterrupt);
     FastLED.addLeds<WS2811, LED_PIN, GRB>(&led, 1);
-    led = BLACK;
-    // led = CHSV(HUE_RED, 255, 255);
+    // led = BLACK;
+    led = CHSV(HUE_GREEN, 255, 10);
     FastLED.show();
 }

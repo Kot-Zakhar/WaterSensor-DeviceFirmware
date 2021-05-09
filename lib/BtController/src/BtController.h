@@ -10,7 +10,8 @@
 #include <CommandController.h>
 
 void initBtController();
-bool shouldBtBeProcessed();
+
+bool btNeedToBeProcessed();
 void processBt();
 
 #endif

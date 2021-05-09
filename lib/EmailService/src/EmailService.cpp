@@ -1,41 +1,24 @@
-#include <EmailController.h>
+#include <EmailService.h>
+#include <MemoryController.h>
+#include <ESP32_MailClient.h>
+#include <WifiController.h>
+#include <IOController.h>
+
 
 #define CHECK_INBOX_PERIOD_S 30
 
 SMTPData smtpData;
 IMAPData imapData;
 
-Ticker emailChecker;
-bool needToCheckInbox = false;
-
 const char* htmlLeftSide = "<br><p>";
 const char* htmlSise = "</p><br>";
 
 const String searchCriteria = "UID SEARCH SUBJECT \"esp32\" TEXT \"check\" UNSEEN";
 
-void checkLetterTimerEvent(){
-  log_v("Check letter event.");
-  needToCheckInbox = true;
-}
-
-void initEmailController(){
-  log_v("Initializing email checker.");
-  emailChecker.attach(CHECK_INBOX_PERIOD_S, checkLetterTimerEvent);
-}
-
-void stopEmailChecker() {
-  log_v("Stopping email checker.");
-  emailChecker.detach();
-}
-
-void restartEmailChecker() {
-  log_v("Restarting email checker.");
-  emailChecker.attach(CHECK_INBOX_PERIOD_S, checkLetterTimerEvent);
-}
 
 bool sendLetter(const char *subject, const char *message, bool isHtml, bool retryUntilSuccess){
   log_v("Sending letter");
-  if (!emailValuesAvailable()) {
+  if (!emailServerSettingsAvailable(SMTP_EMAIL_SERVER_TYPE)) {
     log_v("Not all email settings are set!");
     return false;
   }
@@ -46,26 +29,25 @@ bool sendLetter(const char *subject, const char *message, bool isHtml, bool retr
 
   ioIndicate(EMAIL_SENDING_LETTER);
 
-  char *server = getEmailValueFromMemory(EMAIL_SMTP_SERVER, (char *)malloc(STRING_LENGTH));
-  char *port = getEmailValueFromMemory(EMAIL_SMTP_PORT, (char *)malloc(STRING_LENGTH));
-  char *login = getEmailValueFromMemory(EMAIL_LOGIN, (char *)malloc(STRING_LENGTH));
-  char *password = getEmailValueFromMemory(EMAIL_PASS, (char *)malloc(STRING_LENGTH));
-  char *sender = getEmailValueFromMemory(EMAIL_SMTP_SENDER, (char *)malloc(STRING_LENGTH));
+  struct EmailServerSettings smtpServer;
+  getEmailServerSettingsFromMemory(SMTP_EMAIL_SERVER_TYPE, smtpServer);
+
   char *dateTime = getDateTimeStr((char *)malloc(STRING_LENGTH), STRING_LENGTH, false);
+  // TODO: make this customasable
+  char *sender = "ESP32 water sensor";
   
   String timeStampedMessage = 
     String(message) +
     (isHtml ? htmlLeftSide : "\n") + 
-    "Sensor value is: " + getSensorValue() +
     (isHtml ? htmlSise: "\n") + 
     (isHtml ? htmlLeftSide : "\n") + 
     dateTime +
     (isHtml ? htmlSise: "\n");
 
   log_v("Email:\n ---\n Smtp server: %s\n Smtp port: %s\n Smtp login: %s\n Smtp sender name: %s\n ---\n Subject: %s\n Message:\n %s\n ---\n",
-    server,
-    port,
-    login,
+    smtpServer.server,
+    smtpServer.port,
+    smtpServer.login,
     sender,
     subject,
     timeStampedMessage.c_str()
@@ -73,8 +55,8 @@ bool sendLetter(const char *subject, const char *message, bool isHtml, bool retr
 
   smtpData.setDebug(true);
 
-  smtpData.setLogin(server, String(port).toInt(), login, password);
-  smtpData.setSender(sender, login);
+  smtpData.setLogin(smtpServer.server, String(smtpServer.port).toInt(), smtpServer.login, smtpServer.password);
+  smtpData.setSender(sender, smtpServer.login);
   smtpData.setPriority("High");
   smtpData.setSubject(subject);
   smtpData.setMessage(timeStampedMessage, isHtml);
@@ -83,7 +65,7 @@ bool sendLetter(const char *subject, const char *message, bool isHtml, bool retr
   int recipientCount = getEmailRecipientsAmountFromMemory();
 
   for (int i = 0; i < recipientCount; i++) {
-    getEmailRecipientFromMemory(i, recipient);
+    recipient = getEmailRecipientFromMemory(i, recipient, STRING_LENGTH);
     smtpData.addRecipient(recipient);
   }
 
@@ -105,11 +87,6 @@ bool sendLetter(const char *subject, const char *message, bool isHtml, bool retr
 
   smtpData.empty();
 
-  free(server);
-  free(port);
-  free(login);
-  free(password);
-  free(sender);
   free(recipient);
 
   return result;
@@ -117,7 +94,7 @@ bool sendLetter(const char *subject, const char *message, bool isHtml, bool retr
 
 bool checkForIncomingLetter(){
   log_i("Checking incomming letter");
-  if (!emailValuesAvailable()){
+  if (!emailServerSettingsAvailable(IMAP_EMAIL_SERVER_TYPE)){
     log_v("Not all email settings are set!");
     return false;
   }
@@ -125,12 +102,11 @@ bool checkForIncomingLetter(){
 
   ioIndicate(EMAIL_CHECKING);
 
-  char *server = getEmailValueFromMemory(EMAIL_IMAP_SERVER, (char *)malloc(STRING_LENGTH));
-  char *port = getEmailValueFromMemory(EMAIL_IMAP_PORT, (char *)malloc(STRING_LENGTH));
-  char *login = getEmailValueFromMemory(EMAIL_LOGIN, (char *)malloc(STRING_LENGTH));
-  char *password = getEmailValueFromMemory(EMAIL_PASS, (char *)malloc(STRING_LENGTH));
+  struct EmailServerSettings imapServer;
 
-  imapData.setLogin(server, String(port).toInt(), login, password);
+  getEmailServerSettingsFromMemory(IMAP_EMAIL_SERVER_TYPE, imapServer);
+
+  imapData.setLogin(imapServer.server, String(imapServer.port).toInt(), imapServer.login, imapServer.password);
   imapData.setSearchCriteria(searchCriteria);
   imapData.setRecentSort(true);
   imapData.setSearchLimit(1);
@@ -162,21 +138,5 @@ bool checkForIncomingLetter(){
     ioIndicate(EMAIL_NO_MESSAGE_FOUND);
   }
 
-  free(password);
-  free(login);
-  free(port);
-  free(server);
-
   return result;
-}
-
-bool shouldEmailBeProcessed() {
-  return needToCheckInbox;
-}
-
-void processEmailController() {
-  if (needToCheckInbox){
-    checkForIncomingLetter();
-    needToCheckInbox = false;
-  }
 }

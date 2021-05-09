@@ -14,8 +14,12 @@ enum command_t {
   EMAIL_RECIPIENTS_COMMAND,
 
   GSM_PIN_COMMAND,
-  GSM_USE_NETWORK_PERMISSION_COMMAND,
   GSM_RECIPIENTS_COMMAND,
+
+  GPRS_USE_NETWORK_PERMISSION_COMMAND,
+  GPRS_COMMAND,
+
+  NOTIFICATION_TEST,
 
   SENSOR_VALUE_COMMAND,
   SENSOR_BOUNDARIES_COMMAND,
@@ -38,8 +42,12 @@ static const char *commands[] = {
   "email-recipients",
   
   "gsm-pin",
-  "gsm-use-network-perm",
   "gsm-recipients",
+
+  "gprs-use-network-perm",
+  "gprs",
+  
+  "notification-test",
 
   "sensor-value",
   "sensor-boundaries",
@@ -63,39 +71,5 @@ static const char *commandMethods[] = {
   "post",
   "delete"
 };
-
-// static const char* commands[] = {
-//   "ping",
-//   "wifi",
-//   "wifi-add",
-//   "wifi-delete-all",
-//   "wifi-delete-single",
-
-//   "email-smtp",
-//   "email-smtp-set",
-
-//   "email-imap",
-//   "email-imap-set",
-
-//   "email-recipients",
-//   "email-recipients-add",
-//   "email-recipients-delete-single",
-//   "email-recipients-delete-all",
-
-//   "gsm-pin-set",
-//   "gsm-use-network",
-//   "gsm-use-network-set",
-//   "gsm-recipients",
-//   "gsm-recipients-add",
-//   "gsm-recipients-delete-single",
-//   "gsm-recipients-delete-all",
-
-//   "restart",
-//   "switch mode",
-//   "get mode",
-//   "sensor value",
-//   "help",
-//   "sms"
-// };
 
 #endif

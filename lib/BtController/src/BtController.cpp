@@ -7,7 +7,7 @@ void initBtController(){
   ioWrite(IO_WRITE_SCREEN | IO_WRITE_SERIAL, ("BT - " + String(bt_credentials_name)).c_str());
 }
 
-bool shouldBtBeProcessed() {
+bool btNeedToBeProcessed() {
   return btAvailable() > 0;
 }
 
