@@ -25,7 +25,7 @@ error_t notificationTestEndpoint(command_method_t method, const JsonVariant &req
 error_t sensorValueJsonEndpoint(command_method_t method, const JsonVariant &reqPayload, DynamicJsonDocument &resDoc);
 error_t sensorBoundariesJsonEndpoint(command_method_t method, const JsonVariant &reqPayload, DynamicJsonDocument &resDoc);
 
-// error_t *modeJsonEndpoint(command_method_t method, const JsonVariant &reqPayload, DynamicJsonDocument &resDoc);
+error_t modeJsonEndpoint(command_method_t method, const JsonVariant &reqPayload, DynamicJsonDocument &resDoc);
 // error_t *restartJsonEndpoint(command_method_t method, const JsonVariant &reqPayload, DynamicJsonDocument &resDoc);
 
 // error_t *helpJsonEndpoint(command_method_t method, const JsonVariant &reqPayload, DynamicJsonDocument &resDoc);
@@ -52,7 +52,7 @@ error_t (* jsonEndpoints[COMMAND_AMOUNT + 1])(command_method_t method, const Jso
     sensorValueJsonEndpoint,
     sensorBoundariesJsonEndpoint,
 
-    defaultOkEndpoint,
+    modeJsonEndpoint,
     defaultOkEndpoint,
     defaultOkEndpoint,
     defaultErrorEndpoint,
@@ -788,9 +788,9 @@ error_t sensorBoundariesJsonEndpoint(command_method_t method, const JsonVariant 
     return success;
 }
 
-// error_t modeJsonEndpoint(command_method_t method, const JsonVariant &reqPayload, DynamicJsonDocument &resDoc) {
-//     return createDefaultOKResponse();
-// }
+error_t modeJsonEndpoint(command_method_t method, const JsonVariant &reqPayload, DynamicJsonDocument &resDoc) {
+    return 0;
+}
 
 // error_t restartJsonEndpoint(command_method_t method, const JsonVariant &reqPayload, DynamicJsonDocument &resDoc) {
 //     return createDefaultOKResponse();

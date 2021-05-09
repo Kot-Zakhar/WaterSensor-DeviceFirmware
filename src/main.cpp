@@ -7,12 +7,14 @@
 #include <GsmService.h>
 #include <EmailChecker.h>
 #include <WifiHotspotController.h>
+#include <HttpServerController.h>
 
 device_state_t currentState;
 
 void setup() {
 
   Serial.begin(115200);
+  Serial.println("Starting");
 
   initIndicationController();
 
@@ -35,12 +37,16 @@ void setup() {
   initButtonsInterrupts(currentState & DEVICE_STATE_CONFIG);
 
   if (currentState & DEVICE_STATE_CONFIG) {
-    Serial.printf("Config mode. %s\n", currentState & DEVICE_STATE_CONFIG_BLUETOOTH ? "Bluetooth" : "WiFi");
-    if (currentState & DEVICE_STATE_CONFIG_BLUETOOTH)
+    Serial.printf("Config mode. %d %s\n", currentState, currentState == DEVICE_STATE_CONFIG_BLUETOOTH ? "Bluetooth" : "WiFi");
+    if (currentState == DEVICE_STATE_CONFIG_BLUETOOTH)
       initBtController();
-    else if (currentState & DEVICE_STATE_CONFIG_WIFI_HOTSPOT)
-      initWiFiHotspot();
-    else {
+    else if (currentState == DEVICE_STATE_CONFIG_WIFI_HOTSPOT) {
+      // initWiFiHotspot();
+      initWiFiController();
+      connectToWiFi("Kot-Fi", "18.12.1999");
+      awaitForWiFiConnection();
+      initHttpServer();
+    } else {
       Serial.println("Unknown state");
       setStateInMemory(DEFAULT_DEVICE_CONFIG_STATE);
       esp_restart();
@@ -50,6 +56,8 @@ void setup() {
     Serial.println("Working mode.");
     startEmailChecker();
   }
+
+  Serial.println("Finishing setup");
 }
 
 void detachInterruptsAndTimers() {
@@ -63,7 +71,6 @@ void reattachInterruptsAndTimers() {
 }
 
 void loop() {
-
   processButtons();
 
   switch (currentState)
@@ -85,23 +92,26 @@ void loop() {
     break;
   case DEVICE_STATE_CONFIG_WIFI_HOTSPOT:
     /* there is going to be wifi hotspot processing */
+    // processWiFiHotspot();
+    processHttpServer();
     break;
   
   default:
     break;
   }
 
-  if (sensorsNeedToBeProcessed()) {
-    detachInterruptsAndTimers();
-    processSensorsChecker();
-    reattachInterruptsAndTimers();
-  }
+  // if (sensorsNeedToBeProcessed()) {
+  //   detachInterruptsAndTimers();
+  //   processSensorsChecker();
+  //   reattachInterruptsAndTimers();
+  // }
 
   if (gsmNeedToBeProcessed()) {
     detachInterruptsAndTimers();
     processGsm();
     reattachInterruptsAndTimers();
   }
+
   
   delay(100);
 }

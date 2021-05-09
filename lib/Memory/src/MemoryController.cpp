@@ -1,5 +1,7 @@
 #include <MemoryController.h>
+#include <LITTLEFS.h>
 
+#define CONFIG_LITTLEFS_SPIFFS_COMPAT 1
 #define MEMORY_KEY_MAX_LENGTH 15
 
 // memory keys
@@ -43,6 +45,7 @@ Preferences memory;
 
 void initMemoryController(){
   memory.begin(table_name, false);
+  LITTLEFS.begin();
 
   // TODO: initialization with defined values
 }
@@ -371,7 +374,8 @@ void removeAllWiFiCredentialsFromMemory(){
 #pragma region  States (modes)
 
 device_state_t getStateFromMemory() {
-  return device_state_t(memory.getChar(device_state_key, DEFAULT_DEVICE_CONFIG_STATE));
+  // return device_state_t(memory.getChar(device_state_key, DEFAULT_DEVICE_CONFIG_STATE));
+  return DEVICE_STATE_CONFIG_WIFI_HOTSPOT;
 }
 
 device_state_t getPreferredConfigStateFromMemory() {

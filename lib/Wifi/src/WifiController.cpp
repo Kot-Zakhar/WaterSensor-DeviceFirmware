@@ -118,3 +118,8 @@ bool WiFiConnectionIsAvailable() {
   disconnectFromWiFi();
   return result;
 }
+
+
+void startServer() {
+  WiFiServer httpServer(80);
+}
