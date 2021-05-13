@@ -3,6 +3,4 @@
 
 void initHttpServer();
 
-void processHttpServer();
-
 #endif

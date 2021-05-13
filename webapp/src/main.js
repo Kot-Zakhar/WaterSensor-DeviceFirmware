@@ -5,7 +5,7 @@ import vuetify from './plugins/vuetify'
 
 Vue.config.productionTip = false;
 
-Vue.prototype.$api = "http://localhost:3000"
+Vue.prototype.$api = process.env.API_ADDRESS || "";
 
 new Vue({
   router,

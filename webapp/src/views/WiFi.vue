@@ -12,18 +12,18 @@
 
       <v-divider class="mx-4"></v-divider>
 
-      <v-card-subtitle>Wi-Fi credentials</v-card-subtitle>
+      <v-card-subtitle class="text-h5">Wi-Fi credentials</v-card-subtitle>
       <v-card-text>
         <v-list>
           <v-list-item
             v-for="(record, i) in wifiRecords"
             :key="i">
               <v-list-item-content>
-                <v-list-item-title v-text="record.ssid"></v-list-item-title>
-                <v-list-item-subtitle v-text="record.password"></v-list-item-subtitle>
+                <v-list-item-title v-text="record.ssid" class="text-subtitle-1"></v-list-item-title>
+                <!-- <v-list-item-subtitle v-text="record.password"></v-list-item-subtitle> -->
               </v-list-item-content>
               <v-list-item-action>
-                <v-btn icon @click="deleteWifiRecord(record)">
+                <v-btn icon @click="deleteWifiRecord(i)">
                   <v-icon>mdi-delete</v-icon>
                 </v-btn>
               </v-list-item-action>
@@ -121,16 +121,15 @@ export default {
         this.fetchRecords()
       }
     },
-    async deleteWifiRecord(record) {
+    async deleteWifiRecord(recordIndex) {
       const reqOption = {
         method: "DELETE",
         headers: {
           'Content-Type': 'application/json'
-        },
-        body: JSON.stringify([record.ssid])
+        }
       }
 
-      const res = await fetch(this.$api + "/api/wifi-creds", reqOption);
+      const res = await fetch(this.$api + "/api/wifi-creds/" + recordIndex, reqOption);
       const data = await res.json();
 
       if (data.status == "OK") {

@@ -93,7 +93,6 @@ void loop() {
   case DEVICE_STATE_CONFIG_WIFI_HOTSPOT:
     /* there is going to be wifi hotspot processing */
     // processWiFiHotspot();
-    processHttpServer();
     break;
   
   default:
