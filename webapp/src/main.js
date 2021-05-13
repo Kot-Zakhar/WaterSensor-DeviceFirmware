@@ -1,4 +1,14 @@
-import { createApp } from 'vue'
+import Vue from 'vue'
 import App from './App.vue'
+import router from './router'
+import vuetify from './plugins/vuetify'
 
-createApp(App).mount('#app')
+Vue.config.productionTip = false;
+
+Vue.prototype.$api = "http://localhost:3000"
+
+new Vue({
+  router,
+  vuetify,
+  render: h => h(App)
+}).$mount('#app')
