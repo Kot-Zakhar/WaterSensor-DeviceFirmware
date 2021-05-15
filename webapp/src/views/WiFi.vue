@@ -1,19 +1,9 @@
 <template>
   <v-container>
-    <v-card
-      :loading="loading"
-      class="m-12"
-    >
-      <template slot="progress">
-        <v-progress-linear></v-progress-linear>
-      </template>
-
-      <v-card-title>Wi-Fi Settings</v-card-title>
-
-      <v-divider class="mx-4"></v-divider>
-
-      <v-card-subtitle class="text-h5">Wi-Fi credentials</v-card-subtitle>
+    <v-card>
+      <v-card-title class="text-h5">Wi-Fi credentials</v-card-title>
       <v-card-text>
+        <v-card-subtitle v-if="!wifiRecords.length">No Wi-Fi records. Add one below</v-card-subtitle>
         <v-list>
           <v-list-item
             v-for="(record, i) in wifiRecords"
@@ -30,7 +20,7 @@
           </v-list-item>
         </v-list>
         <v-form
-          v-on:submit="saveRecord"
+          v-on:submit.prevent="saveRecord"
           v-model="newWifiRecordValid"
           ref="newWifiRecordForm"
         >
@@ -40,6 +30,7 @@
                 v-model="newWifiRecord.ssid"
                 label="SSID"
                 :rules="[rules.required]"
+                clearable
                 ></v-text-field>
             </v-col>
             <v-col cols="12" md="4">
@@ -47,17 +38,25 @@
                 v-model="newWifiRecord.password"
                 label="Password"
                 :rules="[rules.required]"
+                :append-icon="newWifiRecordPasswordVisible ? 'mdi-eye' : 'mdi-eye-off'"
+                :type="newWifiRecordPasswordVisible ? 'text' : 'password'"
+                @click:append="newWifiRecordPasswordVisible = !newWifiRecordPasswordVisible"
+                clearable
                 ></v-text-field>
             </v-col>
             <v-col cols="12" md="4" align-self="center" class="d-flex justify-center">
-              <v-btn class="mx-auto"
+              <v-btn
                 type="submit"
+                color="primary"
                 :disabled="!newWifiRecordValid"
+                class="mx-auto"
               >
-                submit
+                <v-icon left>mdi-content-save</v-icon>
+                Save
               </v-btn>
               <v-btn @click="clear" class="mx-auto">
-                clear
+                <v-icon left>mdi-close</v-icon>
+                Clear
               </v-btn>
             </v-col>
           </v-row> </v-form>
@@ -74,6 +73,7 @@ export default {
       loading: true,
       wifiRecords: [],
       newWifiRecordValid: false,
+      newWifiRecordPasswordVisible: false,
       newWifiRecord: {
         ssid: '',
         password: ''
@@ -123,10 +123,7 @@ export default {
     },
     async deleteWifiRecord(recordIndex) {
       const reqOption = {
-        method: "DELETE",
-        headers: {
-          'Content-Type': 'application/json'
-        }
+        method: "DELETE"
       }
 
       const res = await fetch(this.$api + "/api/wifi-creds/" + recordIndex, reqOption);

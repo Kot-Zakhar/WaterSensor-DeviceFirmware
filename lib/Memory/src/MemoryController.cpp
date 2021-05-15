@@ -489,7 +489,7 @@ void saveGsmPinToMemory(const char *pin) {
   memory.putString(gsm_pin_key, pin);
 }
 
-char *getPinFromMemory(char *buffer, size_t len) {
+char *getGsmPinFromMemory(char *buffer, size_t len) {
   memory.getString(gsm_pin_key, buffer, len);
   return buffer;
 }

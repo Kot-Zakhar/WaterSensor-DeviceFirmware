@@ -16,7 +16,7 @@ void wifiCredsDeleteAll();
 
 // char *pingCommandHandler(char *responseBuffer, size_t len);
 
-void emailServerSettingsGet(email_server_type_t serverType, struct EmailServerSettings &settings);
+error_t emailServerSettingsGet(email_server_type_t serverType, struct EmailServerSettings &settings);
 void emailServerSettingsSet(email_server_type_t serverType, struct EmailServerSettings &settings);
 void emailServerSettingsDelete(email_server_type_t serverType);
 
@@ -27,6 +27,7 @@ void emailRecipientDelete(const char *email);
 void emailRecipientDelete(int index);
 void emailRecipientsDeleteAll();
 
+char *gsmPinGet(char *buffer, size_t length);
 void gsmPinSet(const char *pin);
 void gsmPinDelete();
 

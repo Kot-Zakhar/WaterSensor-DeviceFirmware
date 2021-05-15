@@ -39,9 +39,13 @@ void wifiCredsDeleteAll() {
 }
 
 
-void emailServerSettingsGet(email_server_type_t serverType, struct EmailServerSettings &settings) {
+error_t emailServerSettingsGet(email_server_type_t serverType, struct EmailServerSettings &settings) {
     // TODO: check availability
+    if (!emailServerSettingsAvailable(serverType))
+        return 1;
+
     getEmailServerSettingsFromMemory(serverType, settings);
+    return 0;
 }
 void emailServerSettingsSet(email_server_type_t serverType, struct EmailServerSettings &settings) {
     saveEmailServerSettingsToMemory(serverType, settings);
@@ -88,6 +92,9 @@ void gsmRecipientsDeleteAll() {
     removeAllGsmRecipientsFromMemory();
 }
 
+char *gsmPinGet(char *buffer, size_t length) {
+    getGsmPinFromMemory(buffer, length);
+}
 void gsmPinSet(const char *pin) {
     saveGsmPinToMemory(pin);
 }

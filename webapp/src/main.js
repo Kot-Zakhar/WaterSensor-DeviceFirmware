@@ -5,7 +5,7 @@ import vuetify from './plugins/vuetify'
 
 Vue.config.productionTip = false;
 
-Vue.prototype.$api = process.env.API_ADDRESS || "";
+Vue.prototype.$api = process.env.VUE_APP_API_ADDRESS || "";
 
 new Vue({
   router,

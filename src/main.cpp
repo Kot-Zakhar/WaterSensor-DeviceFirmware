@@ -43,6 +43,7 @@ void setup() {
     else if (currentState == DEVICE_STATE_CONFIG_WIFI_HOTSPOT) {
       // initWiFiHotspot();
       initWiFiController();
+      // connectToWiFi("KotFi", "randomPass125739");
       connectToWiFi("Kot-Fi", "18.12.1999");
       awaitForWiFiConnection();
       initHttpServer();
@@ -54,7 +55,10 @@ void setup() {
 
   } else {
     Serial.println("Working mode.");
+    initWiFiController();
+    connectToAnyWiFiFromMemory();
     startEmailChecker();
+    initHttpServer();
   }
 
   Serial.println("Finishing setup");

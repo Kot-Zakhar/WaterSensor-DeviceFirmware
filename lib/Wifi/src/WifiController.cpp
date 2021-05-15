@@ -91,7 +91,7 @@ bool connectToAnyWiFiFromMemory(){
   bool result = false;
   for (int i = 0; (i < amount) && (!result); i++){
     connectToWiFi(getWiFiSsidFromMemory(i, ssid), getWiFiPasswordFromMemory(i, password));
-    result = awaitForWiFiConnection(2000);
+    result = awaitForWiFiConnection(5000);
   }
   free(ssid);
   free(password);

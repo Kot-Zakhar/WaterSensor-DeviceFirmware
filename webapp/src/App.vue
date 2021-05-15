@@ -1,17 +1,14 @@
 <template>
   <v-app>
 
-    <v-app-bar
-      app
-      color="primary"
-    >
+    <v-app-bar app color="primary" dark>
       <v-app-bar-nav-icon @click="drawer = !drawer"></v-app-bar-nav-icon>
-      <v-toolbar-title>Water sensor</v-toolbar-title>
+      <v-toolbar-title class="text-h5">Water sensor : {{ $route.name }}</v-toolbar-title>
     </v-app-bar>
 
     <v-navigation-drawer
       v-model="drawer"
-      absolute
+      app
       bottom
       temporary
     >
@@ -25,7 +22,7 @@
             :key="i"
             :to="item.route">
             <v-list-item-icon>
-              <v-icon vf-text="item.icon"></v-icon>
+              <v-icon v-text="item.icon"></v-icon>
             </v-list-item-icon>
             <v-list-item-content>
               <v-list-item-title v-text="item.text"></v-list-item-title>
@@ -49,11 +46,11 @@ export default {
   data: () => ({
     drawer: false,
     pages: [
-      // {
-      //   text: "Home",
-      //   route: "/",
-      //   icon: "mdi-home"
-      // },
+      {
+        text: "Home",
+        route: "/",
+        icon: "mdi-home"
+      },
       {
         text: "WiFi",
         route: "/wifi",
@@ -75,6 +72,6 @@ export default {
         icon: "mdi-antenna"
       }
     ]
-  }),
+  })
 };
 </script>

@@ -32,28 +32,28 @@ void initGsmService() {
     SimSerial.setTimeout(1000);
     #endif
 
-    SimSerial.println("ATE0");
-    delay(10);
-    SimSerial.readString();
-
-    // Errors with description
-    SimSerial.println("AT+CMEE=2");
-    delay(10);
-    SimSerial.readString();
-
-    // SimSerial.printf("AT+CPIN=%s\n", pin);
+    // SimSerial.println("ATE0");
     // delay(10);
     // SimSerial.readString();
 
-    // no phone calls
-    SimSerial.printf("AT+CLIP=0\n");
-    delay(10);
-    SimSerial.readString();
+    // // Errors with description
+    // SimSerial.println("AT+CMEE=2");
+    // delay(10);
+    // SimSerial.readString();
 
-    // set charset
-    SimSerial.println("AT+CSCS=\"GSM\"");
-    delay(10);
-    SimSerial.readString();
+    // // SimSerial.printf("AT+CPIN=%s\n", pin);
+    // // delay(10);
+    // // SimSerial.readString();
+
+    // // no phone calls
+    // SimSerial.printf("AT+CLIP=0\n");
+    // delay(10);
+    // SimSerial.readString();
+
+    // // set charset
+    // SimSerial.println("AT+CSCS=\"GSM\"");
+    // delay(10);
+    // SimSerial.readString();
 }
 
 bool gsmNeedToBeProcessed() {

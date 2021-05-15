@@ -84,7 +84,7 @@ int getGsmRecipientsAmountFromMemory();
 char *getGsmRecipientFromMemory(int index, char *buffer, size_t len);
 
 void saveGsmPinToMemory(const char *pin);
-char *getPinFromMemory(char *buffer, size_t len);
+char *getGsmPinFromMemory(char *buffer, size_t len);
 void removeGsmPinFromMemory();
 
 #endif
