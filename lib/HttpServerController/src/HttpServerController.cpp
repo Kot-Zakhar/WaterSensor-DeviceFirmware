@@ -31,6 +31,12 @@ void gsmPinPostHandlerFunction(AsyncWebServerRequest *req, JsonVariant &body);
 void gsmRecipientsGetDeleteHandlerFunction(AsyncWebServerRequest *req);
 void gsmRecipientsPostHandlerFunction(AsyncWebServerRequest *req, JsonVariant &body);
 
+void gprsNetworkPermGetHanderFunction(AsyncWebServerRequest *req);
+void gprsNetworkPermPostHandlerFunction(AsyncWebServerRequest *req, JsonVariant &body);
+
+void gprsSettingsGetDeleteHanderFunction(AsyncWebServerRequest *req);
+void gprsSettingsPostHandlerFunction(AsyncWebServerRequest *req, JsonVariant &body);
+
 void initHttpServer() {
     DefaultHeaders::Instance().addHeader("Access-Control-Allow-Origin", "*");
 
@@ -49,6 +55,12 @@ void initHttpServer() {
 
     server.on("^\\/api\\/gsm-recipients(\\/([0-9]*))?$", HTTP_GET | HTTP_DELETE , gsmRecipientsGetDeleteHandlerFunction);
     server.addHandler(new AsyncCallbackJsonWebHandler("/api/gsm-recipients", gsmRecipientsPostHandlerFunction));
+
+    server.on("/api/gprs-use-network-perm", HTTP_GET, gprsNetworkPermGetHanderFunction);
+    server.addHandler(new AsyncCallbackJsonWebHandler("/api/gprs-use-network-perm", gprsNetworkPermPostHandlerFunction));
+
+    server.on("/api/gprs", HTTP_GET | HTTP_DELETE, gprsSettingsGetDeleteHanderFunction);
+    server.addHandler(new AsyncCallbackJsonWebHandler("/api/gprs", gprsSettingsPostHandlerFunction));
 
     server
         .serveStatic("/", LITTLEFS, "/public")
@@ -351,6 +363,109 @@ void gsmRecipientsPostHandlerFunction(AsyncWebServerRequest *req, JsonVariant &b
     }
 
     doc["status"] = status_ok_message;
+
+    AsyncResponseStream *res = req->beginResponseStream("application/json");
+    res->setCode(200);
+
+    serializeJson(doc, *res);
+
+    req->send(res);
+}
+
+
+void gprsNetworkPermGetHanderFunction(AsyncWebServerRequest *req) {
+
+    DynamicJsonDocument doc(JSON_DEFAULT_BUFFER_LENGTH);
+    DynamicJsonDocument reqDoc(0);
+    switch (req->method())
+    {
+    case HTTP_GET:
+        doc["payload"] = gprsPermGet();
+        doc["status"] = status_ok_message;
+        break;
+    default:
+        doc["status"] = status_error_message;
+        break;
+    }
+    
+    AsyncResponseStream *res = req->beginResponseStream("application/json");
+    serializeJson(doc, *res);
+
+    res->setCode(200);
+    req->send(res);
+}
+
+void gprsNetworkPermPostHandlerFunction(AsyncWebServerRequest *req, JsonVariant &body) {
+    DynamicJsonDocument doc(STRING_JSON_LENGTH);
+
+    if (body["allow"].is<bool>()) {
+        gprsPermSet(body["allow"].as<bool>());
+        doc["status"] = status_ok_message;
+    } else {
+        doc["status"] = status_error_message;
+    }
+
+    AsyncResponseStream *res = req->beginResponseStream("application/json");
+    res->setCode(200);
+
+    serializeJson(doc, *res);
+
+    req->send(res);
+}
+
+void gprsSettingsGetDeleteHanderFunction(AsyncWebServerRequest *req) {
+    GprsSettings settings;
+
+    DynamicJsonDocument doc(JSON_DEFAULT_BUFFER_LENGTH);
+    DynamicJsonDocument reqDoc(0);
+    switch (req->method())
+    {
+    case HTTP_GET:
+    {
+        error_t err = gprsSettingsGet(settings);
+        if (err) {
+            doc["status"] = status_error_message;
+        } else {
+            DynamicJsonDocument newDoc(JSON_DEFAULT_BUFFER_LENGTH + 2 * 3 * STRING_LENGTH);
+            JsonObject payload = newDoc.createNestedObject("payload");
+            payload["apn"] = settings.apn;
+            payload["password"] = settings.password;
+            payload["user"] = settings.user;
+
+            doc = std::move(newDoc);
+            doc["status"] = status_ok_message;
+        }
+        break;
+    }
+    case HTTP_DELETE:
+        gprsSettingsDelete();
+        doc["status"] = status_ok_message;
+    default:
+        doc["status"] = status_error_message;
+        break;
+    }
+    
+    AsyncResponseStream *res = req->beginResponseStream("application/json");
+    serializeJson(doc, *res);
+
+    res->setCode(200);
+    req->send(res);
+}
+
+void gprsSettingsPostHandlerFunction(AsyncWebServerRequest *req, JsonVariant &body) {
+    DynamicJsonDocument doc(STRING_JSON_LENGTH);
+    GprsSettings settings;
+
+    if (body.is<JsonObject>()) {
+        strlcpy(settings.apn, body["apn"], STRING_LENGTH);
+        strlcpy(settings.password, body["password"], STRING_LENGTH);
+        strlcpy(settings.user, body["user"], STRING_LENGTH);
+        gprsSettingsSet(settings);
+
+        doc["status"] = status_ok_message;
+    } else {
+        doc["status"] = status_error_message;
+    }
 
     AsyncResponseStream *res = req->beginResponseStream("application/json");
     res->setCode(200);

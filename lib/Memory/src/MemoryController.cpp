@@ -142,6 +142,8 @@ void saveEmailServerSettingsToMemory(email_server_type_t serverType, struct Emai
 }
 
 void getEmailServerSettingsFromMemory(email_server_type_t serverType, struct EmailServerSettings &serverSettings) {
+  if (!emailServerSettingsAvailable(serverType))
+    return;
   char key_buffer[STRING_LENGTH];
   sprintf(key_buffer, "%s_%s", email_server_keys[serverType], email_server_keys[EMAIL_SERVER_ADDRESS]);
   memory.getString(key_buffer, serverSettings.server, STRING_LENGTH);
@@ -156,6 +158,8 @@ void getEmailServerSettingsFromMemory(email_server_type_t serverType, struct Ema
 }
 
 void removeEmailServerSettingsFromMemory(email_server_type_t serverType) {
+  if (!emailServerSettingsAvailable(serverType))
+    return;
   char key_buffer[STRING_LENGTH];
   sprintf(key_buffer, "%s_%s", email_server_keys[serverType], email_server_keys[EMAIL_SERVER_ADDRESS]);
   memory.remove(key_buffer);
@@ -198,6 +202,8 @@ void saveGprsSettingsToMemory(GprsSettings &serverSettings) {
 }
 
 void getGprsSettingsFromMemory(GprsSettings &serverSettings) {
+  if (!gprsSettingsAvailableImMemory())
+    return;
   char key_buffer[MEMORY_KEY_MAX_LENGTH];
   sprintf(key_buffer, "%s_%s", gprs_key_prefix, gprs_settings_keys[GPRS_APN]);
   memory.getString(key_buffer, serverSettings.apn, STRING_LENGTH);
@@ -208,6 +214,8 @@ void getGprsSettingsFromMemory(GprsSettings &serverSettings) {
 }
 
 void removeGprsSettingsFromMemory() {
+  if (!gprsSettingsAvailableImMemory())
+    return;
   memory.putBool(gprs_key_prefix, false);
   char key_buffer[MEMORY_KEY_MAX_LENGTH];
   sprintf(key_buffer, "%s_%s", gprs_key_prefix, gprs_settings_keys[GPRS_APN]);

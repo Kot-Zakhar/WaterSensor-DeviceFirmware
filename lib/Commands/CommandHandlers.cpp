@@ -102,8 +102,11 @@ void gsmPinDelete() {
     removeGsmPinFromMemory();
 }
 
-void gprsSettingsGet(struct GprsSettings &settings) {
+error_t gprsSettingsGet(struct GprsSettings &settings) {
+    if (!gprsSettingsAvailableImMemory)
+        return 1;
     getGprsSettingsFromMemory(settings);
+    return 0;
 }
 void gprsSettingsSet(struct GprsSettings &settings) {
     saveGprsSettingsToMemory(settings);

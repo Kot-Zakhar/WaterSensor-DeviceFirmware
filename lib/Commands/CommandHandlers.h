@@ -38,7 +38,7 @@ void gsmRecipientDelete(const char *phoneNumber);
 void gsmRecipientDelete(int index);
 void gsmRecipientsDeleteAll();
 
-void gprsSettingsGet(struct GprsSettings &settings);
+error_t gprsSettingsGet(struct GprsSettings &settings);
 void gprsSettingsSet(struct GprsSettings &settings);
 void gprsSettingsDelete();
 bool gprsPermGet();

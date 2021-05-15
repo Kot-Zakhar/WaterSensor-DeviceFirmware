@@ -51,13 +51,13 @@
 
     <v-container>
       <v-card>
-        <v-form
-          v-on:submit.prevent="saveSmtpSettings"
-          v-model="smtpSettingsValid"
-          ref="smtpSettingsForm"
-        >
-          <v-card-title class="text-h5">SMTP credentials</v-card-title>
-          <v-card-text>
+        <v-card-title class="text-h5">SMTP credentials</v-card-title>
+        <v-card-text>
+          <v-form
+            v-on:submit.prevent="saveSmtpSettings"
+            v-model="smtpSettingsValid"
+            ref="smtpSettingsForm"
+          >
             <v-text-field
               v-model="smtpSettings.server"
               label="Server"
@@ -89,38 +89,38 @@
               v-model="smtpSettings.ssl"
               label="Use SSL"
             ></v-switch>
-          </v-card-text>
-          <v-card-actions>
-            <v-btn color="primary" type="submit" :disabled="!smtpSettingsValid" class="mr-auto">
-              <v-icon left>mdi-content-save</v-icon>
-              Save
-            </v-btn>
-            <v-btn color="primary" @click="fetchSmtpSettings" class="mx-auto">
-              <v-icon left>mdi-download</v-icon>
-              Fetch
-            </v-btn>
-            <v-btn @click="clearForm('smtpSettingsForm')" class="mx-auto">
-              <v-icon left>mdi-close</v-icon>
-              Clear
-            </v-btn>
-            <v-btn color="secondary" @click="deleteSmtp" class="ml-auto">
-              <v-icon left>mdi-delete</v-icon>
-              Delete
-            </v-btn>
-          </v-card-actions>
-        </v-form>
+            <v-card-actions>
+              <v-btn color="primary" type="submit" :disabled="!smtpSettingsValid" class="mr-auto">
+                <v-icon left>mdi-content-save</v-icon>
+                Save
+              </v-btn>
+              <v-btn color="primary" @click="fetchSmtpSettings" class="mx-auto">
+                <v-icon left>mdi-download</v-icon>
+                Fetch
+              </v-btn>
+              <v-btn @click="clearForm('smtpSettingsForm')" class="mx-auto">
+                <v-icon left>mdi-close</v-icon>
+                Clear
+              </v-btn>
+              <v-btn color="secondary" @click="deleteSmtp" class="ml-auto">
+                <v-icon left>mdi-delete</v-icon>
+                Delete
+              </v-btn>
+            </v-card-actions>
+          </v-form>
+        </v-card-text>
       </v-card>
     </v-container>
 
     <v-container>
       <v-card>
-        <v-form
-          v-on:submit.prevent="saveImapSettings"
-          v-model="imapSettingsValid"
-          ref="imapSettingsForm"
-        >
-          <v-card-title class="text-h5">IMAP credentials</v-card-title>
-          <v-card-text>
+        <v-card-title class="text-h5">IMAP credentials</v-card-title>
+        <v-card-text>
+          <v-form
+            v-on:submit.prevent="saveImapSettings"
+            v-model="imapSettingsValid"
+            ref="imapSettingsForm"
+          >
             <v-text-field
               v-model="imapSettings.server"
               label="Server"
@@ -152,26 +152,26 @@
               v-model="imapSettings.ssl"
               label="Use SSL"
             ></v-switch>
-          </v-card-text>
-          <v-card-actions>
-            <v-btn color="primary" type="submit" :disabled="!imapSettingsValid" class="mr-auto">
-              <v-icon left>mdi-content-save</v-icon>
-              Save
-            </v-btn>
-            <v-btn color="primary" @click="fetchImapSettings" class="mx-auto">
-              <v-icon left>mdi-download</v-icon>
-              Fetch
-            </v-btn>
-            <v-btn @click="clearForm('imapSettingsForm')" class="mx-auto">
-              <v-icon left>mdi-close</v-icon>
-              Clear
-            </v-btn>
-            <v-btn color="secondary" @click="deleteImap" class="ml-auto">
-              <v-icon left>mdi-delete</v-icon>
-              Delete
-            </v-btn>
-          </v-card-actions>
-        </v-form>
+            <v-card-actions>
+              <v-btn color="primary" type="submit" :disabled="!imapSettingsValid" class="mr-auto">
+                <v-icon left>mdi-content-save</v-icon>
+                Save
+              </v-btn>
+              <v-btn color="primary" @click="fetchImapSettings" class="mx-auto">
+                <v-icon left>mdi-download</v-icon>
+                Fetch
+              </v-btn>
+              <v-btn @click="clearForm('imapSettingsForm')" class="mx-auto">
+                <v-icon left>mdi-close</v-icon>
+                Clear
+              </v-btn>
+              <v-btn color="secondary" @click="deleteImap" class="ml-auto">
+                <v-icon left>mdi-delete</v-icon>
+                Delete
+              </v-btn>
+            </v-card-actions>
+          </v-form>
+        </v-card-text>
       </v-card>
     </v-container>
   </div>

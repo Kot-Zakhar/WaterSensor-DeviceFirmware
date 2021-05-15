@@ -49,7 +49,7 @@
 
     <v-container>
       <v-card>
-        <v-card-title class="text-h5">Gsm recipients</v-card-title>
+        <v-card-title class="text-h5">GSM recipients</v-card-title>
         <v-card-text>
           <v-card-subtitle v-if="!gsmRecipients.length"
             >No recipients. Add one below.</v-card-subtitle
@@ -103,6 +103,62 @@
         </v-card-text>
       </v-card>
     </v-container>
+
+    <v-container>
+      <v-card>
+        <v-card-title class="text-h5">GPRS settings</v-card-title>
+        <v-card-text>
+          <v-switch
+            v-model="allowGprs"
+            v-on:change="saveGprsPermission"
+            label="Allow the use of mobile network (GPRS)"
+          ></v-switch>
+
+          <v-form
+            v-on:submit.prevent="saveGprsSettings"
+            v-model="gprsSettingsValid"
+            ref="gprsSettingsForm"
+          >
+            <v-text-field
+              v-model="gprsSettings.apn"
+              label="Apn"
+              :rules="[rules.required]"
+              clearable
+            ></v-text-field>
+            <v-text-field
+              v-model="gprsSettings.user"
+              label="User"
+              :rules="[rules.required]"
+              clearable
+            ></v-text-field>
+            <v-text-field
+              v-model="gprsSettings.password"
+              label="Password"
+              :rules="[rules.required]"
+              clearable
+            ></v-text-field>
+            <v-card-actions>
+              <v-btn color="primary" type="submit" :disabled="!gprsSettingsValid" class="mr-auto">
+                <v-icon left>mdi-content-save</v-icon>
+                Save
+              </v-btn>
+              <v-btn color="primary" @click="fetchGprsSettings" class="mx-auto">
+                <v-icon left>mdi-download</v-icon>
+                Fetch
+              </v-btn>
+              <v-btn @click="clearForm('gprsSettingsForm')" class="mx-auto">
+                <v-icon left>mdi-close</v-icon>
+                Clear
+              </v-btn>
+              <v-btn color="secondary" @click="deletegprsSettings" class="ml-auto">
+                <v-icon left>mdi-delete</v-icon>
+                Delete
+              </v-btn>
+            </v-card-actions>
+          </v-form>
+        </v-card-text>
+      </v-card>
+    </v-container>
   </div>
 </template>
 
@@ -114,8 +170,15 @@ export default {
       gsmRecipients: [],
       newGsmRecipient: "",
       newGsmRecipientValid: false,
+      allowGprs: false,
       pin: "",
       pinValid: false,
+      gprsSettings: {
+        apn: "",
+        user: "",
+        password: ""
+      },
+      gprsSettingsValid: false,
       rules: {
         required: v => !!v || "This field is required.",
         phone: v => /^\+\d{12}$/.test(v) || "Insert proper phone number (e.g. +375121234567).",
@@ -125,8 +188,13 @@ export default {
   },
   created() {
     this.fetchGsmResipients();
+    this.fetchGprsPermission();
+    this.fetchGprsSettings();
   },
   methods: {
+    clearForm(formName) {
+      this.$refs[formName].reset();
+    },
     async fetchGsmResipients() {
       const reqOptions = {
         method: "GET",
@@ -186,6 +254,51 @@ export default {
     },
     async deletePin() {
       const res = await fetch(this.$api + "/api/gsm-pin", {method: "DELETE"});
+      const data = await res.json();
+      if (data.status !== "OK") {
+        console.error(data);
+      }
+    },
+    async saveGprsPermission() {
+      const reqOptions = {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({allow: this.allowGprs})
+      }
+      const res = await fetch(this.$api + "/api/gprs-use-network-perm", reqOptions);
+      const data = await res.json();
+      if (data.status !== "OK") {
+        console.error(data);
+      }
+    },
+    async fetchGprsPermission() {
+      const res = await fetch(this.$api + "/api/gprs-use-network-perm", {method: "GET"});
+      const data = await res.json();
+      if (data.status == "OK") {
+        this.allowGprs = data.payload;
+      }
+    },
+    async fetchGprsSettings() {
+      const res = await fetch(this.$api + "/api/gprs", {method: "GET"});
+      const data = await res.json();
+      if (data.status == "OK") {
+        this.gprsSettings = data.payload;
+      }
+    },
+    async saveGprsSettings() {
+      const reqOptions = {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(this.gprsSettings)
+      }
+      const res = await fetch(this.$api + "/api/gprs", reqOptions);
+      const data = await res.json();
+      if (data.status !== "OK") {
+        console.error(data);
+      }
+    },
+    async deleteGprsSettings() {
+      const res = await fetch(this.$api + "/api/gprs", {method: "DELETE"});
       const data = await res.json();
       if (data.status !== "OK") {
         console.error(data);
