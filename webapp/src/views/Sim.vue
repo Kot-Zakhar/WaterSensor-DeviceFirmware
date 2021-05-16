@@ -21,7 +21,7 @@
               <v-col
                 cols="12"
                 md="6"
-                class="d-flex justify-center"
+                class="d-flex align-center"
               >
                 <v-btn
                   type="submit"
@@ -86,7 +86,7 @@
               <v-col
                 cols="12"
                 md="6"
-                class="d-flex justify-center"
+                class="d-flex align-center"
               >
                 <v-btn
                   type="submit"

@@ -44,7 +44,7 @@
                 clearable
                 ></v-text-field>
             </v-col>
-            <v-col cols="12" md="4" align-self="center" class="d-flex justify-center">
+            <v-col cols="12" md="4" align-self="center" class="d-flex align-center">
               <v-btn
                 type="submit"
                 color="primary"
