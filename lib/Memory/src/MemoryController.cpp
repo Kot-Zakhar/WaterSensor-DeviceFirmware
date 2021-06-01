@@ -382,8 +382,8 @@ void removeAllWiFiCredentialsFromMemory(){
 #pragma region  States (modes)
 
 device_state_t getStateFromMemory() {
-  // return device_state_t(memory.getChar(device_state_key, DEFAULT_DEVICE_CONFIG_STATE));
-  return DEVICE_STATE_CONFIG_WIFI_HOTSPOT;
+  return device_state_t(memory.getChar(device_state_key, DEFAULT_DEVICE_CONFIG_STATE));
+  // return DEVICE_STATE_CONFIG_WIFI_HOTSPOT;
 }
 
 device_state_t getPreferredConfigStateFromMemory() {
@@ -391,6 +391,7 @@ device_state_t getPreferredConfigStateFromMemory() {
 }
 
 void setStateInMemory(device_state_t state) {
+  log_d("Saving state in memory: %d", state);
   memory.putChar(device_state_key, state);
 }
 

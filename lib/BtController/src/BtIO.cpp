@@ -63,11 +63,13 @@ void writeBt(const char* line){
 
 void btInterruptCallback(esp_spp_cb_event_t event, esp_spp_cb_param_t *param){
   if (event == ESP_SPP_SRV_OPEN_EVT){
-    ioWrite(IO_WRITE_SCREEN | IO_WRITE_SERIAL, "Connected to bt.");
-    ioIndicate(BT_CONNECTED);
+    log_d("connection to bt.");
+    // ioWrite(IO_WRITE_SCREEN | IO_WRITE_SERIAL, "Connected to bt.");
+    // ioIndicate(BT_CONNECTED);
   }
   if (event == ESP_SPP_CLOSE_EVT){
-    ioWrite(IO_WRITE_SCREEN | IO_WRITE_SERIAL, "Disconnected from bt.");
-    ioIndicate(BT_DISCONNECTED);
+    log_d("disconnected from bt");
+    // ioWrite(IO_WRITE_SCREEN | IO_WRITE_SERIAL, "Disconnected from bt.");
+    // ioIndicate(BT_DISCONNECTED);
   }
 }

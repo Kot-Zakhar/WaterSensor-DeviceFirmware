@@ -63,6 +63,10 @@ String getCurrentWiFiSsid(){
   return WiFi.SSID();
 }
 
+IPAddress getCurrentIP() {
+  return WiFi.localIP();
+}
+
 void awaitForWiFiConnection(){
   log_v("Awaiting for wifi connection...");
   while (!isWiFiConnected())
@@ -74,7 +78,7 @@ void awaitForWiFiConnection(){
 
 bool awaitForWiFiConnection(int timeout){
   int time = 0;
-  log_v("Awaiting for wifi connection...");
+  log_v("Awaiting for wifi connection with timeout: %d...", timeout);
   while (!isWiFiConnected() && (time <= timeout))
   {
     log_v(".");
@@ -90,7 +94,10 @@ bool connectToAnyWiFiFromMemory(){
   int amount = getWiFiCredentialsAmountFromMemory();
   bool result = false;
   for (int i = 0; (i < amount) && (!result); i++){
-    connectToWiFi(getWiFiSsidFromMemory(i, ssid), getWiFiPasswordFromMemory(i, password));
+    ssid = getWiFiSsidFromMemory(i, ssid);
+    password = getWiFiPasswordFromMemory(i, password);
+    log_d("ssid: %s, password: %s", ssid, password);
+    connectToWiFi(ssid, password);
     result = awaitForWiFiConnection(5000);
   }
   free(ssid);
@@ -113,9 +120,11 @@ bool WiFiNotificationIsOn() {
 }
 
 bool WiFiConnectionIsAvailable() {
+  log_d("trying to connecto to any wifi");
   initWiFiController();
   bool result = connectToAnyWiFiFromMemory();
   disconnectFromWiFi();
+  log_d("%s", result ? "Connection can be established" : "No connection can be established");
   return result;
 }
 

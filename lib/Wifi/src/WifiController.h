@@ -11,6 +11,7 @@
 void wifiControllerOff();
 
 String getCurrentWiFiSsid();
+IPAddress getCurrentIP();
 bool isWiFiConnected();
 void initWiFiController();
 bool awaitForWiFiConnection(int timeout);

@@ -1,18 +1,18 @@
 #include <IOController.h>
 #include "LedController.cpp"
 
-void checkScreen();
-void initDisplay();
+// void checkScreen();
+// void initScreen();
 
-void initIOController(){
-  initLED();
+// void initIOController(){
+//   initLED();
   
-  initDisplay();
+//   initScreen();
 
-  checkScreen();
+//   checkScreen();
 
-  clearDisplay();
-}
+//   clearDisplay();
+// }
 
 void ioIndicate(message_t messageType){
     return;

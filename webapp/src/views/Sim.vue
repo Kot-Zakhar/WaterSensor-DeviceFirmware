@@ -150,7 +150,7 @@
                 <v-icon left>mdi-close</v-icon>
                 Clear
               </v-btn>
-              <v-btn color="secondary" @click="deletegprsSettings" class="ml-auto">
+              <v-btn color="secondary" @click="deleteGprsSettings" class="ml-auto">
                 <v-icon left>mdi-delete</v-icon>
                 Delete
               </v-btn>
@@ -158,6 +158,18 @@
           </v-form>
         </v-card-text>
       </v-card>
+    </v-container>
+    <v-container>
+      <v-btn @click="sendTestSms" class="mx-auto">
+        <v-icon left>mdi-email</v-icon>
+        Send test SMS
+      </v-btn>
+    </v-container>
+    <v-container>
+      <v-btn @click="sendTestEmailGprs" class="mx-auto">
+        <v-icon left>mdi-email</v-icon>
+        Send test email using GPRS
+      </v-btn>
     </v-container>
   </div>
 </template>
@@ -303,6 +315,16 @@ export default {
       if (data.status !== "OK") {
         console.error(data);
       }
+    },
+    async sendTestSms() {
+      const res = await fetch(this.$api + "/api/gsm-test", {method: "GET"});
+      const data = await res.json();
+      console.log(data);
+    },
+    async sendTestEmailGprs() {
+      const res = await fetch(this.$api + "/api/gprs-test", {method: "GET"});
+      const data = await res.json();
+      console.log(data);
     }
   }
 };

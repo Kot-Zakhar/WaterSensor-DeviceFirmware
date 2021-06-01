@@ -60,12 +60,7 @@ void deleteHumidityBoundaries();
 
 void getSensorsValues(SensorsValues &sensors);
 
-// void gsmPinSetCommandHandler(int payload);
-// void gsmUseNetworkPermissionGetCommandHandler(int payload);
-// void gsmUseNetworkPermissionSetCommandHandler(int payload);
-// void gsmRecipientsGetCommandHandler(int payload);
-// void gsmRecipientsAddCommandHandler(int payload);
-// void gsmRecipientsDeleteSingleCommandHandler(int payload);
-// void gsmRecipientsDeleteAllCommandHandler(int payload);
+void switchStateToNext();
+void showNextScreenPage();
 
 #endif

@@ -1,5 +1,4 @@
 #include "WifiHotspotController.h"
-#include <WiFi.h>
 #include <DNSServer.h>
 
 DNSServer dnsServer;
@@ -10,6 +9,10 @@ void initWiFiHotspot() {
 
     IPAddress IP = WiFi.softAPIP();
     Serial.println(IP);
+}
+
+IPAddress getHotspotIP() {
+    return WiFi.softAPIP();
 }
 
 void processWiFiHotspot() {

@@ -1,13 +1,13 @@
 #include <BtController.h>
 #include <MemoryController.h>
 #include <InterruptController.h>
-#include <IndicationController.h>
 #include <SensorsChecker.h>
 #include <WifiController.h>
 #include <GsmService.h>
 #include <EmailChecker.h>
 #include <WifiHotspotController.h>
 #include <HttpServerController.h>
+#include <ScreenController.h>
 
 device_state_t currentState;
 
@@ -16,7 +16,7 @@ void setup() {
   Serial.begin(115200);
   Serial.println("Starting");
 
-  initIndicationController();
+  initScreen();
 
   initMemoryController();
   initGsmService();
@@ -41,13 +41,9 @@ void setup() {
     if (currentState == DEVICE_STATE_CONFIG_BLUETOOTH)
       initBtController();
     else if (currentState == DEVICE_STATE_CONFIG_WIFI_HOTSPOT) {
-      // initWiFiHotspot();
-      initWiFiController();
-      // connectToWiFi("KotFi", "randomPass125739");
-      connectToWiFi("Kot-Fi", "18.12.1999");
-      awaitForWiFiConnection();
+      initWiFiHotspot();
       initHttpServer();
-    } else {
+    } else  {
       Serial.println("Unknown state");
       setStateInMemory(DEFAULT_DEVICE_CONFIG_STATE);
       esp_restart();
@@ -56,9 +52,21 @@ void setup() {
   } else {
     Serial.println("Working mode.");
     initWiFiController();
-    connectToAnyWiFiFromMemory();
-    startEmailChecker();
-    initHttpServer();
+    if (currentState == DEVICE_STATE_WORK_WIFI_ALWAYS_CONNECTED) {
+      if (!connectToAnyWiFiFromMemory()) {
+        log_d("can't connect to any wifi network");
+        setStateInMemory(DEFAULT_DEVICE_CONFIG_STATE);
+        delay(1000);
+        esp_restart();
+      }
+      startEmailChecker();
+      initHttpServer();
+      // connectToWiFi("KotFi", "randomPass125739");
+      // connectToWiFi("Kot-Fi", "18.12.1999");
+      // awaitForWiFiConnection();
+    } else if (currentState == DEVICE_STATE_WORK_WIFI_FOR_NOTIFICATION) {
+
+    }
   }
 
   Serial.println("Finishing setup");
@@ -78,15 +86,7 @@ void loop() {
   processButtons();
 
   switch (currentState)
-  {
-  case DEVICE_STATE_WORK:
-    if (emailNeedToBeProcessed()) {
-      detachInterruptsAndTimers();
-      processEmailChecker();
-      reattachInterruptsAndTimers();
-    }
-    break;
-    
+  {    
   case DEVICE_STATE_CONFIG_BLUETOOTH:
     if (btNeedToBeProcessed()) {
       detachInterruptsAndTimers();
@@ -96,9 +96,16 @@ void loop() {
     break;
   case DEVICE_STATE_CONFIG_WIFI_HOTSPOT:
     /* there is going to be wifi hotspot processing */
-    // processWiFiHotspot();
+    processWiFiHotspot();
     break;
-  
+  case DEVICE_STATE_WORK_WIFI_ALWAYS_CONNECTED:
+    if (emailNeedToBeProcessed()) {
+      detachInterruptsAndTimers();
+      processEmailChecker();
+      reattachInterruptsAndTimers();
+    }
+    break;
+  case DEVICE_STATE_WORK_WIFI_FOR_NOTIFICATION:
   default:
     break;
   }
@@ -115,6 +122,7 @@ void loop() {
     reattachInterruptsAndTimers();
   }
 
-  
+  updateScreen(currentState);
+
   delay(100);
 }

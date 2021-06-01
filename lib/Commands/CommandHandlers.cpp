@@ -3,7 +3,7 @@
 #include <MemoryController.h>
 #include <NotificationService.h>
 #include <SensorsService.h>
-
+#include <ScreenController.h>
 
 int wifiCredsGetAmount() {
     return getWiFiCredentialsAmountFromMemory();
@@ -161,4 +161,68 @@ void deleteHumidityBoundaries() {
 
 void getSensorsValues(SensorsValues &sensors) {
     getCurrentSensorsValues(sensors);
+}
+
+void switchStateToNext() {
+    device_state_t state = getStateFromMemory();
+    device_state_t newState;
+    switch (state)
+    {
+    case DEVICE_STATE_CONFIG_BLUETOOTH:
+        newState = DEVICE_STATE_CONFIG_WIFI_HOTSPOT;
+        break;
+    case DEVICE_STATE_CONFIG_WIFI_HOTSPOT:
+        newState = DEVICE_STATE_WORK_WIFI_ALWAYS_CONNECTED;
+        break;
+    case DEVICE_STATE_WORK_WIFI_ALWAYS_CONNECTED:
+        newState = DEVICE_STATE_WORK_WIFI_FOR_NOTIFICATION;
+        break;
+    case DEVICE_STATE_WORK_WIFI_FOR_NOTIFICATION:
+        newState = DEVICE_STATE_CONFIG_BLUETOOTH;
+        break;
+    default:
+        newState = DEVICE_STATE_CONFIG_WIFI_HOTSPOT;
+        break;
+    }
+
+    setStateInMemory(newState);
+    delay(2000);
+    esp_restart();
+}
+
+void showNextScreenPage() {
+    screen_page_t page = getPage();
+    screen_page_t nextPage;
+    switch (page)
+    {
+    case SCREEN_PAGE_PREVIEW:
+        nextPage = SCREEN_PAGE_WIFI_RECORDS;
+        break;
+    case SCREEN_PAGE_WIFI_RECORDS:
+        nextPage = SCREEN_PAGE_NETWORK_SETTINGS;
+        break;
+    case SCREEN_PAGE_NETWORK_SETTINGS:
+        nextPage = SCREEN_PAGE_IMAP_SETTINGS;
+        break;
+    case SCREEN_PAGE_IMAP_SETTINGS:
+        nextPage = SCREEN_PAGE_SMTP_SETTINGS;
+        break;
+    case SCREEN_PAGE_SMTP_SETTINGS:
+        nextPage = SCREEN_PAGE_EMAIL_RECIPIENTS;
+        break;
+    case SCREEN_PAGE_EMAIL_RECIPIENTS:
+        nextPage = SCREEN_PAGE_GSM_SETTINGS;
+        break;
+    case SCREEN_PAGE_GSM_SETTINGS:
+        nextPage = SCREEN_PAGE_GPRS_SETTINGS;
+        break;
+    case SCREEN_PAGE_GPRS_SETTINGS:
+        nextPage = SCREEN_PAGE_GSM_RECIPIENTS;
+        break;
+    case SCREEN_PAGE_GSM_RECIPIENTS:
+        nextPage = SCREEN_PAGE_PREVIEW;
+        break;
+    }
+
+    setPage(nextPage);
 }

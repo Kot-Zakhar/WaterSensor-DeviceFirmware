@@ -13,7 +13,10 @@
 #include <custom_defaults.h>
 #include <ResponseMessages.h>
 
+#include <NotificationService.h>
+
 AsyncWebServer server(80);
+AsyncWebSocket ws("/ws");
 
 void wifiCredsGetDeleteHandlerFunction(AsyncWebServerRequest *req);
 void wifiCredsPostPutHandlerFunction(AsyncWebServerRequest *req, JsonVariant &body);
@@ -37,6 +40,9 @@ void gprsNetworkPermPostHandlerFunction(AsyncWebServerRequest *req, JsonVariant 
 void gprsSettingsGetDeleteHanderFunction(AsyncWebServerRequest *req);
 void gprsSettingsPostHandlerFunction(AsyncWebServerRequest *req, JsonVariant &body);
 
+void gsmTestHandlerFunction(AsyncWebServerRequest *req);
+void gprsEmailTestHandlerFunction(AsyncWebServerRequest *req);
+
 void initHttpServer() {
     DefaultHeaders::Instance().addHeader("Access-Control-Allow-Origin", "*");
 
@@ -56,11 +62,15 @@ void initHttpServer() {
     server.on("^\\/api\\/gsm-recipients(\\/([0-9]*))?$", HTTP_GET | HTTP_DELETE , gsmRecipientsGetDeleteHandlerFunction);
     server.addHandler(new AsyncCallbackJsonWebHandler("/api/gsm-recipients", gsmRecipientsPostHandlerFunction));
 
+    server.on("/api/gsm-test", HTTP_GET, gsmTestHandlerFunction);
+
     server.on("/api/gprs-use-network-perm", HTTP_GET, gprsNetworkPermGetHanderFunction);
     server.addHandler(new AsyncCallbackJsonWebHandler("/api/gprs-use-network-perm", gprsNetworkPermPostHandlerFunction));
 
     server.on("/api/gprs", HTTP_GET | HTTP_DELETE, gprsSettingsGetDeleteHanderFunction);
     server.addHandler(new AsyncCallbackJsonWebHandler("/api/gprs", gprsSettingsPostHandlerFunction));
+
+    server.on("/api/gprs-test", HTTP_GET, gprsEmailTestHandlerFunction);
 
     server
         .serveStatic("/", LITTLEFS, "/public")
@@ -80,6 +90,30 @@ void initHttpServer() {
     server.begin();
 }
 
+// void initWebSocket() {
+//     ws.onEvent([](AsyncWebSocket * server, AsyncWebSocketClient * client, AwsEventType type, void * arg, uint8_t *data, size_t len) {
+//         if (type == WS_EVT_CONNECT) {
+//             log_d("New ws connection: %s %u", server->url(), client->id());
+//             client->ping();
+//         } else if (type == WS_EVT_DISCONNECT) {
+//             log_d("Client has been disconnected: %s %u", server->url(), client->id());
+//         } else if (type == WS_EVT_DATA) {
+//             SensorsValues values;
+//             getSensorsValues(values);
+//             DynamicJsonDocument doc(JSON_DEFAULT_BUFFER_LENGTH);
+//             doc["water"] = values.water;
+//             doc["temp"] = values.temperature;
+//             doc["humid"] = values.humidity;
+//             size_t len = measureJson(doc);
+
+//             AsyncWebSocketMessageBuffer * buffer = ws.makeBuffer(len); //  creates a buffer (len + 1) for you.
+//             if (buffer) {
+//                 serializeJson(doc, buffer);
+//                 client->text(buffer);
+//             }
+//         }
+//     });
+// }
 
 void wifiCredsGetDeleteHandlerFunction (AsyncWebServerRequest *req) {
     DynamicJsonDocument doc(JSON_DEFAULT_BUFFER_LENGTH);
@@ -472,5 +506,31 @@ void gprsSettingsPostHandlerFunction(AsyncWebServerRequest *req, JsonVariant &bo
 
     serializeJson(doc, *res);
 
+    req->send(res);
+}
+
+void gsmTestHandlerFunction(AsyncWebServerRequest *req) {
+    DynamicJsonDocument doc(JSON_DEFAULT_BUFFER_LENGTH);
+    
+    notifyAboutEvent(TEST_SMS_NOTIFICATION);
+
+    doc["status"] = status_ok_message;
+    AsyncResponseStream *res = req->beginResponseStream("application/json");
+    serializeJson(doc, *res);
+
+    res->setCode(200);
+    req->send(res);
+}
+
+void gprsEmailTestHandlerFunction(AsyncWebServerRequest *req) {
+    DynamicJsonDocument doc(JSON_DEFAULT_BUFFER_LENGTH);
+    
+    notifyAboutEvent(TEST_EMAIL_GPRS_NOTIFICATION);
+
+    doc["status"] = status_ok_message;
+    AsyncResponseStream *res = req->beginResponseStream("application/json");
+    serializeJson(doc, *res);
+
+    res->setCode(200);
     req->send(res);
 }

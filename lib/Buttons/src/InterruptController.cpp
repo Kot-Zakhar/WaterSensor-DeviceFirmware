@@ -1,6 +1,7 @@
 #include <InterruptController.h>
 
 #include <custom_types.h>
+#include <CommandHandlers.h>
 
 static const char *memory_empty_message = "No networks in memory";
 
@@ -38,13 +39,18 @@ void IRAM_ATTR Button1Interrupt(){
   delay(100);
 }
 
+void switchScreenPage();
+void changeState();
 
 void ProcessInterrupt(int index){
-  // bool currentSavedStateIsConfig;
   switch(index){
     case 0:
+      log_d("Processing 0 button: switching screen page.");
+      switchScreenPage();
       break;
     case 1:
+      log_d("Processing 1 button: changing state.");
+      changeState();
       break;
     default:
       break;
@@ -65,12 +71,16 @@ void processButtons(){
 }
 
 void initButtonsInterrupts(bool stateIsConfig){
-  log_v("Binding interrupts.");
+  log_v("Binding buttons.");
 
   isConfigState = stateIsConfig;
 
   pinMode(buttonsPins[0], INPUT_PULLDOWN);
   pinMode(buttonsPins[1], INPUT_PULLDOWN);
+
+  buttonsPressed[0] = false;
+  buttonsPressed[1] = false;
+
   rebindInterrupts();
 }
 
@@ -109,3 +119,12 @@ void rebindInterrupts() {
 //     free(password);
 //   }
 // }
+
+
+void switchScreenPage() {
+  showNextScreenPage();
+}
+
+void changeState() {
+  switchStateToNext();
+}

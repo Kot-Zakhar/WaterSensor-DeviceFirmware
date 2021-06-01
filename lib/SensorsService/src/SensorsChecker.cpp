@@ -90,7 +90,7 @@ void processSensorsChecker(){
     if (needToNotifyAboutSensors){
         if (!notificationWasSent){
             // TODO: check actual result of notifyAboutEvent to resend notification on failure
-            notifyAboutEvent(SENSORS_OUT_OF_BOUNDS_EVENT);
+            // notifyAboutEvent(SENSORS_OUT_OF_BOUNDS_EVENT);
             notificationWasSent = true;
         } else {
             log_i("Sensor value still out of range - %d", getWaterSensorValue()); 
