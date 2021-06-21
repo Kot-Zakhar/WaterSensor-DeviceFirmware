@@ -9,7 +9,7 @@ bool gsmNeedToBeProcessed();
 bool GsmNotificationIsOn();
 bool GsmConnectionIsAvailable();
 bool GprsNotificationIsOn();
-bool GpssConnectionIsAvailable();
+bool GprsConnectionIsAvailable();
 
 void sendSMS(const char* text, const char* mobileNumber);
 void sendSMS(const char *text);

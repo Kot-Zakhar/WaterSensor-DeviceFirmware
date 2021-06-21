@@ -649,8 +649,7 @@ error_t sensorBoundariesJsonEndpoint(command_method_t method, const JsonVariant 
         DynamicJsonDocument doc(JSON_DEFAULT_BUFFER_LENGTH + 2 * 6 * 10);
         JsonObject payload = doc.createNestedObject("payload");
 
-        int waterLow, waterHigh;
-        float tLow, tHigh, hLow, hHigh;
+        int waterLow, waterHigh, tLow, tHigh, hLow, hHigh;
         bool water = getWaterSensorBoundaries(waterLow, waterHigh);
         bool temp = getTemperatureBoundaries(tLow, tHigh);
         bool humid = getHumidityBoundaries(hLow, hHigh);

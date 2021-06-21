@@ -2,7 +2,7 @@
   <v-app>
 
     <v-app-bar app color="primary" dark>
-      <v-app-bar-nav-icon @click="drawer = !drawer"></v-app-bar-nav-icon>
+      <v-app-bar-nav-icon @click="drawer = !drawer"><v-icon>{{ mdiMenu }}</v-icon></v-app-bar-nav-icon>
       <v-toolbar-title class="text-h5">Water sensor : {{ $route.name }}</v-toolbar-title>
     </v-app-bar>
 
@@ -40,36 +40,39 @@
 
 <script>
 
+import { mdiHome, mdiWifi, mdiEmail, mdiSim, mdiAntenna, mdiMenu } from '@mdi/js'
+
 export default {
   name: 'App',
 
   data: () => ({
+    mdiMenu,
     drawer: false,
     pages: [
       {
         text: "Home",
         route: "/",
-        icon: "mdi-home"
+        icon: mdiHome
       },
       {
         text: "WiFi",
         route: "/wifi",
-        icon: "mdi-wifi"
+        icon: mdiWifi
       },
       {
         text: "Email",
         route: "/email",
-        icon: "mdi-email"
+        icon: mdiEmail
       },
       {
         text: "SIM (GSM/GPRS)",
         route: "/sim",
-        icon: "mdi-sim"
+        icon: mdiSim
       },
       {
         text: "Sensors",
         route: "/sensors",
-        icon: "mdi-antenna"
+        icon: mdiAntenna
       }
     ]
   })

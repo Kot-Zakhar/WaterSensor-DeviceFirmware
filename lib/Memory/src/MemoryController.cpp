@@ -74,16 +74,17 @@ void deleteWaterSensorBoundariesFroMemory() {
   memory.remove("ws_l");
 }
 
-void saveTemperatureBoundariesToMemory(float &low, float &high) {
-  memory.putFloat("ts_l", low);
-  memory.putFloat("ts_h", high);
+void saveTemperatureBoundariesToMemory(int &low, int &high) {
+  memory.putInt("ts_l", low);
+  memory.putInt("ts_h", high);
   memory.putBool("ts", true);
+  log_d("saving temp bounds: %0.1f %0.1f", low, high);
 }
 
-bool getTemperatureBoundariesFromMemory(float &low, float &high) {
+bool getTemperatureBoundariesFromMemory(int &low, int &high) {
   if (memory.getBool("ts")) {
-    low = memory.getFloat("ts_l");
-    high = memory.getFloat("ts_h");
+    low = memory.getInt("ts_l");
+    high = memory.getInt("ts_h");
     return true;
   } else {
     return false;
@@ -93,19 +94,20 @@ bool getTemperatureBoundariesFromMemory(float &low, float &high) {
 void deleteTemperatureBoundariesFroMemory() {
   memory.remove("ts");
   memory.remove("ts_l");
-  memory.remove("ts_l");
+  memory.remove("ts_h");
 }
 
-void saveHumidityBoundariesToMemory(float &low, float &high) {
-  memory.putFloat("hs_l", low);
-  memory.putFloat("hs_h", high);
+void saveHumidityBoundariesToMemory(int &low, int &high) {
+  memory.putInt("hs_l", low);
+  memory.putInt("hs_h", high);
   memory.putBool("hs", true);
+  log_d("saving temp bounds: %0.1f %0.1f", low, high);
 }
 
-bool getHumidityBoundariesFromMemory(float &low, float &high) {
+bool getHumidityBoundariesFromMemory(int &low, int &high) {
   if (memory.getBool("hs")) {
-    low = memory.getFloat("hs_l");
-    high = memory.getFloat("hs_h");
+    low = memory.getInt("hs_l");
+    high = memory.getInt("hs_h");
     return true;
   } else {
     return false;
@@ -115,7 +117,7 @@ bool getHumidityBoundariesFromMemory(float &low, float &high) {
 void deleteHumidityBoundariesFroMemory() {
   memory.remove("hs");
   memory.remove("hs_l");
-  memory.remove("hs_l");
+  memory.remove("hs_h");
 }
 
 #pragma endregion  sensors bounds

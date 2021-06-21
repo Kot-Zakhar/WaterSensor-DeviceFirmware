@@ -98,7 +98,7 @@ bool connectToAnyWiFiFromMemory(){
     password = getWiFiPasswordFromMemory(i, password);
     log_d("ssid: %s, password: %s", ssid, password);
     connectToWiFi(ssid, password);
-    result = awaitForWiFiConnection(5000);
+    result = awaitForWiFiConnection(10000);
   }
   free(ssid);
   free(password);

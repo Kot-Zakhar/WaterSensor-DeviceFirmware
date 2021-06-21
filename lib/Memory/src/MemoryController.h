@@ -41,11 +41,11 @@ void setPreferredConfigStateFromMemory(device_state_t configState);
 void saveWaterSensorBoundariesToMemory(int low, int high);
 bool getWaterSensorBoundariesFromMemory(int &low, int &high);
 void deleteWaterSensorBoundariesFroMemory();
-void saveTemperatureBoundariesToMemory(float &low, float &high);
-bool getTemperatureBoundariesFromMemory(float &low, float &high);
+void saveTemperatureBoundariesToMemory(int &low, int &high);
+bool getTemperatureBoundariesFromMemory(int &low, int &high);
 void deleteTemperatureBoundariesFroMemory();
-void saveHumidityBoundariesToMemory(float &low, float &high);
-bool getHumidityBoundariesFromMemory(float &low, float &high);
+void saveHumidityBoundariesToMemory(int &low, int &high);
+bool getHumidityBoundariesFromMemory(int &low, int &high);
 void deleteHumidityBoundariesFroMemory();
 
 int saveWiFiCredentialsToMemory(const char* ssid, const char* password);

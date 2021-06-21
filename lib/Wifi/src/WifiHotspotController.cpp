@@ -2,13 +2,18 @@
 #include <DNSServer.h>
 
 DNSServer dnsServer;
+IPAddress serverIP(192, 168, 100, 1);
+IPAddress mask(255,255,255,0);
 
 void initWiFiHotspot() {
+    WiFi.mode(WIFI_AP);
     WiFi.softAP("ESP32 water sensor");
-    dnsServer.start(53, "*", WiFi.softAPIP());
 
-    IPAddress IP = WiFi.softAPIP();
-    Serial.println(IP);
+    WiFi.softAPConfig(serverIP, serverIP, mask);
+
+    dnsServer.start(53, "*", serverIP);
+
+    Serial.println(serverIP);
 }
 
 IPAddress getHotspotIP() {

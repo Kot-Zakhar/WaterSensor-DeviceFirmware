@@ -13,6 +13,8 @@
               :key="mode.value"
               :label="mode.label"
               :value="mode.value"
+              :on-icon="mdiRadioboxMarked"
+              :off-icon="mdiRadioboxBlank"
               :disabled="mode.disabled"
             ></v-radio>
           </v-radio-group>
@@ -29,7 +31,7 @@
             class="mx-auto"
             @click="sendRestart"
           >
-            <v-icon left>mdi-restart</v-icon>
+            <v-icon left>{{ mdiRestart }}</v-icon>
             Restart
           </v-btn>
         </v-card-actions>
@@ -39,10 +41,15 @@
 </template>
 
 <script>
+import { mdiRestart, mdiRadioboxMarked, mdiRadioboxBlank } from '@mdi/js'
+
 export default {
   name: "Home",
   data() {
     return {
+      mdiRestart,
+      mdiRadioboxMarked,
+      mdiRadioboxBlank,
       modes: [
         {
           value: "bt",
@@ -57,7 +64,7 @@ export default {
         {
           value: "wifi-always",
           label: "WiFi: stay connected",
-          disabled: true // need to fetch amount of records to enable
+          disabled: false // need to fetch amount of records to enable
         },
         {
           value: "wifi-notific-only",
@@ -65,7 +72,7 @@ export default {
           disabled: true // need to fetch amount of records to enable
         },
       ],
-      currentMode: ""
+      currentMode: "wifi-always"
     };
   },
   created() {

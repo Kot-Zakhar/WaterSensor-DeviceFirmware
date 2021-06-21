@@ -27,14 +27,12 @@ void setup() {
   if (currentState & DEVICE_STATE_WORK) {
     bool ableToWork =
       (GsmNotificationIsOn() && GsmConnectionIsAvailable()) ||
-      (GprsNotificationIsOn() && GpssConnectionIsAvailable()) ||
+      (GprsNotificationIsOn() && GprsConnectionIsAvailable()) ||
       (WiFiNotificationIsOn() && WiFiConnectionIsAvailable());
     if (!ableToWork)
       currentState = getPreferredConfigStateFromMemory();
   }
 
-  initSensorsChecker();
-  initButtonsInterrupts(currentState & DEVICE_STATE_CONFIG);
 
   if (currentState & DEVICE_STATE_CONFIG) {
     Serial.printf("Config mode. %d %s\n", currentState, currentState == DEVICE_STATE_CONFIG_BLUETOOTH ? "Bluetooth" : "WiFi");
@@ -68,6 +66,9 @@ void setup() {
 
     }
   }
+
+  initSensorsChecker();
+  initButtonsInterrupts(currentState & DEVICE_STATE_CONFIG);
 
   Serial.println("Finishing setup");
 }
@@ -110,11 +111,11 @@ void loop() {
     break;
   }
 
-  // if (sensorsNeedToBeProcessed()) {
-  //   detachInterruptsAndTimers();
-  //   processSensorsChecker();
-  //   reattachInterruptsAndTimers();
-  // }
+  if (sensorsNeedToBeProcessed()) {
+    detachInterruptsAndTimers();
+    processSensorsChecker();
+    reattachInterruptsAndTimers();
+  }
 
   if (gsmNeedToBeProcessed()) {
     detachInterruptsAndTimers();

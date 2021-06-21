@@ -140,19 +140,19 @@ void setWaterSensorBoundaries(int low, int high) {
 void deleteWaterSensorBoundaries() {
     deleteWaterSensorBoundariesFroMemory();
 }
-bool getTemperatureBoundaries(float &low, float &high) {
+bool getTemperatureBoundaries(int &low, int &high) {
     return getTemperatureBoundariesFromMemory(low, high);
 }
-void setTemperatureBoundaries(float low, float high) {
+void setTemperatureBoundaries(int low, int high) {
     saveTemperatureBoundariesToMemory(low, high);
 }
 void deleteTemperatureBoundaries() {
     deleteTemperatureBoundariesFroMemory();
 }
-bool getHumidityBoundaries(float &low, float &high) {
+bool getHumidityBoundaries(int &low, int &high) {
     return getHumidityBoundariesFromMemory(low, high);
 }
-void setHumidityBoundaries(float low, float high) {
+void setHumidityBoundaries(int low, int high) {
     saveHumidityBoundariesToMemory(low, high);
 }
 void deleteHumidityBoundaries() {
@@ -220,6 +220,7 @@ void showNextScreenPage() {
         nextPage = SCREEN_PAGE_GSM_RECIPIENTS;
         break;
     case SCREEN_PAGE_GSM_RECIPIENTS:
+    default:
         nextPage = SCREEN_PAGE_PREVIEW;
         break;
     }

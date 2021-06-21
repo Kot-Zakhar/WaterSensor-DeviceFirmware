@@ -1,6 +1,7 @@
 #include "ScreenController.h"
 #include "WifiHotspotController.h"
 #include "WifiController.h"
+#include "MemoryController.h"
 
 #define SCREEN_WIDTH 128 // OLED display width, in pixels
 #define SCREEN_HEIGHT 64 // OLED display height, in pixels
@@ -60,7 +61,6 @@ void initScreen(){
 
   if(!display.begin(SSD1306_SWITCHCAPVCC, 0x3c, false, false)){
     log_e("SSD1306 allocation failed");
-    // ioIndicate(FATAL_ERROR);
     // todo: add sending error to ledController
     for(;;); // Don't proceed, loop forever
   }
@@ -95,16 +95,109 @@ void showPreviewPage(device_state_t currentState) {
   default:
     break;
   }
+  display.display();
 }
 
-void showWiFiRecords() {}
-void showNetworkSettings() {}
-void showImapSettings() {}
-void showSmtpSettings() {}
-void showEmailRecipients() {}
-void showGsmSettings() {}
-void showGprsSettings() {}
-void showGsmRecipients() {}
+void showWiFiRecords() {
+  int amount = getWiFiCredentialsAmountFromMemory();
+  char ssid[STRING_LENGTH];
+
+  if (amount == 0) {
+    display.println("Wi-Fi creds");
+    display.println("No records");
+  } else {
+    display.printf("Wi-Fi creds %d\n", amount);
+    for (int i = 0; i < 7 && i < amount; i++) {
+      getWiFiSsidFromMemory(i, ssid);
+      display.printf("%d: %s\n", i, ssid);
+    }
+  }
+  display.display();
+}
+
+void showNetworkSettings() {
+  display.println("Network");
+  display.display();
+}
+void showImapSettings() {
+  EmailServerSettings serverSettings;
+  display.println("IMAP");
+  if (emailServerSettingsAvailable(IMAP_EMAIL_SERVER_TYPE)) {
+    getEmailServerSettingsFromMemory(IMAP_EMAIL_SERVER_TYPE, serverSettings);
+    display.printf("server: %s\n", serverSettings.server);
+    display.printf("port: %s\n", serverSettings.port);
+    display.printf("login: %s\n", serverSettings.login);
+    display.printf("ssl: %s\n", serverSettings.ssl ? "true" : "false");
+  } else {
+    display.println("Not set");
+  }
+  display.display();
+}
+void showSmtpSettings() {
+  EmailServerSettings serverSettings;
+  display.println("SMTP");
+  if (emailServerSettingsAvailable(SMTP_EMAIL_SERVER_TYPE)) {
+    getEmailServerSettingsFromMemory(SMTP_EMAIL_SERVER_TYPE, serverSettings);
+    display.printf("server: %s\n", serverSettings.server);
+    display.printf("port: %s\n", serverSettings.port);
+    display.printf("login: %s\n", serverSettings.login);
+    display.printf("ssl: %s\n", serverSettings.ssl ? "true" : "false");
+  } else {
+    display.println("Not set");
+  }
+  display.display();
+}
+void showEmailRecipients() {
+  int amount = getEmailRecipientsAmountFromMemory();
+  char email[STRING_LENGTH];
+
+  if (amount == 0) {
+    display.println("Emails");
+    display.println("No records");
+  } else {
+    display.printf("Emails %d\n", amount);
+    for (int i = 0; i < 7 && i < amount; i++) {
+      getEmailRecipientFromMemory(i, email, STRING_LENGTH);
+      display.printf("%d: %s\n", i, email);
+    }
+  }
+  display.display();
+}
+void showGsmSettings() {
+  display.println("GSM");
+  display.println("Connected");
+  display.display();
+}
+void showGprsSettings() {
+  display.println("GPRS");
+  bool perm = getGprsPermFromMemory();
+  GprsSettings gprsSettigns;
+  if (gprsSettingsAvailableImMemory()) {
+    getGprsSettingsFromMemory(gprsSettigns);
+    display.printf("apn: %s\n", gprsSettigns.apn);
+    display.printf("user: %s\n", gprsSettigns.user);
+    display.printf("pass: %s\n", gprsSettigns.password);
+  } else {
+    display.println("not set");
+  }
+  display.display();
+}
+void showGsmRecipients() {
+  int amount = getGsmRecipientsAmountFromMemory();
+  char phone[STRING_LENGTH];
+
+  if (amount == 0) {
+    display.println("Phones");
+    display.println("No records");
+  } else {
+    display.printf("Phones %d\n", amount);
+    for (int i = 0; i < 7 && i < amount; i++) {
+      getGsmRecipientFromMemory(i, phone, STRING_LENGTH);
+      display.printf("%d: %s\n", i, phone);
+    }
+  }
+  display.display();
+}
 
 void updateScreen(device_state_t currentState) {
   clearDisplay();
@@ -143,5 +236,4 @@ void updateScreen(device_state_t currentState) {
     break;
   }
   
-  display.display();
 }

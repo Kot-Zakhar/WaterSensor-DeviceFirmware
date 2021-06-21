@@ -3,7 +3,7 @@
 const char* bt_credentials_name = "ESP32 Water Sensor";
 
 void initBtController(){
-  // initBtIO(bt_credentials_name);
+  initBtIO(bt_credentials_name);
   // ioWrite(IO_WRITE_SCREEN | IO_WRITE_SERIAL, ("BT - " + String(bt_credentials_name)).c_str());
   log_d("Initializing bt: %s", bt_credentials_name);
 }

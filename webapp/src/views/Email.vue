@@ -14,7 +14,7 @@
               </v-list-item-content>
               <v-list-item-action>
                 <v-btn icon @click="deleteEmailRecipient(i)">
-                  <v-icon>mdi-delete</v-icon>
+                  <v-icon>{{ mdi.mdiDelete }}</v-icon>
                 </v-btn>
               </v-list-item-action>
             </v-list-item>
@@ -39,7 +39,7 @@
                   color="primary"
                   :disabled="!newEmailRecipientValid"
                 >
-                  <v-icon left>mdi-content-save</v-icon>
+                  <v-icon left>{{ mdi.mdiContentSave }}</v-icon>
                   Save
                 </v-btn>
               </v-col>
@@ -80,7 +80,7 @@
               v-model="smtpSettings.password"
               label="Password"
               :rules="[rules.required]"
-              :append-icon="showSmtpPasswordVisible ? 'mdi-eye' : 'mdi-eye-off'"
+              :append-icon="showSmtpPasswordVisible ? mdi.mdiEye : mdi.mdiEyeOff"
               :type="showSmtpPasswordVisible ? 'text' : 'password'"
               @click:append="showSmtpPasswordVisible = !showSmtpPasswordVisible"
               clearable
@@ -91,19 +91,19 @@
             ></v-switch>
             <v-card-actions>
               <v-btn color="primary" type="submit" :disabled="!smtpSettingsValid" class="mr-auto">
-                <v-icon left>mdi-content-save</v-icon>
+                <v-icon left>{{ mdi.mdiContentSave }}</v-icon>
                 Save
               </v-btn>
               <v-btn color="primary" @click="fetchSmtpSettings" class="mx-auto">
-                <v-icon left>mdi-download</v-icon>
+                <v-icon left>{{ mdi.mdiDownload }}</v-icon>
                 Fetch
               </v-btn>
               <v-btn @click="clearForm('smtpSettingsForm')" class="mx-auto">
-                <v-icon left>mdi-close</v-icon>
+                <v-icon left>{{ mdi.mdiClose }}</v-icon>
                 Clear
               </v-btn>
               <v-btn color="secondary" @click="deleteSmtp" class="ml-auto">
-                <v-icon left>mdi-delete</v-icon>
+                <v-icon left>{{ mdi.mdiDelete }}</v-icon>
                 Delete
               </v-btn>
             </v-card-actions>
@@ -143,7 +143,7 @@
               v-model="imapSettings.password"
               label="Password"
               :rules="[rules.required]"
-              :append-icon="showImapPasswordVisible ? 'mdi-eye' : 'mdi-eye-off'"
+              :append-icon="showImapPasswordVisible ? mdi.mdiEye : mdi.mdiEyeOff"
               :type="showImapPasswordVisible ? 'text' : 'password'"
               @click:append="showImapPasswordVisible = !showImapPasswordVisible"
               clearable
@@ -154,19 +154,19 @@
             ></v-switch>
             <v-card-actions>
               <v-btn color="primary" type="submit" :disabled="!imapSettingsValid" class="mr-auto">
-                <v-icon left>mdi-content-save</v-icon>
+                <v-icon left>{{ mdi.mdiContentSave }}</v-icon>
                 Save
               </v-btn>
               <v-btn color="primary" @click="fetchImapSettings" class="mx-auto">
-                <v-icon left>mdi-download</v-icon>
+                <v-icon left>{{ mdi.mdiDownload }}</v-icon>
                 Fetch
               </v-btn>
               <v-btn @click="clearForm('imapSettingsForm')" class="mx-auto">
-                <v-icon left>mdi-close</v-icon>
+                <v-icon left>{{ mdi.mdiClose }}</v-icon>
                 Clear
               </v-btn>
               <v-btn color="secondary" @click="deleteImap" class="ml-auto">
-                <v-icon left>mdi-delete</v-icon>
+                <v-icon left>{{ mdi.mdiDelete }}</v-icon>
                 Delete
               </v-btn>
             </v-card-actions>
@@ -178,10 +178,27 @@
 </template>
 
 <script>
+import {
+  mdiContentSave,
+  mdiEye,
+  mdiEyeOff,
+  mdiDownload,
+  mdiClose,
+  mdiDelete
+} from '@mdi/js'
+
 export default {
   name: "Email",
   data() {
     return {
+      mdi: {
+        mdiContentSave,
+        mdiEye,
+        mdiEyeOff,
+        mdiDownload,
+        mdiClose,
+        mdiDelete,
+      },
       smtpSettingsValid: false,
       showSmtpPasswordVisible: false,
       smtpSettings: {

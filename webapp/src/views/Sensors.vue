@@ -109,7 +109,7 @@
             class="mx-auto"
             @click="saveBoundaries"
           >
-            <v-icon left>mdi-content-save</v-icon>
+            <v-icon left>{{ mdiContentSave }}</v-icon>
             Save
           </v-btn>
         </v-card-actions>
@@ -122,9 +122,17 @@
         <v-divider></v-divider>
         <v-card-title class="text-h6">Water sensor</v-card-title>
         <v-card-text>
-          <apexchart ref="waterChart" type="line" height="350" :options="chartOptions" :series="waterSeries"></apexchart>
-          <v-btn
-            @click="addValue">add</v-btn>
+          <apexchart ref="waterSensorChart" type="line" height="350" :options="chartOptions" :series="waterSeries"></apexchart>
+        </v-card-text>
+        <v-divider></v-divider>
+        <v-card-title class="text-h6">Humidity sensor</v-card-title>
+        <v-card-text>
+          <apexchart ref="humidSensorChart" type="line" height="350" :options="chartOptions" :series="humidSeries"></apexchart>
+        </v-card-text>
+        <v-divider></v-divider>
+        <v-card-title class="text-h6">Temperature sensor</v-card-title>
+        <v-card-text>
+          <apexchart ref="tempSensorChart" type="line" height="350" :options="chartOptions" :series="tempSeries"></apexchart>
         </v-card-text>
       </v-card>
     </v-container>
@@ -132,8 +140,8 @@
 </template>
 
 <script>
-// import SensorChart from '../components/SensorChart'
 import VueApexCharts from 'vue-apexcharts'
+import { mdiContentSave } from '@mdi/js'
 
 export default {
   name: 'Sensors',
@@ -142,12 +150,51 @@ export default {
   },
   data() {
     return {
+      mdiContentSave,
       waterSensor: {
         range: [1000, 2000],
         min: 0,
-        max: 2048
+        max: 4096
       },
       waterSeries: [
+        {
+          name: "Min bound",
+          data: []
+        },
+        {
+          name: 'Max bound',
+          data: [],
+        },
+        {
+          name: 'Sensor value',
+          data: [],
+        }
+      ],
+      tempSensor: {
+        range: [10, 40],
+        min: 0,
+        max: 50
+      },
+      tempSeries: [
+        {
+          name: "Min bound",
+          data: []
+        },
+        {
+          name: 'Max bound',
+          data: [],
+        },
+        {
+          name: 'Sensor value',
+          data: [],
+        }
+      ],
+      humidSensor: {
+        range: [20, 50],
+        min: 20,
+        max: 80
+      },
+      humidSeries: [
         {
           name: "Min bound",
           data: []
@@ -193,41 +240,74 @@ export default {
           type: 'datetime'
         }
       },
-      tempSensor: {
-        range: [20, 40],
-        min: 0,
-        max: 50
-      },
-      humidSensor: {
-        range: [30, 50],
-        min: 20,
-        max: 80
-      },
       checkTimer: null
     }
   },
   created() {
     this.checkTimer = setInterval(() => {
-      this.addValue();
-    }, 1000)
+      this.fetchValuesAndUpdateChart();
+    }, 1000),
+    this.getBoundaries();
   },
   beforeDestroy() {
     clearInterval(this.checkTimer);
   },
   methods: {
+    async getBoundaries() {
+      const response = await fetch(this.$api + "/api/sensors-boundaries", {method: "GET"});
+      const data = await response.json();
+
+      if (data.status == "OK" && data.payload) {
+        this.waterSensor.range = [data.payload.waterSensor.low, data.payload.waterSensor.high];
+        this.tempSensor.range = [data.payload.tempSensor.low, data.payload.tempSensor.high];
+        this.humidSensor.range = [data.payload.humidSensor.low, data.payload.humidSensor.high];
+      }
+    },
     async saveBoundaries() {
-
+      const reqOptions = {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          waterSensor: {
+            low: this.waterSensor.range[0],
+            high: this.waterSensor.range[1]
+          },
+          tempSensor: {
+            low: this.tempSensor.range[0],
+            high: this.tempSensor.range[1]
+          },
+          humidSensor: {
+            low: this.humidSensor.range[0],
+            high: this.humidSensor.range[1]
+          },
+        })
+      };
+      const res = await fetch(this.$api + "/api/sensors-boundaries", reqOptions);
+      const data = await res.json();
+      if (data.status !== "OK") {
+        console.error(data);
+      }
     },
-    async fetchWebSocketAddress() {
+    async fetchValuesAndUpdateChart() {
+      const response = await fetch(this.$api + "/api/sensors-values", {method: "GET"});
+      const data = await response.json();
 
+      if (data.status == "OK") {
+        this.addValue("waterSensor", data.payload.waterSensor);
+        this.addValue("tempSensor", data.payload.tempSensor);
+        this.addValue("humidSensor", data.payload.humidSensor);
+      }
     },
-    addValue() {
-      this.$refs.waterChart.appendData([{
-        data: [[Date.now(), this.waterSensor.range[0]]]
+    addValue(name, value) {
+      const time = Date.now();
+      this.$refs[name + "Chart"].appendData([{
+        data: [[time, this[name].range[0]]]
       },{
-        data: [[Date.now(), this.waterSensor.range[1]]]
+        data: [[time, this[name].range[1]]]
       }, {
-        data: [[Date.now(), Math.floor(Math.random() * (100) + 1000)]]
+        data: [[time, value]]
       }]);
     }
   }

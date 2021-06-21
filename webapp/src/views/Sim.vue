@@ -29,7 +29,7 @@
                   :disabled="!pinValid"
                   class="mx-auto"
                 >
-                  <v-icon left>mdi-content-save</v-icon>
+                  <v-icon left>{{ mdi.mdiContentSave }}</v-icon>
                   Save
                 </v-btn>
                 <v-btn
@@ -37,7 +37,7 @@
                   @click="deletePin"
                   class="mx-auto"
                 >
-                  <v-icon left>mdi-delete</v-icon>
+                  <v-icon left>{{ mdi.mdiDelete }}</v-icon>
                   Delete
                 </v-btn>
               </v-col>
@@ -64,7 +64,7 @@
               </v-list-item-content>
               <v-list-item-action>
                 <v-btn icon @click="deleteRecipient(i)">
-                  <v-icon>mdi-delete</v-icon>
+                  <v-icon>{{ mdi.mdiDelete }}</v-icon>
                 </v-btn>
               </v-list-item-action>
             </v-list-item>
@@ -94,7 +94,7 @@
                   :disabled="!newGsmRecipientValid"
                   class="mx-auto"
                 >
-                  <v-icon left>mdi-content-save</v-icon>
+                  <v-icon left>{{ mdi.mdiContentSave }}</v-icon>
                   Save
                 </v-btn>
               </v-col>
@@ -139,19 +139,19 @@
             ></v-text-field>
             <v-card-actions>
               <v-btn color="primary" type="submit" :disabled="!gprsSettingsValid" class="mr-auto">
-                <v-icon left>mdi-content-save</v-icon>
+                <v-icon left>{{ mdi.mdiContentSave }}</v-icon>
                 Save
               </v-btn>
               <v-btn color="primary" @click="fetchGprsSettings" class="mx-auto">
-                <v-icon left>mdi-download</v-icon>
+                <v-icon left>{{ mdi.mdiDownload }}</v-icon>
                 Fetch
               </v-btn>
               <v-btn @click="clearForm('gprsSettingsForm')" class="mx-auto">
-                <v-icon left>mdi-close</v-icon>
+                <v-icon left>{{ mdi.mdiClose }}</v-icon>
                 Clear
               </v-btn>
               <v-btn color="secondary" @click="deleteGprsSettings" class="ml-auto">
-                <v-icon left>mdi-delete</v-icon>
+                <v-icon left>{{ mdi.mdiDelete }}</v-icon>
                 Delete
               </v-btn>
             </v-card-actions>
@@ -161,13 +161,13 @@
     </v-container>
     <v-container>
       <v-btn @click="sendTestSms" class="mx-auto">
-        <v-icon left>mdi-email</v-icon>
+        <v-icon left>{{ mdi.mdiEmail }}</v-icon>
         Send test SMS
       </v-btn>
     </v-container>
     <v-container>
       <v-btn @click="sendTestEmailGprs" class="mx-auto">
-        <v-icon left>mdi-email</v-icon>
+        <v-icon left>{{ mdi.mdiEmail }}</v-icon>
         Send test email using GPRS
       </v-btn>
     </v-container>
@@ -175,10 +175,25 @@
 </template>
 
 <script>
+import {
+  mdiContentSave,
+  mdiDelete,
+  mdiDownload,
+  mdiClose,
+  mdiEmail
+} from '@mdi/js'
+
 export default {
   name: "Sim",
   data() {
     return {
+      mdi: {
+        mdiContentSave,
+        mdiDelete,
+        mdiDownload,
+        mdiClose,
+        mdiEmail
+      },
       gsmRecipients: [],
       newGsmRecipient: "",
       newGsmRecipientValid: false,

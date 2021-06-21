@@ -51,11 +51,11 @@ void sendTestEmailWiFi();
 bool getWaterSensorBoundaries(int &low, int &high);
 void setWaterSensorBoundaries(int low, int high);
 void deleteWaterSensorBoundaries();
-bool getTemperatureBoundaries(float &low, float &high);
-void setTemperatureBoundaries(float low, float high);
+bool getTemperatureBoundaries(int &low, int &high);
+void setTemperatureBoundaries(int low, int high);
 void deleteTemperatureBoundaries();
-bool getHumidityBoundaries(float &low, float &high);
-void setHumidityBoundaries(float low, float high);
+bool getHumidityBoundaries(int &low, int &high);
+void setHumidityBoundaries(int low, int high);
 void deleteHumidityBoundaries();
 
 void getSensorsValues(SensorsValues &sensors);

@@ -43,6 +43,12 @@ void gprsSettingsPostHandlerFunction(AsyncWebServerRequest *req, JsonVariant &bo
 void gsmTestHandlerFunction(AsyncWebServerRequest *req);
 void gprsEmailTestHandlerFunction(AsyncWebServerRequest *req);
 
+void sensorsBoundariesGetDeleteHanderFunction(AsyncWebServerRequest *req);
+void sensorsBoundariesPostHandlerFunction(AsyncWebServerRequest *req, JsonVariant &body);
+
+void sensorsValuesGetHandlerFunction(AsyncWebServerRequest *req);
+
+
 void initHttpServer() {
     DefaultHeaders::Instance().addHeader("Access-Control-Allow-Origin", "*");
 
@@ -71,6 +77,11 @@ void initHttpServer() {
     server.addHandler(new AsyncCallbackJsonWebHandler("/api/gprs", gprsSettingsPostHandlerFunction));
 
     server.on("/api/gprs-test", HTTP_GET, gprsEmailTestHandlerFunction);
+
+    server.on("/api/sensors-boundaries", HTTP_GET | HTTP_DELETE, sensorsBoundariesGetDeleteHanderFunction);
+    server.addHandler(new AsyncCallbackJsonWebHandler("/api/sensors-boundaries", sensorsBoundariesPostHandlerFunction));
+
+    server.on("/api/sensors-values", HTTP_GET, sensorsValuesGetHandlerFunction);
 
     server
         .serveStatic("/", LITTLEFS, "/public")
@@ -528,6 +539,94 @@ void gprsEmailTestHandlerFunction(AsyncWebServerRequest *req) {
     notifyAboutEvent(TEST_EMAIL_GPRS_NOTIFICATION);
 
     doc["status"] = status_ok_message;
+    AsyncResponseStream *res = req->beginResponseStream("application/json");
+    serializeJson(doc, *res);
+
+    res->setCode(200);
+    req->send(res);
+}
+
+void sensorsBoundariesGetDeleteHanderFunction(AsyncWebServerRequest *req) {
+    
+    DynamicJsonDocument doc(JSON_DEFAULT_BUFFER_LENGTH);
+    DynamicJsonDocument reqDoc(0);
+    switch (req->method())
+    {
+    case HTTP_GET: {
+        int h, l;
+        JsonObject payload = doc.createNestedObject("payload");
+        JsonObject waterSensor = payload.createNestedObject("waterSensor");
+        getWaterSensorBoundaries(l, h);
+        waterSensor["low"] = l;
+        waterSensor["high"] = h;
+        JsonObject tempSensor = payload.createNestedObject("tempSensor");
+        getTemperatureBoundaries(l, h);
+        tempSensor["low"] = l;
+        tempSensor["high"] = h;
+        JsonObject humidSensor = payload.createNestedObject("humidSensor");
+        getHumidityBoundaries(l, h);
+        humidSensor["low"] = l;
+        humidSensor["high"] = h;
+        doc["status"] = status_ok_message;
+        break;
+    }
+    default:
+        doc["status"] = status_error_message;
+        break;
+    }
+    
+    AsyncResponseStream *res = req->beginResponseStream("application/json");
+    serializeJson(doc, *res);
+
+    res->setCode(200);
+    req->send(res);
+}
+
+void sensorsBoundariesPostHandlerFunction(AsyncWebServerRequest *req, JsonVariant &body) {
+    DynamicJsonDocument doc(STRING_JSON_LENGTH);
+    GprsSettings settings;
+
+    if (body.is<JsonObject>()) {
+        JsonObject waterSensor = body["waterSensor"];
+        setWaterSensorBoundaries(waterSensor["low"], waterSensor["high"]);
+        JsonObject tempSensor = body["tempSensor"];
+        int l, h;
+        l = tempSensor["low"];
+        h = tempSensor["high"];
+        log_d("temp bounds: %d %d", l, h);
+        setTemperatureBoundaries(l, h);
+        JsonObject humidSensor = body["humidSensor"];
+        l = humidSensor["low"];
+        h = humidSensor["high"];
+        log_d("humid bounds: %d %d", l, h);
+        setHumidityBoundaries(l, h);
+        doc["status"] = status_ok_message;
+    } else {
+        doc["status"] = status_error_message;
+    }
+
+    AsyncResponseStream *res = req->beginResponseStream("application/json");
+    res->setCode(200);
+
+    serializeJson(doc, *res);
+
+    req->send(res);
+}
+
+void sensorsValuesGetHandlerFunction(AsyncWebServerRequest *req) {
+    DynamicJsonDocument doc(JSON_DEFAULT_BUFFER_LENGTH);
+    DynamicJsonDocument reqDoc(0);
+
+    SensorsValues values;
+    getSensorsValues(values);
+
+    JsonObject payload = doc.createNestedObject("payload");
+    payload["waterSensor"] = values.water;
+    payload["tempSensor"] = values.temperature;
+    payload["humidSensor"] = values.humidity;
+
+    doc["status"] = status_ok_message;
+    
     AsyncResponseStream *res = req->beginResponseStream("application/json");
     serializeJson(doc, *res);
 

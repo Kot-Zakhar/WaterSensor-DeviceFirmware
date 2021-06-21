@@ -26,8 +26,7 @@ void checkSensorsValue(){
     SensorsValues newValues;
     getCurrentSensorsValues(newValues);
 
-    int waterLow, waterHigh;
-    float tLow, tHigh, hLow, hHigh;
+    int waterLow, waterHigh, tLow, tHigh, hLow, hHigh;
     bool water = getWaterSensorBoundariesFromMemory(waterLow, waterHigh);
     bool temp = getTemperatureBoundariesFromMemory(tLow, tHigh);
     bool humid = getHumidityBoundariesFromMemory(hLow, hHigh);
@@ -43,22 +42,22 @@ void checkSensorsValue(){
         }
     }
 
-    if (newValues.temperature >= values.temperature + tempAccuracy || newValues.temperature <= values.temperature - tempAccuracy){
+    if (newValues.temperature >= (float)values.temperature + tempAccuracy || newValues.temperature <= (float)values.temperature - tempAccuracy){
         log_d("Temperature - %.0f*C", newValues.temperature);
         values.temperature = newValues.temperature;
         
-        if (newValues.temperature >= tHigh || newValues.temperature <= tLow){
+        if (newValues.temperature >= (float)tHigh || newValues.temperature <= (float)tLow){
             outOfBoundsSensors = outOfBoundsSensors & TEMPERATURE_SENSOR_TYPE;
         } else {
             outOfBoundsSensors = ~(~outOfBoundsSensors & TEMPERATURE_SENSOR_TYPE);
         }
     }
 
-    if (newValues.humidity >= values.humidity + humidAccuracy || newValues.humidity <= values.humidity - humidAccuracy){
+    if (newValues.humidity >= (float)values.humidity + humidAccuracy || newValues.humidity <= (float)values.humidity - humidAccuracy){
         log_d("Humidity - %.0f%%", newValues.humidity);
         values.humidity = newValues.humidity;
         
-        if (newValues.humidity >= hHigh || newValues.humidity <= hLow){
+        if (newValues.humidity >= (float)hHigh || newValues.humidity <= (float)hLow){
             outOfBoundsSensors = outOfBoundsSensors & HUMIDITY_SENSOR_TYPE;
         } else {
             outOfBoundsSensors = ~(~outOfBoundsSensors & HUMIDITY_SENSOR_TYPE);
@@ -90,10 +89,20 @@ void processSensorsChecker(){
     if (needToNotifyAboutSensors){
         if (!notificationWasSent){
             // TODO: check actual result of notifyAboutEvent to resend notification on failure
-            // notifyAboutEvent(SENSORS_OUT_OF_BOUNDS_EVENT);
+            notifyAboutEvent(SENSORS_OUT_OF_BOUNDS_EVENT);
             notificationWasSent = true;
         } else {
-            log_i("Sensor value still out of range - %d", getWaterSensorValue()); 
+            log_i("some sensor value still out of range");
+            int l, h;
+            getWaterSensorBoundariesFromMemory(l, h);
+            log_i("%d [%d, %d]", getWaterSensorValue(), l, h);
+            getTemperatureBoundariesFromMemory(l, h);
+            float t, hum;
+            getTemperature(&t);
+            log_i("temp %0.1f [%d, %d]", t, l, h);
+            getHumidity(&hum);
+            getHumidityBoundariesFromMemory(l, h);
+            log_i("humid %0.1f [%d, %d]", hum, l, h);
         }
         needToNotifyAboutSensors = false;
     }

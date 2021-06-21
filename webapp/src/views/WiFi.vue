@@ -14,7 +14,7 @@
               </v-list-item-content>
               <v-list-item-action>
                 <v-btn icon @click="deleteWifiRecord(i)">
-                  <v-icon>mdi-delete</v-icon>
+                  <v-icon>{{ mdi.mdiDelete }}</v-icon>
                 </v-btn>
               </v-list-item-action>
           </v-list-item>
@@ -38,7 +38,7 @@
                 v-model="newWifiRecord.password"
                 label="Password"
                 :rules="[rules.required]"
-                :append-icon="newWifiRecordPasswordVisible ? 'mdi-eye' : 'mdi-eye-off'"
+                :append-icon="newWifiRecordPasswordVisible ? mdi.mdiEye : mdi.mdiEyeOff"
                 :type="newWifiRecordPasswordVisible ? 'text' : 'password'"
                 @click:append="newWifiRecordPasswordVisible = !newWifiRecordPasswordVisible"
                 clearable
@@ -51,11 +51,11 @@
                 :disabled="!newWifiRecordValid"
                 class="mx-auto"
               >
-                <v-icon left>mdi-content-save</v-icon>
+                <v-icon left>{{ mdi.mdiContentSave }}</v-icon>
                 Save
               </v-btn>
               <v-btn @click="clear" class="mx-auto">
-                <v-icon left>mdi-close</v-icon>
+                <v-icon left>{{ mdi.mdiClose }}</v-icon>
                 Clear
               </v-btn>
             </v-col>
@@ -66,10 +66,25 @@
 </template>
 
 <script>
+import {
+  mdiDelete,
+  mdiEye,
+  mdiEyeOff,
+  mdiContentSave,
+  mdiClose
+} from '@mdi/js'
+
 export default {
   name: 'WiFi',
   data () {
     return {
+      mdi: {
+        mdiDelete,
+        mdiEye,
+        mdiEyeOff,
+        mdiContentSave,
+        mdiClose
+      },
       loading: true,
       wifiRecords: [],
       newWifiRecordValid: false,
