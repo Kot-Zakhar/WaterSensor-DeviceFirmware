@@ -3,6 +3,6 @@
 
 #include <custom_types.h>
 
-void getCurrentSensorsValues(SensorsValues &values);
+int getCurrentSensorsValues(SensorsValues &values);
 
 #endif

@@ -1,4 +1,5 @@
 #include <WifiController.h>
+#include <HTTPClient.h>
 
 const char* failedToObtainTimeMessage = "Failed to otain time.";
 const char* failedToObtainTimeShortMessage = "<no time>";
@@ -115,8 +116,11 @@ void disconnectFromWiFi(){
 }
 
 bool WiFiNotificationIsOn() {
-  return getWiFiCredentialsAmountFromMemory() > 0 &&
-    getEmailRecipientsAmountFromMemory() > 0;
+  return getWiFiCredentialsAmountFromMemory() > 0;
+}
+
+bool emailNotificationIsON() {
+  return getEmailRecipientsAmountFromMemory() > 0;
 }
 
 bool WiFiConnectionIsAvailable() {
@@ -131,4 +135,17 @@ bool WiFiConnectionIsAvailable() {
 
 void startServer() {
   WiFiServer httpServer(80);
+}
+
+void sendIFTTTRequest(const char *body) {
+  if (isWiFiConnected()) {
+    HTTPClient http;
+    http.begin("http://maker.ifttt.com/trigger/water_sensor_event/with/key/dzS3-GHKGWMzQMM544pLF1");
+    http.addHeader("Content-Type", "application/json");
+    String requestData = String("{\"value1\":\"") + body + "\"}";
+    log_d("'%s'", requestData.c_str());
+    int code = http.POST(requestData);
+    log_d("response code: %d", code);
+    http.end();
+  }
 }

@@ -1,21 +1,15 @@
 #include <IOController.h>
-#include <FastLED.h>
 #include <Ticker.h>
+#include "LedController.h"
 
-#define LED_TIMER_INDEX 1
-#define LED_TIMER_FREQ_DEVIDER 80
-#define LED_UPDATE_FREQ 50
-#define LED_PIN GPIO_NUM_13
+// #define LED_TIMER_INDEX 1
+// #define LED_TIMER_FREQ_DEVIDER 80
+// #define LED_UPDATE_FREQ 50
+#define GREEN_LED_PIN GPIO_NUM_13
+#define RED_LED_PIN GPIO_NUM_12
 
-
-const static uint16_t blinkDuration[2] = {300, 1000};
-
-const static uint8_t ledPins[] = {25, 26};
-const static uint8_t rgbLedPins[] = {15, 13, 12};
-
-// Ticker updater;
-
-CRGB led;
+// CRGB prevColor;
+// CRGB led;
 // uint8_t brightness = 0;
 // int currentColor = 0;
 
@@ -27,17 +21,32 @@ CRGB led;
 //   HUE_PURPLE
 // };
 
-portMUX_TYPE ledTimerMux = portMUX_INITIALIZER_UNLOCKED;
-
-void IRAM_ATTR ledUpdateInterrupt(){
-    portENTER_CRITICAL_ISR(&ledTimerMux);
-    portEXIT_CRITICAL_ISR(&ledTimerMux);
+void initLED() {
+    pinMode(GREEN_LED_PIN, OUTPUT);
+    pinMode(RED_LED_PIN, OUTPUT);
+    redLedOn();
+    greenLedOn();
+    delay(500);
+    redLedOff();
+    greenLedOff();
+    // FastLED.addLeds<WS2811, LED_PIN, GRB>(&led, 1);
+    // led = RGB_GREEN;
+    // FastLED.show();
 }
 
-void initLED(){
-    // updater.attach_ms(LED_UPDATE_FREQ, ledUpdateInterrupt);
-    FastLED.addLeds<WS2811, LED_PIN, GRB>(&led, 1);
-    // led = BLACK;
-    led = CHSV(HUE_GREEN, 255, 10);
-    FastLED.show();
+
+void redLedOn() {
+    digitalWrite(RED_LED_PIN, HIGH);
+}
+
+void redLedOff() {
+    digitalWrite(RED_LED_PIN, LOW);
+}
+
+void greenLedOn() {
+    digitalWrite(GREEN_LED_PIN, HIGH);
+}
+
+void greenLedOff() {
+    digitalWrite(GREEN_LED_PIN, LOW);
 }

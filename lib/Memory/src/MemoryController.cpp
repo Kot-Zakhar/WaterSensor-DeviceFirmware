@@ -52,20 +52,19 @@ void initMemoryController(){
 
 #pragma region  sensors bounds
 
+static int water_low_default = 1000;
+static int water_high_default = 2000;
+
 void saveWaterSensorBoundariesToMemory(int low, int high) {
   memory.putInt("ws_l", low);
   memory.putInt("ws_h", high);
   memory.putBool("ws", true);
+  log_d("saving water bounds: %d %d", low, high);
 }
 
-bool getWaterSensorBoundariesFromMemory(int &low, int &high) {
-  if (memory.getBool("ws")) {
-    low = memory.getInt("ws_l");
-    high = memory.getInt("ws_h");
-    return true;
-  } else {
-    return false;
-  }
+void getWaterSensorBoundariesFromMemory(int &low, int &high) {
+  low = memory.getInt("ws_l", water_low_default);
+  high = memory.getInt("ws_h", water_high_default);
 }
 
 void deleteWaterSensorBoundariesFroMemory() {
@@ -74,21 +73,19 @@ void deleteWaterSensorBoundariesFroMemory() {
   memory.remove("ws_l");
 }
 
+static int temp_low_default = 20;
+static int temp_high_default = 50;
+
 void saveTemperatureBoundariesToMemory(int &low, int &high) {
   memory.putInt("ts_l", low);
   memory.putInt("ts_h", high);
   memory.putBool("ts", true);
-  log_d("saving temp bounds: %0.1f %0.1f", low, high);
+  log_d("saving temp bounds: %d %d", low, high);
 }
 
-bool getTemperatureBoundariesFromMemory(int &low, int &high) {
-  if (memory.getBool("ts")) {
-    low = memory.getInt("ts_l");
-    high = memory.getInt("ts_h");
-    return true;
-  } else {
-    return false;
-  }
+void getTemperatureBoundariesFromMemory(int &low, int &high) {
+  low = memory.getInt("ts_l", temp_low_default);
+  high = memory.getInt("ts_h", temp_high_default);
 }
 
 void deleteTemperatureBoundariesFroMemory() {
@@ -97,21 +94,19 @@ void deleteTemperatureBoundariesFroMemory() {
   memory.remove("ts_h");
 }
 
+static int humid_low_default = 20;
+static int humid_high_default = 55;
+
 void saveHumidityBoundariesToMemory(int &low, int &high) {
   memory.putInt("hs_l", low);
   memory.putInt("hs_h", high);
   memory.putBool("hs", true);
-  log_d("saving temp bounds: %0.1f %0.1f", low, high);
+  log_d("saving temp bounds: %d %d", low, high);
 }
 
-bool getHumidityBoundariesFromMemory(int &low, int &high) {
-  if (memory.getBool("hs")) {
-    low = memory.getInt("hs_l");
-    high = memory.getInt("hs_h");
-    return true;
-  } else {
-    return false;
-  }
+void getHumidityBoundariesFromMemory(int &low, int &high) {
+  low = memory.getInt("hs_l", humid_low_default);
+  high = memory.getInt("hs_h", humid_high_default);
 }
 
 void deleteHumidityBoundariesFroMemory() {

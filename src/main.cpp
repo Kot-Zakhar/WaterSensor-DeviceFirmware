@@ -8,6 +8,9 @@
 #include <WifiHotspotController.h>
 #include <HttpServerController.h>
 #include <ScreenController.h>
+#include <TextTerminal.h>
+#include <Scheduler.h>
+#include <LedController.h>
 
 device_state_t currentState;
 
@@ -17,8 +20,10 @@ void setup() {
   Serial.println("Starting");
 
   initScreen();
-
+  initLED();
   initMemoryController();
+  initTextTerminal();
+
   initGsmService();
 
   currentState = getStateFromMemory();
@@ -29,8 +34,9 @@ void setup() {
       (GsmNotificationIsOn() && GsmConnectionIsAvailable()) ||
       (GprsNotificationIsOn() && GprsConnectionIsAvailable()) ||
       (WiFiNotificationIsOn() && WiFiConnectionIsAvailable());
-    if (!ableToWork)
+    if (!ableToWork) {
       currentState = getPreferredConfigStateFromMemory();
+    }
   }
 
 
@@ -48,6 +54,7 @@ void setup() {
     }
 
   } else {
+    greenLedOn();
     Serial.println("Working mode.");
     initWiFiController();
     if (currentState == DEVICE_STATE_WORK_WIFI_ALWAYS_CONNECTED) {
@@ -126,4 +133,6 @@ void loop() {
   updateScreen(currentState);
 
   delay(100);
+
+  processScheduler();
 }

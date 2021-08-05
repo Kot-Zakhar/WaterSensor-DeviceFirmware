@@ -49,7 +49,7 @@ static const char *commands[] = {
   
   "notification-test",
 
-  "sensor-value",
+  "sensor-values",
   "sensor-boundaries",
 
   "mode",

@@ -21,10 +21,12 @@ bool connectToAnyWiFiFromMemory();
 void disconnectFromWiFi();
 
 bool WiFiNotificationIsOn();
+bool emailNotificationIsON();
 bool WiFiConnectionIsAvailable();
 
 void syncTime();
 char *getDateTimeStr(char *buffer, size_t length, bool shortFormat = true);
 char *getTimeStr(char *buffer, size_t length, bool shortFormat = true);
+void sendIFTTTRequest(const char *body);
 
 #endif

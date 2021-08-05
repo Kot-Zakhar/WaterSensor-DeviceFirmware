@@ -48,19 +48,21 @@ void sendTestSms();
 void sendTestEmailGprs();
 void sendTestEmailWiFi();
 
-bool getWaterSensorBoundaries(int &low, int &high);
+void getWaterSensorBoundaries(int &low, int &high);
 void setWaterSensorBoundaries(int low, int high);
 void deleteWaterSensorBoundaries();
-bool getTemperatureBoundaries(int &low, int &high);
+void getTemperatureBoundaries(int &low, int &high);
 void setTemperatureBoundaries(int low, int high);
 void deleteTemperatureBoundaries();
-bool getHumidityBoundaries(int &low, int &high);
+void getHumidityBoundaries(int &low, int &high);
 void setHumidityBoundaries(int low, int high);
 void deleteHumidityBoundaries();
 
-void getSensorsValues(SensorsValues &sensors);
+int getSensorsValues(SensorsValues &sensors);
 
 void switchStateToNext();
+device_state_t getState();
+void setState(device_state_t state);
 void showNextScreenPage();
 
 #endif

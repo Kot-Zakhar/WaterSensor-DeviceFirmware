@@ -13,8 +13,6 @@
               :key="mode.value"
               :label="mode.label"
               :value="mode.value"
-              :on-icon="mdiRadioboxMarked"
-              :off-icon="mdiRadioboxBlank"
               :disabled="mode.disabled"
             ></v-radio>
           </v-radio-group>
@@ -41,15 +39,13 @@
 </template>
 
 <script>
-import { mdiRestart, mdiRadioboxMarked, mdiRadioboxBlank } from '@mdi/js'
+import { mdiRestart } from '@mdi/js'
 
 export default {
   name: "Home",
   data() {
     return {
       mdiRestart,
-      mdiRadioboxMarked,
-      mdiRadioboxBlank,
       modes: [
         {
           value: "bt",
@@ -64,19 +60,19 @@ export default {
         {
           value: "wifi-always",
           label: "WiFi: stay connected",
-          disabled: false // need to fetch amount of records to enable
+          disabled: false
         },
         {
           value: "wifi-notific-only",
           label: "WiFi: connect only for notifications",
-          disabled: true // need to fetch amount of records to enable
+          disabled: false
         },
       ],
-      currentMode: "wifi-always"
+      currentMode: ""
     };
   },
   created() {
-    // this.fetchMode();
+    this.fetchMode();
   },
   methods: {
     async fetchMode() {

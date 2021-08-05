@@ -154,7 +154,7 @@ export default {
       waterSensor: {
         range: [1000, 2000],
         min: 0,
-        max: 4096
+        max: 2000
       },
       waterSeries: [
         {
@@ -258,6 +258,7 @@ export default {
       const data = await response.json();
 
       if (data.status == "OK" && data.payload) {
+        console.log(data);
         this.waterSensor.range = [data.payload.waterSensor.low, data.payload.waterSensor.high];
         this.tempSensor.range = [data.payload.tempSensor.low, data.payload.tempSensor.high];
         this.humidSensor.range = [data.payload.humidSensor.low, data.payload.humidSensor.high];

@@ -23,23 +23,31 @@
                 md="6"
                 class="d-flex align-center"
               >
-                <v-btn
-                  type="submit"
-                  color="primary"
-                  :disabled="!pinValid"
-                  class="mx-auto"
-                >
-                  <v-icon left>{{ mdi.mdiContentSave }}</v-icon>
-                  Save
-                </v-btn>
-                <v-btn
-                  color="secondary"
-                  @click="deletePin"
-                  class="mx-auto"
-                >
-                  <v-icon left>{{ mdi.mdiDelete }}</v-icon>
-                  Delete
-                </v-btn>
+                <v-row>
+                  <v-col col="6">
+                    <v-btn
+                      block
+                      type="submit"
+                      color="primary"
+                      :disabled="!pinValid"
+                      class="mx-auto"
+                    >
+                      <v-icon left>{{ mdi.mdiContentSave }}</v-icon>
+                      Save
+                    </v-btn>
+                  </v-col>
+                  <v-col col="6">
+                    <v-btn
+                      block
+                      color="secondary"
+                      @click="deletePin"
+                      class="mx-auto"
+                    >
+                      <v-icon left>{{ mdi.mdiDelete }}</v-icon>
+                      Delete
+                    </v-btn>
+                  </v-col>
+                </v-row>
               </v-col>
             </v-row>
           </v-form>
@@ -63,7 +71,7 @@
                 ></v-list-item-title>
               </v-list-item-content>
               <v-list-item-action>
-                <v-btn icon @click="deleteRecipient(i)">
+                <v-btn icon @click="deleteGsmRecipient(i)">
                   <v-icon>{{ mdi.mdiDelete }}</v-icon>
                 </v-btn>
               </v-list-item-action>
@@ -89,6 +97,7 @@
                 class="d-flex align-center"
               >
                 <v-btn
+                  block
                   type="submit"
                   color="primary"
                   :disabled="!newGsmRecipientValid"
@@ -138,35 +147,45 @@
               clearable
             ></v-text-field>
             <v-card-actions>
-              <v-btn color="primary" type="submit" :disabled="!gprsSettingsValid" class="mr-auto">
-                <v-icon left>{{ mdi.mdiContentSave }}</v-icon>
-                Save
-              </v-btn>
-              <v-btn color="primary" @click="fetchGprsSettings" class="mx-auto">
-                <v-icon left>{{ mdi.mdiDownload }}</v-icon>
-                Fetch
-              </v-btn>
-              <v-btn @click="clearForm('gprsSettingsForm')" class="mx-auto">
-                <v-icon left>{{ mdi.mdiClose }}</v-icon>
-                Clear
-              </v-btn>
-              <v-btn color="secondary" @click="deleteGprsSettings" class="ml-auto">
-                <v-icon left>{{ mdi.mdiDelete }}</v-icon>
-                Delete
-              </v-btn>
+              <v-row>
+                <v-col col="6" md="3">
+                  <v-btn block color="primary" type="submit" :disabled="!gprsSettingsValid" class="mr-auto">
+                    <v-icon left>{{ mdi.mdiContentSave }}</v-icon>
+                    Save
+                  </v-btn>
+                </v-col>
+                <v-col col="6" md="3">
+                  <v-btn block color="primary" @click="fetchGprsSettings" class="mx-auto">
+                    <v-icon left>{{ mdi.mdiDownload }}</v-icon>
+                    Fetch
+                  </v-btn>
+                </v-col>
+                <v-col col="6" md="3">
+                  <v-btn block @click="clearForm('gprsSettingsForm')" class="mx-auto">
+                    <v-icon left>{{ mdi.mdiClose }}</v-icon>
+                    Clear
+                  </v-btn>
+                </v-col>
+                <v-col col="6" md="3">
+                  <v-btn block color="secondary" @click="deleteGprsSettings" class="ml-auto">
+                    <v-icon left>{{ mdi.mdiDelete }}</v-icon>
+                    Delete
+                  </v-btn>
+                </v-col>
+              </v-row>
             </v-card-actions>
           </v-form>
         </v-card-text>
       </v-card>
     </v-container>
     <v-container>
-      <v-btn @click="sendTestSms" class="mx-auto">
+      <v-btn block @click="sendTestSms" class="mx-auto">
         <v-icon left>{{ mdi.mdiEmail }}</v-icon>
         Send test SMS
       </v-btn>
     </v-container>
     <v-container>
-      <v-btn @click="sendTestEmailGprs" class="mx-auto">
+      <v-btn block @click="sendTestEmailGprs" class="mx-auto">
         <v-icon left>{{ mdi.mdiEmail }}</v-icon>
         Send test email using GPRS
       </v-btn>

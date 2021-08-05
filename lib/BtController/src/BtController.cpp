@@ -18,7 +18,8 @@ void processBt() {
     return;
 
   char *message = (char *)malloc(length + 1);
-  readBt(message, length + 1);
+  readBt(message, length);
+  message[length] = 0;
 
   char *response = (char *)malloc(STRING_LENGTH);
 

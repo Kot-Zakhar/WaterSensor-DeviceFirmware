@@ -13,8 +13,5 @@ Vue.use(VueApexCharts)
 new Vue({
   router,
   vuetify,
-  icons: {
-    iconfont: 'mdiSvg'
-  },
   render: h => h(App)
 }).$mount('#app')

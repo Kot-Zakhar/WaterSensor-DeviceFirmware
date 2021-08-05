@@ -24,21 +24,24 @@ int outOfBoundsSensors = 0;
 
 void checkSensorsValue(){
     SensorsValues newValues;
-    getCurrentSensorsValues(newValues);
-
+    int error = getCurrentSensorsValues(newValues);
+    if (error) {
+        return;
+    }
     int waterLow, waterHigh, tLow, tHigh, hLow, hHigh;
-    bool water = getWaterSensorBoundariesFromMemory(waterLow, waterHigh);
-    bool temp = getTemperatureBoundariesFromMemory(tLow, tHigh);
-    bool humid = getHumidityBoundariesFromMemory(hLow, hHigh);
+    getWaterSensorBoundariesFromMemory(waterLow, waterHigh);
+    getTemperatureBoundariesFromMemory(tLow, tHigh);
+    getHumidityBoundariesFromMemory(hLow, hHigh);
 
     if (newValues.water >= values.water + waterSensorAccuracy || newValues.water <= values.water - waterSensorAccuracy){
         log_d("Water sensor - %d", newValues.water);
         values.water = newValues.water;
         
-        if (newValues.water >= waterHigh || newValues.water <= waterLow){
-            outOfBoundsSensors = outOfBoundsSensors & WATER_SENSOR_TYPE;
+        if (newValues.water <= waterHigh && newValues.water >= waterLow){
+            outOfBoundsSensors = outOfBoundsSensors | WATER_SENSOR_TYPE;
+            log_d("water out of bounds %d %d %d", newValues.water, waterLow, waterHigh);
         } else {
-            outOfBoundsSensors = ~(~outOfBoundsSensors & WATER_SENSOR_TYPE);
+            outOfBoundsSensors = ~(~outOfBoundsSensors | WATER_SENSOR_TYPE);
         }
     }
 
@@ -47,9 +50,10 @@ void checkSensorsValue(){
         values.temperature = newValues.temperature;
         
         if (newValues.temperature >= (float)tHigh || newValues.temperature <= (float)tLow){
-            outOfBoundsSensors = outOfBoundsSensors & TEMPERATURE_SENSOR_TYPE;
+            log_d("temperature value %.1f out of %.1f and %.1f", newValues.temperature, (float)tLow, (float)tHigh);
+            outOfBoundsSensors = outOfBoundsSensors | TEMPERATURE_SENSOR_TYPE;
         } else {
-            outOfBoundsSensors = ~(~outOfBoundsSensors & TEMPERATURE_SENSOR_TYPE);
+            outOfBoundsSensors = ~(~outOfBoundsSensors | TEMPERATURE_SENSOR_TYPE);
         }
     }
 
@@ -58,9 +62,10 @@ void checkSensorsValue(){
         values.humidity = newValues.humidity;
         
         if (newValues.humidity >= (float)hHigh || newValues.humidity <= (float)hLow){
-            outOfBoundsSensors = outOfBoundsSensors & HUMIDITY_SENSOR_TYPE;
+            log_d("humid value %.1f out of %.1f and %.1f", newValues.humidity, (float)hLow, (float)hHigh);
+            outOfBoundsSensors = outOfBoundsSensors | HUMIDITY_SENSOR_TYPE;
         } else {
-            outOfBoundsSensors = ~(~outOfBoundsSensors & HUMIDITY_SENSOR_TYPE);
+            outOfBoundsSensors = ~(~outOfBoundsSensors | HUMIDITY_SENSOR_TYPE);
         }
     }
 

@@ -14,6 +14,7 @@
 #include <ResponseMessages.h>
 
 #include <NotificationService.h>
+#include <Scheduler.h>
 
 AsyncWebServer server(80);
 AsyncWebSocket ws("/ws");
@@ -42,9 +43,13 @@ void gprsSettingsPostHandlerFunction(AsyncWebServerRequest *req, JsonVariant &bo
 
 void gsmTestHandlerFunction(AsyncWebServerRequest *req);
 void gprsEmailTestHandlerFunction(AsyncWebServerRequest *req);
+void wifiEmailTestHandlerFunction(AsyncWebServerRequest *req);
 
 void sensorsBoundariesGetDeleteHanderFunction(AsyncWebServerRequest *req);
 void sensorsBoundariesPostHandlerFunction(AsyncWebServerRequest *req, JsonVariant &body);
+
+void modeGetHandlerFunction(AsyncWebServerRequest *req);
+void modePostHandlerFunction(AsyncWebServerRequest *req, JsonVariant &body);
 
 void sensorsValuesGetHandlerFunction(AsyncWebServerRequest *req);
 
@@ -69,6 +74,7 @@ void initHttpServer() {
     server.addHandler(new AsyncCallbackJsonWebHandler("/api/gsm-recipients", gsmRecipientsPostHandlerFunction));
 
     server.on("/api/gsm-test", HTTP_GET, gsmTestHandlerFunction);
+    server.on("/api/email-test", HTTP_GET, wifiEmailTestHandlerFunction);
 
     server.on("/api/gprs-use-network-perm", HTTP_GET, gprsNetworkPermGetHanderFunction);
     server.addHandler(new AsyncCallbackJsonWebHandler("/api/gprs-use-network-perm", gprsNetworkPermPostHandlerFunction));
@@ -82,6 +88,9 @@ void initHttpServer() {
     server.addHandler(new AsyncCallbackJsonWebHandler("/api/sensors-boundaries", sensorsBoundariesPostHandlerFunction));
 
     server.on("/api/sensors-values", HTTP_GET, sensorsValuesGetHandlerFunction);
+
+    server.on("/api/mode", HTTP_GET, modeGetHandlerFunction);
+    server.addHandler(new AsyncCallbackJsonWebHandler("/api/mode", modePostHandlerFunction));
 
     server
         .serveStatic("/", LITTLEFS, "/public")
@@ -523,7 +532,7 @@ void gprsSettingsPostHandlerFunction(AsyncWebServerRequest *req, JsonVariant &bo
 void gsmTestHandlerFunction(AsyncWebServerRequest *req) {
     DynamicJsonDocument doc(JSON_DEFAULT_BUFFER_LENGTH);
     
-    notifyAboutEvent(TEST_SMS_NOTIFICATION);
+    scheduleTestSms();
 
     doc["status"] = status_ok_message;
     AsyncResponseStream *res = req->beginResponseStream("application/json");
@@ -535,8 +544,21 @@ void gsmTestHandlerFunction(AsyncWebServerRequest *req) {
 
 void gprsEmailTestHandlerFunction(AsyncWebServerRequest *req) {
     DynamicJsonDocument doc(JSON_DEFAULT_BUFFER_LENGTH);
-    
-    notifyAboutEvent(TEST_EMAIL_GPRS_NOTIFICATION);
+
+    scheduleTestEmailGprs();    
+
+    doc["status"] = status_ok_message;
+    AsyncResponseStream *res = req->beginResponseStream("application/json");
+    serializeJson(doc, *res);
+
+    res->setCode(200);
+    req->send(res);
+}
+
+void wifiEmailTestHandlerFunction(AsyncWebServerRequest *req) {
+    DynamicJsonDocument doc(JSON_DEFAULT_BUFFER_LENGTH);
+
+    scheduleTestEmailWiFi();    
 
     doc["status"] = status_ok_message;
     AsyncResponseStream *res = req->beginResponseStream("application/json");
@@ -548,7 +570,7 @@ void gprsEmailTestHandlerFunction(AsyncWebServerRequest *req) {
 
 void sensorsBoundariesGetDeleteHanderFunction(AsyncWebServerRequest *req) {
     
-    DynamicJsonDocument doc(JSON_DEFAULT_BUFFER_LENGTH);
+    DynamicJsonDocument doc(JSON_DEFAULT_BUFFER_LENGTH*2);
     DynamicJsonDocument reqDoc(0);
     switch (req->method())
     {
@@ -618,18 +640,85 @@ void sensorsValuesGetHandlerFunction(AsyncWebServerRequest *req) {
     DynamicJsonDocument reqDoc(0);
 
     SensorsValues values;
-    getSensorsValues(values);
+    int error = getSensorsValues(values);
 
-    JsonObject payload = doc.createNestedObject("payload");
-    payload["waterSensor"] = values.water;
-    payload["tempSensor"] = values.temperature;
-    payload["humidSensor"] = values.humidity;
+    if (error) {
+        doc["status"] = status_error_message;
+    } else {
+        JsonObject payload = doc.createNestedObject("payload");
+        payload["waterSensor"] =  values.water;
+        payload["tempSensor"] = floor(values.temperature * 10) / 10.;
+        payload["humidSensor"] = floor(values.humidity * 10) / 10.;
 
-    doc["status"] = status_ok_message;
+        doc["status"] = status_ok_message;
+    }
+
     
     AsyncResponseStream *res = req->beginResponseStream("application/json");
     serializeJson(doc, *res);
 
     res->setCode(200);
     req->send(res);
+}
+
+void modeGetHandlerFunction(AsyncWebServerRequest *req) {
+    DynamicJsonDocument doc(JSON_DEFAULT_BUFFER_LENGTH);
+
+    device_state_t state = getState();
+    switch (state)
+    {
+    case DEVICE_STATE_CONFIG_BLUETOOTH:
+        doc["payload"] = "bt";
+        break;
+    case DEVICE_STATE_CONFIG_WIFI_HOTSPOT:
+        doc["payload"] = "wifi-hotspot";
+        break;
+    case DEVICE_STATE_WORK_WIFI_ALWAYS_CONNECTED:
+        doc["payload"] = "wifi-always";
+        break;
+    case DEVICE_STATE_WORK_WIFI_FOR_NOTIFICATION:
+        doc["payload"] = "wifi-notific-only";
+        break;
+    default:
+        break;
+    }
+
+    doc["status"] = status_ok_message;
+    AsyncResponseStream *res = req->beginResponseStream("application/json");
+    serializeJson(doc, *res);
+
+    res->setCode(200);
+    req->send(res);
+}
+
+void modePostHandlerFunction(AsyncWebServerRequest *req, JsonVariant &body) {
+    DynamicJsonDocument doc(STRING_JSON_LENGTH);
+    GprsSettings settings;
+
+    if (body.is<String>()) {
+        String newMode = body.as<String>();
+
+        if (newMode.equals("bt")) {
+            setState(DEVICE_STATE_CONFIG_BLUETOOTH);
+        } else if (newMode.equals("wifi-hotspot")) {
+            setState(DEVICE_STATE_CONFIG_WIFI_HOTSPOT);
+        } else if (newMode.equals("wifi-always")) {
+            setState(DEVICE_STATE_WORK_WIFI_ALWAYS_CONNECTED);
+        } else if (newMode.equals("wifi-notific-only")) {
+            setState(DEVICE_STATE_WORK_WIFI_FOR_NOTIFICATION);
+        }
+        scheduleRestart(500);
+
+        doc["status"] = status_ok_message;
+    } else {
+        doc["status"] = status_error_message;
+    }
+
+    AsyncResponseStream *res = req->beginResponseStream("application/json");
+    res->setCode(200);
+
+    serializeJson(doc, *res);
+
+    req->send(res);
+
 }

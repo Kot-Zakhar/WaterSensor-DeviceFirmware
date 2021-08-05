@@ -21,33 +21,34 @@ int btAvailable() {
 
 // IO
 
-int awaitAndReadBt(char *buffer, int maxLength){
-  while (!BT.available()){}
-  return readBt(buffer, maxLength);
-}
+// int awaitAndReadBt(char *buffer, int maxLength){
+//   while (!BT.available()){}
+//   return readBt(buffer, maxLength);
+// }
 
-int readBt(char *buffer, int maxLength){
-  if (!BT.available())
-      return -1;
+int readBt(char *buffer, size_t bytesToRead){
+  // if (!BT.available())
+  //     return -1;
 
-  int realAmount = BT.available();
+  // int realAmount = BT.available();
 
-  int ableToRead = realAmount < maxLength - 1 ? realAmount : maxLength - 1;
+  // int ableToRead = realAmount < maxLength - 1 ? realAmount : maxLength - 1;
 
-  int charAmount = BT.readBytes(buffer, ableToRead);
+  // int charAmount = BT.readBytes(buffer, ableToRead);
+  int charAmount = BT.readBytes(buffer, bytesToRead);
 
-  buffer[charAmount] = '\0';
+  // buffer[charAmount] = '\0';
 
-  if (realAmount > ableToRead){
-    // TODO: reallocate space if realAmount > charAmount
-    char *tail = (char *) malloc(realAmount - ableToRead + 1);
-    int tailLength = BT.readBytes(tail, realAmount - ableToRead);
-    tail[tailLength] = '\0';
-    log_e("Cutting the tail of the message: '%s'", tail);
-    free(tail);
-  }
+  // if (realAmount > ableToRead){
+  //   // TODO: reallocate space if realAmount > charAmount
+  //   char *tail = (char *) malloc(realAmount - ableToRead + 1);
+  //   int tailLength = BT.readBytes(tail, realAmount - ableToRead);
+  //   tail[tailLength] = '\0';
+  //   log_e("Cutting the tail of the message: '%s'", tail);
+  //   free(tail);
+  // }
 
-  log_d("%s", buffer);
+  // log_d("%s", buffer);
 
   return charAmount;
 }

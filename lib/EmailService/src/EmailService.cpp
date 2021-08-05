@@ -27,11 +27,11 @@ bool sendLetter(const char *subject, const char *message, bool isHtml, bool retr
     return false;
   }
 
-  ioIndicate(EMAIL_SENDING_LETTER);
+  // ioIndicate(EMAIL_SENDING_LETTER);
 
   struct EmailServerSettings smtpServer;
   getEmailServerSettingsFromMemory(SMTP_EMAIL_SERVER_TYPE, smtpServer);
-
+  syncTime();
   char *dateTime = getDateTimeStr((char *)malloc(STRING_LENGTH), STRING_LENGTH, false);
   // TODO: make this customasable
   char *sender = "ESP32 water sensor";
@@ -66,6 +66,7 @@ bool sendLetter(const char *subject, const char *message, bool isHtml, bool retr
 
   for (int i = 0; i < recipientCount; i++) {
     recipient = getEmailRecipientFromMemory(i, recipient, STRING_LENGTH);
+    log_d("adding recipient %s", recipient);
     smtpData.addRecipient(recipient);
   }
 

@@ -9,13 +9,15 @@
 #include <WifiController.h>
 
 #include <SensorsService.h>
+#include <LedController.h>
 
 const char *testMessage = "This is a test message from ESP32.";
 const char *alertMessage = "One or several of sensors values have gone out of the bounds.";
 const char *valuesFormat = "Water sensor: %d.\nTemperature: %.1f*C.\nHumidity: %.1f%%.";
+const char *shortFormat = "water: %d, temp: %.1f*C, hum: %.1f%%";
 
 void notifyAboutEvent(notification_event_t event) {
-
+    redLedOn();
     struct SensorsValues values;
     getCurrentSensorsValues(values);
 
@@ -66,14 +68,21 @@ void notifyAboutEvent(notification_event_t event) {
         if (GprsNotificationIsOn()) {
             sendEmailGPRS(header, message);
         } else if (WiFiNotificationIsOn()) {
-            bool connected = connectToAnyWiFiFromMemory();
-            if (connected)
-                sendLetter(header, message, false);
-            disconnectFromWiFi();
+            bool wasConnected = isWiFiConnected();
+            bool connected = wasConnected || connectToAnyWiFiFromMemory();
+            if (connected) {
+                if (emailNotificationIsON())
+                    sendLetter(header, message, false);
+                sprintf(message, shortFormat, values.water, values.temperature, values.humidity);
+                sendIFTTTRequest(message);
+            }
+            if (!wasConnected)
+                disconnectFromWiFi();
         }
         break;
     default:
         log_d("Not sending message: %s", message);
         break;
     }
+    redLedOff();
 }

@@ -4,6 +4,7 @@
 #include <NotificationService.h>
 #include <SensorsService.h>
 #include <ScreenController.h>
+#include <Scheduler.h>
 
 int wifiCredsGetAmount() {
     return getWiFiCredentialsAmountFromMemory();
@@ -131,8 +132,8 @@ void sendTestEmailWiFi() {
     notifyAboutEvent(TEST_EMAIL_WIFI_NOTIFICATION);
 }
 
-bool getWaterSensorBoundaries(int &low, int &high) {
-    return getWaterSensorBoundariesFromMemory(low, high);
+void getWaterSensorBoundaries(int &low, int &high) {
+    getWaterSensorBoundariesFromMemory(low, high);
 }
 void setWaterSensorBoundaries(int low, int high) {
     saveWaterSensorBoundariesToMemory(low, high);
@@ -140,8 +141,8 @@ void setWaterSensorBoundaries(int low, int high) {
 void deleteWaterSensorBoundaries() {
     deleteWaterSensorBoundariesFroMemory();
 }
-bool getTemperatureBoundaries(int &low, int &high) {
-    return getTemperatureBoundariesFromMemory(low, high);
+void getTemperatureBoundaries(int &low, int &high) {
+    getTemperatureBoundariesFromMemory(low, high);
 }
 void setTemperatureBoundaries(int low, int high) {
     saveTemperatureBoundariesToMemory(low, high);
@@ -149,8 +150,8 @@ void setTemperatureBoundaries(int low, int high) {
 void deleteTemperatureBoundaries() {
     deleteTemperatureBoundariesFroMemory();
 }
-bool getHumidityBoundaries(int &low, int &high) {
-    return getHumidityBoundariesFromMemory(low, high);
+void getHumidityBoundaries(int &low, int &high) {
+    getHumidityBoundariesFromMemory(low, high);
 }
 void setHumidityBoundaries(int low, int high) {
     saveHumidityBoundariesToMemory(low, high);
@@ -159,8 +160,8 @@ void deleteHumidityBoundaries() {
     deleteHumidityBoundariesFroMemory();
 }
 
-void getSensorsValues(SensorsValues &sensors) {
-    getCurrentSensorsValues(sensors);
+int getSensorsValues(SensorsValues &sensors) {
+    return getCurrentSensorsValues(sensors);
 }
 
 void switchStateToNext() {
@@ -186,8 +187,16 @@ void switchStateToNext() {
     }
 
     setStateInMemory(newState);
-    delay(2000);
-    esp_restart();
+    scheduleRestart(500);
+}
+
+void setState(device_state_t state) {
+    setStateInMemory(state);
+    scheduleRestart(500);
+}
+
+device_state_t getState() {
+    return getStateFromMemory();
 }
 
 void showNextScreenPage() {

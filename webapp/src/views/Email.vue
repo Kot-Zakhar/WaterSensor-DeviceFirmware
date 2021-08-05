@@ -35,6 +35,7 @@
               </v-col>
               <v-col cols="12" md="6" align-self="center" class="d-flex align-center justify-center">
                 <v-btn
+                  block
                   type="submit"
                   color="primary"
                   :disabled="!newEmailRecipientValid"
@@ -90,26 +91,44 @@
               label="Use SSL"
             ></v-switch>
             <v-card-actions>
-              <v-btn color="primary" type="submit" :disabled="!smtpSettingsValid" class="mr-auto">
-                <v-icon left>{{ mdi.mdiContentSave }}</v-icon>
-                Save
-              </v-btn>
-              <v-btn color="primary" @click="fetchSmtpSettings" class="mx-auto">
-                <v-icon left>{{ mdi.mdiDownload }}</v-icon>
-                Fetch
-              </v-btn>
-              <v-btn @click="clearForm('smtpSettingsForm')" class="mx-auto">
-                <v-icon left>{{ mdi.mdiClose }}</v-icon>
-                Clear
-              </v-btn>
-              <v-btn color="secondary" @click="deleteSmtp" class="ml-auto">
-                <v-icon left>{{ mdi.mdiDelete }}</v-icon>
-                Delete
-              </v-btn>
+
+              <v-row>
+                <v-col col="6" md="3">
+                  <v-btn block color="primary" type="submit" :disabled="!smtpSettingsValid" class="mr-auto">
+                    <v-icon left>{{ mdi.mdiContentSave }}</v-icon>
+                    Save
+                  </v-btn>
+                </v-col>
+                <v-col col="6" md="3">
+                  <v-btn block color="primary" @click="fetchSmtpSettings" class="mx-auto">
+                    <v-icon left>{{ mdi.mdiDownload }}</v-icon>
+                    Fetch
+                  </v-btn>
+                </v-col>
+                <v-col col="6" md="3">
+                  <v-btn block @click="clearForm('smtpSettingsForm')" class="mx-auto">
+                    <v-icon left>{{ mdi.mdiClose }}</v-icon>
+                    Clear
+                  </v-btn>
+                </v-col>
+                <v-col col="6" md="3">
+                  <v-btn block color="secondary" @click="deleteSmtp" class="ml-auto">
+                    <v-icon left>{{ mdi.mdiDelete }}</v-icon>
+                    Delete
+                  </v-btn>
+                </v-col>
+              </v-row>
             </v-card-actions>
           </v-form>
         </v-card-text>
       </v-card>
+    </v-container>
+
+    <v-container>
+      <v-btn block @click="sendTestEmailWifi" class="mx-auto">
+        <v-icon left>{{ mdi.mdiEmail }}</v-icon>
+        Send test email using Wi-Fi
+      </v-btn>
     </v-container>
 
     <v-container>
@@ -153,22 +172,32 @@
               label="Use SSL"
             ></v-switch>
             <v-card-actions>
-              <v-btn color="primary" type="submit" :disabled="!imapSettingsValid" class="mr-auto">
-                <v-icon left>{{ mdi.mdiContentSave }}</v-icon>
-                Save
-              </v-btn>
-              <v-btn color="primary" @click="fetchImapSettings" class="mx-auto">
-                <v-icon left>{{ mdi.mdiDownload }}</v-icon>
-                Fetch
-              </v-btn>
-              <v-btn @click="clearForm('imapSettingsForm')" class="mx-auto">
-                <v-icon left>{{ mdi.mdiClose }}</v-icon>
-                Clear
-              </v-btn>
-              <v-btn color="secondary" @click="deleteImap" class="ml-auto">
-                <v-icon left>{{ mdi.mdiDelete }}</v-icon>
-                Delete
-              </v-btn>
+              <v-row>
+                <v-col col="6" md="3">
+                  <v-btn block color="primary" type="submit" :disabled="!imapSettingsValid" class="mr-auto">
+                    <v-icon left>{{ mdi.mdiContentSave }}</v-icon>
+                    Save
+                  </v-btn>
+                </v-col>
+                <v-col col="6" md="3">
+                  <v-btn block color="primary" @click="fetchImapSettings" class="mx-auto">
+                    <v-icon left>{{ mdi.mdiDownload }}</v-icon>
+                    Fetch
+                  </v-btn>
+                </v-col>
+                <v-col col="6" md="3">
+                  <v-btn block @click="clearForm('imapSettingsForm')" class="mx-auto">
+                    <v-icon left>{{ mdi.mdiClose }}</v-icon>
+                    Clear
+                  </v-btn>
+                </v-col>
+                <v-col col="6" md="3">
+                  <v-btn block color="secondary" @click="deleteImap" class="ml-auto">
+                    <v-icon left>{{ mdi.mdiDelete }}</v-icon>
+                    Delete
+                  </v-btn>
+                </v-col>
+              </v-row>
             </v-card-actions>
           </v-form>
         </v-card-text>
@@ -184,7 +213,8 @@ import {
   mdiEyeOff,
   mdiDownload,
   mdiClose,
-  mdiDelete
+  mdiDelete,
+  mdiEmail
 } from '@mdi/js'
 
 export default {
@@ -198,6 +228,7 @@ export default {
         mdiDownload,
         mdiClose,
         mdiDelete,
+        mdiEmail
       },
       smtpSettingsValid: false,
       showSmtpPasswordVisible: false,
@@ -344,6 +375,11 @@ export default {
         console.error(data)
       }
       await this.fetchEmailResipients();
+    },
+    async sendTestEmailWifi() {
+      const res = await fetch(this.$api + "/api/email-test", {method: "GET"});
+      const data = await res.json();
+      console.log(data);
     }
   }
 };

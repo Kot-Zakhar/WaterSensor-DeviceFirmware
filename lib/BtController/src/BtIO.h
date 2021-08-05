@@ -7,8 +7,8 @@
 void initBtIO(const char *name);
 
 void writeBt(const char* line);
-int readBt(char *buffer, int maxLength);
-int awaitAndReadBt(char *buffer, int maxLength);
+int readBt(char *buffer, size_t bytesToRead);
+// int awaitAndReadBt(char *buffer, int maxLength);
 BluetoothSerial *getCurrentBtSerial();
 int btAvailable();
 

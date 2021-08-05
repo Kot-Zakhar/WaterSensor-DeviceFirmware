@@ -650,27 +650,21 @@ error_t sensorBoundariesJsonEndpoint(command_method_t method, const JsonVariant 
         JsonObject payload = doc.createNestedObject("payload");
 
         int waterLow, waterHigh, tLow, tHigh, hLow, hHigh;
-        bool water = getWaterSensorBoundaries(waterLow, waterHigh);
-        bool temp = getTemperatureBoundaries(tLow, tHigh);
-        bool humid = getHumidityBoundaries(hLow, hHigh);
+        getWaterSensorBoundaries(waterLow, waterHigh);
+        getTemperatureBoundaries(tLow, tHigh);
+        getHumidityBoundaries(hLow, hHigh);
 
-        if (water) {
-            JsonObject water = payload.createNestedObject("water");
-            water["low"] = waterLow;
-            water["high"] = waterHigh;
-        }
+        JsonObject water = payload.createNestedObject("water");
+        water["low"] = waterLow;
+        water["high"] = waterHigh;
 
-        if (temp) {
-            JsonObject temp = payload.createNestedObject("temperature");
-            temp["low"] = tLow;
-            temp["high"] = tHigh;
-        }
+        JsonObject temp = payload.createNestedObject("temperature");
+        temp["low"] = tLow;
+        temp["high"] = tHigh;
 
-        if (humid) {
-            JsonObject humid = payload.createNestedObject("humidity");
-            humid["low"] = hLow;
-            humid["high"] = hHigh;
-        }
+        JsonObject humid = payload.createNestedObject("humidity");
+        humid["low"] = hLow;
+        humid["high"] = hHigh;
 
         resDoc = std::move(doc);
         break;
